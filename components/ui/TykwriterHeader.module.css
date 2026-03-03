@@ -1,0 +1,34 @@
+/* Mobile-first base styles */
+.headerContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  margin: 1rem auto;
+  border-radius: 9999px;
+  /* Pill shape */
+  border: 1px solid rgba(212, 219, 134, 0.3);
+  /* Subtle straw border */
+  width: max-content;
+  max-width: 90%;
+  background-color: var(--soft-card-bg);
+  box-shadow: var(--floating-shadow);
+}
+
+.logoImage {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+
+/************** Larger screens adjustments ****************************/
+@media (min-width: 768px) {
+  .headerContainer {
+    padding: 1rem 2rem;
+    margin: 2rem auto;
+  }
+
+  .logoImage {
+    width: 250px;
+  }
+}
