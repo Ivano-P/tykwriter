@@ -24,8 +24,7 @@
 /************** Larger screens adjustments ****************************/
 @media (min-width: 768px) {
   .headerContainer {
-    padding: 1rem 2rem;
-    margin: 2rem auto;
+    display: none;
   }
 
   .logoImage {

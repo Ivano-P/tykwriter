@@ -1,6 +1,6 @@
 'use server';
 
-import { SpellcheckService } from '@/services/spellcheck.service';
+import { OllamaService } from '@/services/OllamaService';
 
 /**
  * Server Action acting as a Controller for spellcheck functionality.
@@ -11,6 +11,6 @@ export async function spellcheckAction(text: string): Promise<string> {
     throw new Error('Invalid text provided for spellcheck.');
   }
 
-  const spellcheckService = new SpellcheckService();
-  return await spellcheckService.checkText(text);
+  // Ensure dynamic APIs are awaited if any are added here in the future
+  return await OllamaService.checkSpelling(text);
 }
