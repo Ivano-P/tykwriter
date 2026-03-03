@@ -1,7 +1,20 @@
+'use client';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import styles from './ModeSidebar.module.css';
 
 export function ModeSidebar() {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [animatingBtn, setAnimatingBtn] = useState<string | null>(null);
+
+  const handleSoonClick = (btnId: string) => {
+    setAnimatingBtn(btnId);
+    setToastMessage("Cette fonctionnalité n'est pas encore disponible.");
+    setTimeout(() => setAnimatingBtn(null), 400); // correspond à la durée de l'animation
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
   return (
     <aside className={styles.sidebarContainer}>
       <h2 className={styles.title}>Mode</h2>
@@ -13,12 +26,23 @@ export function ModeSidebar() {
           correcteur
         </Button>
         <Button
-          disabled
-          className={styles.buttonTraduction}
+          onClick={() => handleSoonClick('trad')}
+          className={`${styles.buttonSoon} ${animatingBtn === 'trad' ? styles.shake : ''}`}
         >
-          traduction<br />bientôt disponible
+          traduction
+        </Button>
+        <Button
+          onClick={() => handleSoonClick('vulg')}
+          className={`${styles.buttonSoon} ${animatingBtn === 'vulg' ? styles.shake : ''}`}
+        >
+          vulg à pro
         </Button>
       </div>
+      {toastMessage && (
+        <div className={styles.toastMessage}>
+          {toastMessage}
+        </div>
+      )}
     </aside>
   );
 }

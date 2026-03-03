@@ -34,7 +34,7 @@
 
 .buttonCorrecteur {
   border: none;
-  border-radius: 9999px;
+  border-radius: 9999px !important;
   font-weight: bold;
   font-size: 1rem;
   height: auto;
@@ -50,18 +50,71 @@
   box-shadow: 0 6px 8px -1px rgba(15, 82, 186, 0.3);
 }
 
-.buttonTraduction {
-  border: 1px solid rgba(160, 140, 115, 0.2) !important;
-  border-radius: 9999px;
+.buttonSoon {
+  border: 2px dashed rgba(160, 140, 115, 0.6) !important;
+  border-radius: 9999px !important;
   font-weight: bold;
   font-size: 1rem;
   height: auto;
   padding: 0.75rem 1.5rem;
-  background-color: transparent !important;
+  background-color: rgba(160, 140, 115, 0.05) !important;
   color: var(--tyk-dust-brown) !important;
-  opacity: 0.6 !important;
-  cursor: not-allowed;
+  opacity: 0.8 !important;
+  cursor: pointer;
   box-shadow: none !important;
+  transition: all 0.2s;
+}
+
+.buttonSoon:hover {
+  background-color: rgba(160, 140, 115, 0.1) !important;
+  border-color: rgba(160, 140, 115, 0.9) !important;
+}
+
+@keyframes shakeAnimation {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
+
+  75% {
+    transform: translateX(-4px);
+  }
+}
+
+.shake {
+  animation: shakeAnimation 0.4s ease-in-out;
+}
+
+.toastMessage {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--tyk-sapphire);
+  color: white;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /************** Larger screens adjustments ****************************/
