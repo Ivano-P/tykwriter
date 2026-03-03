@@ -167,12 +167,6 @@ export function ContentArea() {
         maxLength={MAX_CHARS}
       />
 
-      <div className={styles.footerInfo}>
-        <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
-          {text.length} / {MAX_CHARS}
-        </div>
-      </div>
-
       {isProcessing && (
         <div className={styles.processingIndicator}>
           <span>IA en cours d&apos;analyse...</span>
@@ -198,6 +192,9 @@ export function ContentArea() {
       )}
 
       <div className={styles.submitContainer}>
+        <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
+          {text.length} / {MAX_CHARS}
+        </div>
         <Button
           onClick={handleManualSubmit}
           disabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
