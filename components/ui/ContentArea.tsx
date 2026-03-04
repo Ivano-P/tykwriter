@@ -142,6 +142,7 @@ export function ContentArea() {
             width={160}
             height={42}
             className={styles.toolbarLogo}
+            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </div>
@@ -169,7 +170,7 @@ export function ContentArea() {
 
       {isProcessing && (
         <div className={styles.processingIndicator}>
-          <span>IA en cours d&apos;analyse...</span>
+          <span>Vérification en cours...</span>
         </div>
       )}
 
