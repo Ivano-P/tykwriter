@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Tykwriter - Votre Assistant Rédacteur",
     description: "Corrigez et sublimez vos textes instantanément grâce à l'intelligence artificielle.",
-    url: "https://tykwriter.votre-domaine.com",
+    url: "https://tykwriter.tykdev.com",
     siteName: "Tykwriter",
     locale: "fr_FR",
     type: "website",
