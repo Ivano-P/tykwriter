@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tykwriter.tykdev.com'),
   title: "Tykwriter - Votre Assistant Rédacteur",
   description: "Corrigez et sublimez vos textes instantanément grâce à l'intelligence artificielle.",
   openGraph: {
