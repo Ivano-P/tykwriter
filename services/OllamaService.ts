@@ -68,6 +68,15 @@ export class OllamaService {
 
           Je te confirme le rdv. 
 
+          Cordialement,
+          
+          texte: Bonjour,
+
+          Comment vas tu je técrit cette email pour te présenter mes excuses pour ce qui s'est passé hier soit. cordialement
+          Ta réponse: Bonjour,
+
+          Comment vas-tu ? Je t'écris cet e-mail pour te présenter mes excuses pour ce qui s'est passé hier soir.
+
           Cordialement,`,
           
           prompt: `Corrige ce texte en appliquant tes directives. Ne renvoie QUE la correction sans RIEN ajouter avant ou après :\n\n${text}`,
