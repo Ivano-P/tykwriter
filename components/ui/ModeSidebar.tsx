@@ -32,10 +32,10 @@ export function ModeSidebar() {
           traduction
         </Button>
         <Button
-          onClick={() => handleSoonClick('vulg')}
-          className={`${styles.buttonSoon} ${animatingBtn === 'vulg' ? styles.shake : ''}`}
+          onClick={() => handleSoonClick('maitre')}
+          className={`${styles.buttonSoon} ${animatingBtn === 'maitre' ? styles.shake : ''}`}
         >
-          vulg à pro
+          maitre rédacteur
         </Button>
       </div>
       {toastMessage && (
