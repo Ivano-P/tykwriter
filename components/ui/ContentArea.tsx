@@ -1,120 +1,33 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { spellcheckAction } from '@/actions/spellcheck.action';
-import * as Diff from 'diff';
 import { Copy, Undo2, Redo2 } from 'lucide-react';
-import Image from 'next/image';
 import styles from './ContentArea.module.css';
 
-export function ContentArea() {
-  const [text, setText] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
+interface ContentAreaProps {
+  text: string;
+  onChange: (val: string) => void;
+  isProcessing: boolean;
+  undoStackLength: number;
+  redoStackLength: number;
+  handleUndo: () => void;
+  handleRedo: () => void;
+  MAX_CHARS: number;
+}
 
-  const [undoStack, setUndoStack] = useState<string[]>([]);
-  const [redoStack, setRedoStack] = useState<string[]>([]);
-  const [diffParts, setDiffParts] = useState<Diff.Change[] | null>(null);
-
-  const MAX_CHARS = 2000;
-
-  // Track if we should skip debounce (e.g. after undo/redo/spellcheck)
-  const skipDebounceRef = useRef(false);
-  const lastProcessedText = useRef<string>('');
-  const lastProcessedBoosterState = useRef<boolean>(false);
-
-  useEffect(() => {
-    // Debounce logic
-    if (skipDebounceRef.current) {
-      skipDebounceRef.current = false;
-      return;
-    }
-
-    if (text.trim() === '' || isProcessing || text.length > MAX_CHARS) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      handleSpellCheck(text);
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [text, isBoosterEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSpellCheck = async (textToCheck: string) => {
-    if (!textToCheck.trim() || isProcessing) return;
-
-    if (textToCheck === lastProcessedText.current) {
-      // Le texte n'a pas changé. On n'autorise la requête QUE si on "upgrade" vers le mode Booster.
-      const isUpgrading: boolean = !lastProcessedBoosterState.current && isBoosterEnabled;
-      if (!isUpgrading) {
-        return; // On bloque la requête (downgrade ou état inchangé)
-      }
-    }
-
-    setIsProcessing(true);
-    try {
-      const result = await spellcheckAction(textToCheck, isBoosterEnabled);
-
-      if (result !== textToCheck) {
-        // Calculate diff before replacing text
-        const calculatedDiff = Diff.diffWords(textToCheck, result);
-        setDiffParts(calculatedDiff);
-
-        // Push old text to undo stack, clear redo
-        setUndoStack((prev: string[]) => [...prev, textToCheck]);
-        setRedoStack([]);
-
-        // Update text with corrected text
-        skipDebounceRef.current = true;
-        setText(result);
-
-        lastProcessedText.current = result;
-      } else {
-        setDiffParts(null); // Clear diff if no changes
-        lastProcessedText.current = textToCheck;
-      }
-
-      lastProcessedBoosterState.current = isBoosterEnabled;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+export function ContentArea({
+  text,
+  onChange,
+  isProcessing,
+  undoStackLength,
+  redoStackLength,
+  handleUndo,
+  handleRedo,
+  MAX_CHARS,
+}: ContentAreaProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (val.length <= MAX_CHARS) {
-      setText(val);
-      setDiffParts(null);
-    }
-  };
-
-  const handleUndo = () => {
-    if (undoStack.length === 0 || isProcessing) return;
-    const lastText = undoStack[undoStack.length - 1];
-
-    setRedoStack((prev: string[]) => [...prev, text]);
-    setUndoStack((prev: string[]) => prev.slice(0, -1));
-
-    skipDebounceRef.current = true;
-    setText(lastText);
-    setDiffParts(null); // Clear diff on manual undo/redo
-  };
-
-  const handleRedo = () => {
-    if (redoStack.length === 0 || isProcessing) return;
-    const nextText = redoStack[redoStack.length - 1];
-
-    setUndoStack((prev: string[]) => [...prev, text]);
-    setRedoStack((prev: string[]) => prev.slice(0, -1));
-
-    skipDebounceRef.current = true;
-    setText(nextText);
-    setDiffParts(null);
+    onChange(e.target.value);
   };
 
   const handleCopy = async () => {
@@ -125,11 +38,6 @@ export function ContentArea() {
     }
   };
 
-  const handleManualSubmit = () => {
-    skipDebounceRef.current = true;
-    handleSpellCheck(text);
-  };
-
   return (
     <div className={styles.contentContainer}>
       <div className={styles.toolbar}>
@@ -137,7 +45,7 @@ export function ContentArea() {
           <button
             className={styles.toolbarButton}
             onClick={handleUndo}
-            disabled={undoStack.length === 0 || isProcessing}
+            disabled={undoStackLength === 0 || isProcessing}
             title="Annuler (Undo)"
           >
             <Undo2 size={24} />
@@ -145,23 +53,17 @@ export function ContentArea() {
           <button
             className={styles.toolbarButton}
             onClick={handleRedo}
-            disabled={redoStack.length === 0 || isProcessing}
+            disabled={redoStackLength === 0 || isProcessing}
             title="Rétablir (Redo)"
           >
             <Redo2 size={24} />
           </button>
         </div>
+
         <div className={styles.toolbarCenter}>
-          <Image
-            src="/images/tykwriter_logo.png"
-            alt="Tykwriter Logo"
-            width={160}
-            height={42}
-            className={styles.toolbarLogo}
-            style={{ width: 'auto', height: 'auto' }}
-            priority
-          />
+          <h2 className={styles.modeTitle}>Correcteur</h2>
         </div>
+
         <div className={styles.toolbarRight}>
           <button
             className={styles.toolbarButton}
@@ -176,7 +78,7 @@ export function ContentArea() {
       </div>
 
       <Textarea
-        placeholder="Tapez votre texte ici..."
+        placeholder="je tape ici."
         className={styles.textArea}
         value={text}
         onChange={handleChange}
@@ -184,55 +86,14 @@ export function ContentArea() {
         maxLength={MAX_CHARS}
       />
 
-      {isProcessing && (
-        <div className={styles.processingIndicator}>
-          <span>Vérification en cours...</span>
-        </div>
-      )}
-
-      {diffParts && !isProcessing && (
-        <div className={styles.diffViewer}>
-          <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Changements détectés :</span>
-            <button className={styles.undoButton} onClick={handleUndo}>
-              Annuler la correction
-            </button>
-          </div>
-          <div className={styles.diffContent}>
-            {diffParts.map((part: Diff.Change, index: number) => {
-              if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
-              if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
-              return <span key={index}>{part.value}</span>;
-            })}
-          </div>
-        </div>
-      )}
-
       <div className={styles.submitContainer}>
-        <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
-          {text.length} / {MAX_CHARS}
-        </div>
-        <div className={styles.submitActions}>
-          <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Booster (Mode Pro)</span>
-            <div className={styles.toggleWrapper}>
-              <input
-                type="checkbox"
-                className={styles.toggleCheckbox}
-                checked={isBoosterEnabled}
-                onChange={(e) => setIsBoosterEnabled(e.target.checked)}
-                disabled={isProcessing}
-              />
-              <div className={styles.toggleSlider}></div>
-            </div>
-          </label>
-          <Button
-            onClick={handleManualSubmit}
-            disabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
-            className={styles.submitButton}
-          >
-            {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
-          </Button>
+        <div className={styles.footerStats}>
+          <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
+            {text.length} / {MAX_CHARS} char
+          </div>
+          <div className={styles.wordCount}>
+            {text.trim() === '' ? 0 : text.trim().split(/\s+/).length} mots
+          </div>
         </div>
       </div>
     </div>
