@@ -93,8 +93,8 @@ export function Navbar() {
               </button>
               {isMoreDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
-                  <Link href="#" className={styles.dropdownItem}>À propos de nous</Link>
-                  <Link href="#" className={styles.dropdownItem}>Road map</Link>
+                  <Link href="/about" className={styles.dropdownItem}>À propos de nous</Link>
+                  <Link href="/feuille-de-route" className={styles.dropdownItem}>Feuille de route</Link>
                 </div>
               )}
             </div>
@@ -119,8 +119,8 @@ export function Navbar() {
           <div className="border-t border-gray-100 my-2"></div>
 
           <div className="px-4 py-2 font-bold text-[#0F52BA]">En savoir plus</div>
-          <Link href="#" className="px-6 py-2 hover:bg-gray-50 text-gray-700">À propos de nous</Link>
-          <Link href="#" className="px-6 py-2 hover:bg-gray-50 text-gray-700">Road map</Link>
+          <Link href="/about" className="px-6 py-2 hover:bg-gray-50 text-gray-700">À propos de nous</Link>
+          <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 text-gray-700">Feuille de route</Link>
         </div>
       )}
     </nav>

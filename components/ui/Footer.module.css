@@ -1,0 +1,50 @@
+.footer {
+  width: 100%;
+  padding: 2rem 1rem;
+  background-color: transparent;
+  color: var(--tyk-sapphire, #0F52BA);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.slogan {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--tyk-dust-brown, #A08C73);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.link {
+  color: var(--tyk-sapphire, #0F52BA);
+  text-decoration: none;
+  transition: opacity 0.2s;
+  font-weight: 500;
+}
+
+.link:hover {
+  opacity: 0.7;
+}
+
+.separator {
+  color: var(--tyk-dust-brown, #A08C73);
+  opacity: 0.5;
+}
