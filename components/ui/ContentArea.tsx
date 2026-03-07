@@ -12,6 +12,7 @@ import styles from './ContentArea.module.css';
 export function ContentArea() {
   const [text, setText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -38,14 +39,14 @@ export function ContentArea() {
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text, isBoosterEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
 
     setIsProcessing(true);
     try {
-      const result = await spellcheckAction(textToCheck);
+      const result = await spellcheckAction(textToCheck, isBoosterEnabled);
 
       if (result !== textToCheck) {
         // Calculate diff before replacing text
@@ -196,13 +197,28 @@ export function ContentArea() {
         <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
           {text.length} / {MAX_CHARS}
         </div>
-        <Button
-          onClick={handleManualSubmit}
-          disabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
-          className={styles.submitButton}
-        >
-          {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
-        </Button>
+        <div className={styles.submitActions}>
+          <label className={styles.toggleLabel}>
+            <span className={styles.toggleText}>Booster (Mode Pro)</span>
+            <div className={styles.toggleWrapper}>
+              <input
+                type="checkbox"
+                className={styles.toggleCheckbox}
+                checked={isBoosterEnabled}
+                onChange={(e) => setIsBoosterEnabled(e.target.checked)}
+                disabled={isProcessing}
+              />
+              <div className={styles.toggleSlider}></div>
+            </div>
+          </label>
+          <Button
+            onClick={handleManualSubmit}
+            disabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
+            className={styles.submitButton}
+          >
+            {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
+          </Button>
+        </div>
       </div>
     </div>
   );
