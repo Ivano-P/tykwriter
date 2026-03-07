@@ -22,6 +22,8 @@ export function ContentArea() {
 
   // Track if we should skip debounce (e.g. after undo/redo/spellcheck)
   const skipDebounceRef = useRef(false);
+  const lastProcessedText = useRef<string>('');
+  const lastProcessedBoosterState = useRef<boolean>(false);
 
   useEffect(() => {
     // Debounce logic
@@ -44,6 +46,14 @@ export function ContentArea() {
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
 
+    if (textToCheck === lastProcessedText.current) {
+      // Le texte n'a pas changé. On n'autorise la requête QUE si on "upgrade" vers le mode Booster.
+      const isUpgrading: boolean = !lastProcessedBoosterState.current && isBoosterEnabled;
+      if (!isUpgrading) {
+        return; // On bloque la requête (downgrade ou état inchangé)
+      }
+    }
+
     setIsProcessing(true);
     try {
       const result = await spellcheckAction(textToCheck, isBoosterEnabled);
@@ -60,9 +70,14 @@ export function ContentArea() {
         // Update text with corrected text
         skipDebounceRef.current = true;
         setText(result);
+
+        lastProcessedText.current = result;
       } else {
         setDiffParts(null); // Clear diff if no changes
+        lastProcessedText.current = textToCheck;
       }
+
+      lastProcessedBoosterState.current = isBoosterEnabled;
     } catch (error) {
       console.error(error);
     } finally {
