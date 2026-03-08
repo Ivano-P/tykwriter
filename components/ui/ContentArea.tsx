@@ -1,11 +1,15 @@
 'use client';
 
-import { Copy, Undo2, Redo2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Copy, Undo2, Redo2, ChevronDown } from 'lucide-react';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 
+type Mode = "correcteur" | "maitre-redacteur" | "traduction";
+
 interface ContentAreaProps {
-  currentMode: "correcteur" | "maitre-redacteur" | "traduction";
+  currentMode: Mode;
+  setCurrentMode: (mode: Mode) => void;
   text: string;
   onChange: (val: string) => void;
   isProcessing: boolean;
@@ -18,6 +22,7 @@ interface ContentAreaProps {
 
 export function ContentArea({
   currentMode,
+  setCurrentMode,
   text,
   onChange,
   isProcessing,
@@ -27,6 +32,23 @@ export function ContentArea({
   handleRedo,
   MAX_CHARS,
 }: ContentAreaProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const handleCopy = async () => {
     try {
@@ -64,8 +86,40 @@ export function ContentArea({
           </button>
         </div>
 
-        <div className={styles.toolbarCenter}>
-          <h2 className={styles.modeTitle}>{modeTitle}</h2>
+        <div className={styles.toolbarCenter} ref={dropdownRef}>
+          <div className={styles.modeTitleWrapper}>
+            <button
+              className={styles.modeTitleButton}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-expanded={isDropdownOpen}
+              aria-haspopup="true"
+            >
+              {modeTitle} <ChevronDown size={20} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className={styles.modeDropdownMenu}>
+                <button
+                  className={`${styles.modeDropdownItem} ${currentMode === 'correcteur' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => { setCurrentMode('correcteur'); setIsDropdownOpen(false); }}
+                >
+                  Correcteur
+                </button>
+                <button
+                  className={`${styles.modeDropdownItem} ${currentMode === 'maitre-redacteur' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => { setCurrentMode('maitre-redacteur'); setIsDropdownOpen(false); }}
+                >
+                  Maître Rédacteur
+                </button>
+                {/* <button
+                  className={`${styles.modeDropdownItem} ${currentMode === 'traduction' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => { setCurrentMode('traduction'); setIsDropdownOpen(false); }}
+                >
+                  Traduction
+                </button> */}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={styles.toolbarRight}>

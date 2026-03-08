@@ -136,6 +136,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
         <ContentArea
           currentMode={currentMode}
+          setCurrentMode={setCurrentMode}
           text={globalText}
           onChange={handleChange}
           isProcessing={isProcessing}

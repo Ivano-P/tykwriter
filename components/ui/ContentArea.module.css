@@ -145,11 +145,77 @@
   }
 }
 
-.modeTitle {
+.modeTitleWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeTitleButton {
   font-size: 1.25rem;
   font-weight: bold;
   color: var(--tyk-sapphire, #0F52BA);
   text-align: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.modeTitleButton:hover {
+  opacity: 0.8;
+  background-color: rgba(15, 82, 186, 0.05);
+  /* Slight hover effect matching button */
+}
+
+.modeDropdownMenu {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modeDropdownItem {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  transition: all 0.2s;
+}
+
+.modeDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.modeDropdownItem:hover {
+  background-color: rgba(15, 82, 186, 0.05);
+  color: var(--tyk-sapphire, #0F52BA);
+}
+
+.modeDropdownItemActive {
+  background-color: rgba(15, 82, 186, 0.1);
+  color: var(--tyk-sapphire, #0F52BA);
+  font-weight: bold;
 }
 
 .submitContainer {
