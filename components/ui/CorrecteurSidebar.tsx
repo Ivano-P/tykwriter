@@ -26,7 +26,7 @@ export function CorrecteurSidebar({
 }: CorrecteurSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Correcteur</h2>
+      <h2 className={styles.title}>Actions</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>

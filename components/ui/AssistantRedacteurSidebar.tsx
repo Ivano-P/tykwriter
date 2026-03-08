@@ -26,7 +26,7 @@ export function AssistantRedacteurSidebar({
 }: AssistantRedacteurSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Assistant Rédacteur</h2>
+      <h2 className={styles.title}>Actions</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>

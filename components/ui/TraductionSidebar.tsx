@@ -5,7 +5,7 @@ import styles from './CorrectionSidebar.module.css'; // Réutilise le CSS princi
 export function TraductionSidebar() {
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Traduction</h2>
+      <h2 className={styles.title}>Actions</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection} style={{ textAlign: 'center', opacity: 0.6, marginTop: '2rem' }}>
