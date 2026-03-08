@@ -47,9 +47,39 @@ export function Navbar() {
         </div>
 
         {/* DESKTOP VIEW */}
-        <div className="hidden md:flex items-center justify-between w-full relative">
-          {/* Left: Modes Dropdown */}
-          <div className="flex items-center ml-4">
+        <div className="hidden md:flex items-center justify-between w-full">
+          {/* Left: Logo */}
+          <div className="flex items-center">
+            <Link href="/">
+              <Image
+                src="/images/tykwriter_logo.png"
+                alt="Tykwriter Logo"
+                width={160}
+                height={42}
+                priority
+                className="object-contain"
+              />
+            </Link>
+          </div>
+
+          {/* Right: "En savoir plus" and Mode selector */}
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <button
+                className={styles.dropdownToggle}
+                onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
+                onBlur={() => setTimeout(() => setIsMoreDropdownOpen(false), 200)}
+              >
+                En savoir plus <ChevronDown size={16} />
+              </button>
+              {isMoreDropdownOpen && (
+                <div className={styles.dropdownMenuRight}>
+                  <Link href="/about" className={styles.dropdownItem}>À propos de nous</Link>
+                  <Link href="/feuille-de-route" className={styles.dropdownItem}>Feuille de route</Link>
+                </div>
+              )}
+            </div>
+
             <div className="relative">
               <button
                 className={styles.dropdownToggle}
@@ -63,44 +93,11 @@ export function Navbar() {
                 <ChevronDown size={16} className="ml-1" />
               </button>
               {isModesDropdownOpen && (
-                <div className={styles.dropdownMenu}>
+                <div className={styles.dropdownMenuRight}>
                   <Link href="/?mode=correcteur" className={styles.dropdownItem}>Correcteur</Link>
                   <Link href="/?mode=maitre-redacteur" className={styles.dropdownItem}>Maître rédacteur (Expérimentale)</Link>
                   <button disabled className={styles.dropdownItemDisabled}>Traduction (Arrive bientôt)</button>
-                  
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Center: Logo (absolutely centered) */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Link href="/">
-              <Image
-                src="/images/tykwriter_logo.png"
-                alt="Tykwriter Logo"
-                width={160}
-                height={42}
-                priority
-                className="object-contain"
-              />
-            </Link>
-          </div>
-
-          {/* Right: "En savoir plus" and Auth space */}
-          <div className="flex items-center mr-4 gap-6">
-            <div className="relative">
-              <button
-                className={styles.dropdownToggle}
-                onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
-                onBlur={() => setTimeout(() => setIsMoreDropdownOpen(false), 200)}
-              >
-                En savoir plus <ChevronDown size={16} />
-              </button>
-              {isMoreDropdownOpen && (
-                <div className={styles.dropdownMenuRight}>
-                  <Link href="/about" className={styles.dropdownItem}>À propos de nous</Link>
-                  <Link href="/feuille-de-route" className={styles.dropdownItem}>Feuille de route</Link>
                 </div>
               )}
             </div>
