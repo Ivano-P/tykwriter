@@ -94,7 +94,8 @@ export function ContentArea({
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
             >
-              {modeTitle} <ChevronDown size={20} />
+              <span className={styles.modeTitleText}>{modeTitle}</span>
+              <ChevronDown size={20} className={styles.modeTitleIcon} />
             </button>
 
             {isDropdownOpen && (

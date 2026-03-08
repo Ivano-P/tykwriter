@@ -29,8 +29,9 @@
 }
 
 .toolbarCenter {
-  display: none;
-  /* Hidden on mobile, shown on desktop */
+  display: flex;
+  justify-content: center;
+  flex: 1;
 }
 
 .toolbarLogo {
@@ -153,7 +154,7 @@
 }
 
 .modeTitleButton {
-  font-size: 1.25rem;
+  font-size: 0.9rem;
   font-weight: bold;
   color: var(--tyk-sapphire, #0F52BA);
   text-align: center;
@@ -162,10 +163,21 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.25rem;
   transition: opacity 0.2s;
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
+  max-width: 140px;
+  line-height: 1.1;
+}
+
+.modeTitleText {
+  display: block;
+}
+
+.modeTitleIcon {
+  flex-shrink: 0;
 }
 
 .modeTitleButton:hover {
@@ -253,9 +265,9 @@
     display: inline;
   }
 
-  .toolbarCenter {
-    display: flex;
-    justify-content: center;
-    flex: 1;
+  .modeTitleButton {
+    font-size: 1.25rem;
+    max-width: none;
+    gap: 0.5rem;
   }
 }

@@ -141,12 +141,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
       <div className="flex-1 overflow-hidden min-h-0 flex flex-col md:flex-row gap-4 p-4 max-w-[1200px] w-full mx-auto">
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Un petit menu de test pour vérifier la fonctionnalité de changement de mode si besoin */}
-          <div className="md:hidden flex gap-2 mb-4 justify-center shrink-0">
-            <button onClick={() => setCurrentMode('correcteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'correcteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Correcteur</button>
-            <button onClick={() => setCurrentMode('assistant-redacteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'assistant-redacteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Assistant Rédacteur</button>
-            <button onClick={() => setCurrentMode('traduction')} className={`px-3 py-1 text-sm rounded ${currentMode === 'traduction' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Traduction</button>
-          </div>
 
           <ContentArea
             currentMode={currentMode}
