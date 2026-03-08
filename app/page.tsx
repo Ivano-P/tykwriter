@@ -8,14 +8,12 @@ type Props = {
 export default async function Home(props: Props) {
   const searchParams = await props.searchParams;
   const modeParam = searchParams.mode;
-  const validModes = ["correcteur", "maitre-redacteur", "traduction"];
+  const validModes = ["correcteur", "assistant-redacteur", "traduction"];
   const mode = validModes.includes(modeParam as string) ? modeParam as any : "correcteur";
 
   return (
     <div className={styles.pageContainer}>
-      <main className={styles.mainLayout}>
-        <Workspace initialMode={mode} />
-      </main>
+      <Workspace initialMode={mode} />
     </div>
   );
 }

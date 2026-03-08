@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css';
 
-interface MaitreRedacteurSidebarProps {
+interface AssistantRedacteurSidebarProps {
   isProcessing: boolean;
   diffParts: Diff.Change[] | null;
   handleUndo: () => void;
@@ -15,7 +15,7 @@ interface MaitreRedacteurSidebarProps {
   setIsBoosterEnabled: (val: boolean) => void;
 }
 
-export function MaitreRedacteurSidebar({
+export function AssistantRedacteurSidebar({
   isProcessing,
   diffParts,
   handleUndo,
@@ -23,10 +23,10 @@ export function MaitreRedacteurSidebar({
   isSubmitDisabled,
   isBoosterEnabled,
   setIsBoosterEnabled,
-}: MaitreRedacteurSidebarProps) {
+}: AssistantRedacteurSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Maître Rédacteur</h2>
+      <h2 className={styles.title}>Assistant Rédacteur</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>

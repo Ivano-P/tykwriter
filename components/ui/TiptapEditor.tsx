@@ -26,7 +26,7 @@ export function TiptapEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: `focus:outline-none ${className}`,
+        class: `focus:outline-none overflow-y-auto flex-1 h-full w-full ${className}`,
       },
     },
     onUpdate: ({ editor }) => {
@@ -63,8 +63,8 @@ export function TiptapEditor({
   }
 
   return (
-    <div className={`tiptap-wrapper w-full h-full flex flex-col ${className}`}>
-      <EditorContent editor={editor} className="w-full h-full flex-grow outline-none prose prose-sm max-w-none" />
+    <div className={`tiptap-wrapper w-full h-full flex flex-col overflow-hidden min-h-0 ${className}`}>
+      <EditorContent editor={editor} className="w-full flex-1 flex flex-col overflow-hidden min-h-0 outline-none prose prose-sm max-w-none" />
     </div>
   );
 }

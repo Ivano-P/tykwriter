@@ -5,7 +5,7 @@ import { Copy, Undo2, Redo2, ChevronDown } from 'lucide-react';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 
-type Mode = "correcteur" | "maitre-redacteur" | "traduction";
+type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
 interface ContentAreaProps {
   currentMode: Mode;
@@ -60,8 +60,8 @@ export function ContentArea({
 
   const modeTitle = currentMode === "correcteur"
     ? "Correcteur"
-    : currentMode === "maitre-redacteur"
-      ? "Maître Rédacteur"
+    : currentMode === "assistant-redacteur"
+      ? "Assistant Rédacteur"
       : "Traduction";
 
   return (
@@ -106,10 +106,10 @@ export function ContentArea({
                   Correcteur
                 </button>
                 <button
-                  className={`${styles.modeDropdownItem} ${currentMode === 'maitre-redacteur' ? styles.modeDropdownItemActive : ''}`}
-                  onClick={() => { setCurrentMode('maitre-redacteur'); setIsDropdownOpen(false); }}
+                  className={`${styles.modeDropdownItem} ${currentMode === 'assistant-redacteur' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => { setCurrentMode('assistant-redacteur'); setIsDropdownOpen(false); }}
                 >
-                  Maître Rédacteur
+                  Assistant Rédacteur
                 </button>
                 {/* <button
                   className={`${styles.modeDropdownItem} ${currentMode === 'traduction' ? styles.modeDropdownItemActive : ''}`}

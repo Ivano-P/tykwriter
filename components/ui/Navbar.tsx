@@ -14,7 +14,7 @@ export function Navbar() {
 
   const searchParams = useSearchParams();
   const modeParam = searchParams.get('mode');
-  const displayMode = modeParam === 'maitre-redacteur' ? 'maître rédacteur' : modeParam === 'traduction' ? 'traduction' : 'correcteur';
+  const displayMode = modeParam === 'assistant-redacteur' ? 'assistant rédacteur' : modeParam === 'traduction' ? 'traduction' : 'correcteur';
 
   return (
     <nav className={styles.navbar}>
@@ -95,7 +95,7 @@ export function Navbar() {
               {isModesDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
                   <Link href="/?mode=correcteur" className={styles.dropdownItem}>Correcteur</Link>
-                  <Link href="/?mode=maitre-redacteur" className={styles.dropdownItem}>Maître rédacteur (Expérimentale)</Link>
+                  <Link href="/?mode=assistant-redacteur" className={styles.dropdownItem}>Assistant rédacteur (Expérimentale)</Link>
                   <button disabled className={styles.dropdownItemDisabled}>Traduction (Arrive bientôt)</button>
 
                 </div>
@@ -115,9 +115,9 @@ export function Navbar() {
             <span className="font-bold text-[#0F52BA] text-base">Mode:</span>
             <span className="font-medium text-[#0F52BA] opacity-80 text-sm">{displayMode}</span>
           </div>
-          <Link href="/?mode=correcteur" className={`px-6 py-2 ${modeParam !== 'maitre-redacteur' && modeParam !== 'traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Correcteur</Link>
+          <Link href="/?mode=correcteur" className={`px-6 py-2 ${modeParam !== 'assistant-redacteur' && modeParam !== 'traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Correcteur</Link>
           <div className="px-6 py-2 text-gray-400">Traduction (Arrive bientôt)</div>
-          <Link href="/?mode=maitre-redacteur" className={`px-6 py-2 ${modeParam === 'maitre-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Maître rédacteur</Link>
+          <Link href="/?mode=assistant-redacteur" className={`px-6 py-2 ${modeParam === 'assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Assistant rédacteur</Link>
 
           <div className="border-t border-gray-100 my-2"></div>
 

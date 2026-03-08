@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
-import { MaitreRedacteurSidebar } from '@/components/ui/MaitreRedacteurSidebar';
+import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
 import { spellcheckAction } from '@/actions/spellcheck.action';
 
-type Mode = "correcteur" | "maitre-redacteur" | "traduction";
+type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
 export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }) {
   const [currentMode, setCurrentMode] = useState<Mode>(initialMode);
@@ -42,7 +42,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }
 
     const timer = setTimeout(() => {
-      // Pour l'instant on garde la logique métier identique pour correcteur et maitre-redacteur
+      // Pour l'instant on garde la logique métier identique pour correcteur et assistant-redacteur
       handleSpellCheck(globalText);
     }, 2500);
 
@@ -125,56 +125,71 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   };
 
   return (
-    <>
-      <div className="flex flex-col w-full">
-        {/* Un petit menu de test pour vérifier la fonctionnalité de changement de mode si besoin */}
-        <div className="md:hidden flex gap-2 mb-4 justify-center">
-          <button onClick={() => setCurrentMode('correcteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'correcteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Correcteur</button>
-          <button onClick={() => setCurrentMode('maitre-redacteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'maitre-redacteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Maitre Rédacteur</button>
-          <button onClick={() => setCurrentMode('traduction')} className={`px-3 py-1 text-sm rounded ${currentMode === 'traduction' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Traduction</button>
-        </div>
-
-        <ContentArea
-          currentMode={currentMode}
-          setCurrentMode={setCurrentMode}
-          text={globalText}
-          onChange={handleChange}
-          isProcessing={isProcessing}
-          undoStackLength={undoStack.length}
-          redoStackLength={redoStack.length}
-          handleUndo={handleUndo}
-          handleRedo={handleRedo}
-          MAX_CHARS={MAX_CHARS}
-        />
+    <div className="flex flex-col w-full h-full overflow-hidden">
+      <div className="text-center py-6 px-4 shrink-0">
+        <h1 className="text-2xl font-bold text-[var(--tyk-sapphire)]">
+          Le complice de votre génie, le gardien de vos textes.
+        </h1>
+        <p className="text-[var(--tyk-dust-brown)] mt-2 max-w-2xl mx-auto">
+          {currentMode === 'correcteur'
+            ? "Éliminez les fautes d'orthographe, de grammaire et de syntaxe, tout en préservant votre style et votre voix unique."
+            : currentMode === 'assistant-redacteur'
+              ? "Saisissez librement, et votre Assistant Rédacteur Tykwriter s'occupe des détails (orthographe, mise en forme et fluidité)."
+              : "Traduisez vos textes avec une précision absolue et un ton naturel grâce à une compréhension profonde de votre contexte."}
+        </p>
       </div>
 
-      {currentMode === 'correcteur' && (
-        <CorrecteurSidebar
-          isProcessing={isProcessing}
-          diffParts={diffParts}
-          handleUndo={handleUndo}
-          handleManualSubmit={handleManualSubmit}
-          isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
-          isBoosterEnabled={isBoosterEnabled}
-          setIsBoosterEnabled={setIsBoosterEnabled}
-        />
-      )}
+      <div className="flex-1 overflow-hidden min-h-0 flex flex-col md:flex-row gap-4 p-4 max-w-[1200px] w-full mx-auto">
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Un petit menu de test pour vérifier la fonctionnalité de changement de mode si besoin */}
+          <div className="md:hidden flex gap-2 mb-4 justify-center shrink-0">
+            <button onClick={() => setCurrentMode('correcteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'correcteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Correcteur</button>
+            <button onClick={() => setCurrentMode('assistant-redacteur')} className={`px-3 py-1 text-sm rounded ${currentMode === 'assistant-redacteur' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Assistant Rédacteur</button>
+            <button onClick={() => setCurrentMode('traduction')} className={`px-3 py-1 text-sm rounded ${currentMode === 'traduction' ? 'bg-[#0F52BA] text-white' : 'bg-gray-200 text-gray-700'}`}>Traduction</button>
+          </div>
 
-      {currentMode === 'maitre-redacteur' && (
-        <MaitreRedacteurSidebar
-          isProcessing={isProcessing}
-          diffParts={diffParts}
-          handleUndo={handleUndo}
-          handleManualSubmit={handleManualSubmit}
-          isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
-          isBoosterEnabled={isBoosterEnabled}
-          setIsBoosterEnabled={setIsBoosterEnabled}
-        />
-      )}
+          <ContentArea
+            currentMode={currentMode}
+            setCurrentMode={setCurrentMode}
+            text={globalText}
+            onChange={handleChange}
+            isProcessing={isProcessing}
+            undoStackLength={undoStack.length}
+            redoStackLength={redoStack.length}
+            handleUndo={handleUndo}
+            handleRedo={handleRedo}
+            MAX_CHARS={MAX_CHARS}
+          />
+        </div>
 
-      {currentMode === 'traduction' && (
-        <TraductionSidebar />
-      )}
-    </>
+        {currentMode === 'correcteur' && (
+          <CorrecteurSidebar
+            isProcessing={isProcessing}
+            diffParts={diffParts}
+            handleUndo={handleUndo}
+            handleManualSubmit={handleManualSubmit}
+            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
+            isBoosterEnabled={isBoosterEnabled}
+            setIsBoosterEnabled={setIsBoosterEnabled}
+          />
+        )}
+
+        {currentMode === 'assistant-redacteur' && (
+          <AssistantRedacteurSidebar
+            isProcessing={isProcessing}
+            diffParts={diffParts}
+            handleUndo={handleUndo}
+            handleManualSubmit={handleManualSubmit}
+            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
+            isBoosterEnabled={isBoosterEnabled}
+            setIsBoosterEnabled={setIsBoosterEnabled}
+          />
+        )}
+
+        {currentMode === 'traduction' && (
+          <TraductionSidebar />
+        )}
+      </div>
+    </div>
   );
 }
