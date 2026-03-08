@@ -1,6 +1,4 @@
 import { Mistral } from '@mistralai/mistralai';
-import dotenv from 'dotenv';
-dotenv.config();
 
 export class MistralAiProService {
   private static client = new Mistral({

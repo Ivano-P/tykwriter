@@ -28,6 +28,7 @@ export const metadata: Metadata = {
 
 import { Navbar } from '@/components/ui/Navbar';
 import { Footer } from '@/components/ui/Footer';
+import { Suspense } from 'react';
 
 export default function RootLayout({
   children,
@@ -39,7 +40,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <Navbar />
+        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-100"></div>}>
+          <Navbar />
+        </Suspense>
         <main className="flex-grow">
           {children}
         </main>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import styles from './Navbar.module.css';
 
@@ -10,6 +11,10 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
   const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const modeParam = searchParams.get('mode');
+  const displayMode = modeParam === 'maitre-redacteur' ? 'maître rédacteur' : modeParam === 'traduction' ? 'traduction' : 'correcteur';
 
   return (
     <nav className={styles.navbar}>
@@ -53,15 +58,16 @@ export function Navbar() {
               >
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-base">Mode:</span>
-                  <span className="font-medium opacity-80 text-sm">correcteur</span>
+                  <span className="font-medium opacity-80 text-sm">{displayMode}</span>
                 </div>
                 <ChevronDown size={16} className="ml-1" />
               </button>
               {isModesDropdownOpen && (
                 <div className={styles.dropdownMenu}>
-                  <Link href="/" className={styles.dropdownItem}>Correcteur</Link>
+                  <Link href="/?mode=correcteur" className={styles.dropdownItem}>Correcteur</Link>
+                  <Link href="/?mode=maitre-redacteur" className={styles.dropdownItem}>Maître rédacteur (Expérimentale)</Link>
                   <button disabled className={styles.dropdownItemDisabled}>Traduction (Arrive bientôt)</button>
-                  <button disabled className={styles.dropdownItemDisabled}>Maître rédacteur (Arrive bientôt)</button>
+                  
                 </div>
               )}
             </div>
@@ -110,11 +116,11 @@ export function Navbar() {
         <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 mt-2 py-2 flex flex-col z-50">
           <div className="px-4 py-2 flex items-center gap-1">
             <span className="font-bold text-[#0F52BA] text-base">Mode:</span>
-            <span className="font-medium text-[#0F52BA] opacity-80 text-sm">correcteur</span>
+            <span className="font-medium text-[#0F52BA] opacity-80 text-sm">{displayMode}</span>
           </div>
-          <Link href="/" className="px-6 py-2 bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]">Correcteur</Link>
+          <Link href="/?mode=correcteur" className={`px-6 py-2 ${modeParam !== 'maitre-redacteur' && modeParam !== 'traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Correcteur</Link>
           <div className="px-6 py-2 text-gray-400">Traduction (Arrive bientôt)</div>
-          <div className="px-6 py-2 text-gray-400">Maître rédacteur (Arrive bientôt)</div>
+          <Link href="/?mode=maitre-redacteur" className={`px-6 py-2 ${modeParam === 'maitre-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Maître rédacteur</Link>
 
           <div className="border-t border-gray-100 my-2"></div>
 
