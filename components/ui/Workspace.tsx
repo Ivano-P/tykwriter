@@ -128,7 +128,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     <div className="flex flex-col w-full h-full overflow-hidden">
       <div className="text-center py-6 px-4 shrink-0">
         <h1 className="text-2xl font-bold text-[var(--tyk-sapphire)]">
-          Le complice de votre génie, le gardien de vos textes.
+          Votre Assistant de Rédaction et Correcteur de Précision.
         </h1>
         <p className="text-[var(--tyk-dust-brown)] mt-2 max-w-2xl mx-auto">
           {currentMode === 'correcteur'

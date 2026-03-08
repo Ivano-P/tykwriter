@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        <p className={styles.slogan}>L'âme de vos mots, la rigueur de la forme.</p>
+        <p className={styles.slogan}>Le complice de votre génie, le gardien de vos textes.</p>
         <div className={styles.links}>
           <Link href="/legal" className={styles.link}>Mentions légales</Link>
           <span className={styles.separator}>|</span>

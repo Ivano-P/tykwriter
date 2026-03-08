@@ -4,9 +4,9 @@
   flex-direction: column;
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 1px solid rgba(212, 219, 134, 0.3);
-  background-color: var(--soft-card-bg, #FDFBF7);
-  box-shadow: var(--floating-shadow);
+  border: none;
+  background-color: #fffdf5;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 0 15px rgba(212, 219, 134, 0.1);
   margin-top: 1rem;
 }
 
@@ -228,11 +228,12 @@
   .sidebarContainer {
     width: 300px;
     /* larger sidebar for better visibility */
-    margin-top: 0;
+    margin-top: 0rem;
+    /* Visually adjusting the top alignment */
     margin-left: 1.5rem;
     height: fit-content;
-    position: sticky;
-    top: 5rem;
-    /* just below navbar */
+    align-self: flex-start;
+    top: 2rem;
+    /* sticky point below navbar */
   }
 }

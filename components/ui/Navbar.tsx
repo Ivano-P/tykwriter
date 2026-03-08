@@ -87,8 +87,8 @@ export function Navbar() {
                 onBlur={() => setTimeout(() => setIsModesDropdownOpen(false), 200)}
               >
                 <div className="flex items-center gap-1">
-                  <span className="font-semibold text-base">Mode:</span>
-                  <span className="font-medium opacity-80 text-sm">{displayMode}</span>
+                  <span className="font-semibold text-base">Mode</span>
+                  {/* <span className="font-medium opacity-80 text-sm">{displayMode}</span> */}
                 </div>
                 <ChevronDown size={16} className="ml-1" />
               </button>
