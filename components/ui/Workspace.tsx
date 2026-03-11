@@ -10,6 +10,7 @@ export function Workspace() {
   const [text, setText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
+  const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -20,6 +21,7 @@ export function Workspace() {
   const skipDebounceRef = useRef(false);
   const lastProcessedText = useRef<string>('');
   const lastProcessedBoosterState = useRef<boolean>(false);
+  const autoCorrectDelay : number = 3000; //change the delay time here for auto correct
 
   useEffect(() => {
     if (skipDebounceRef.current) {
@@ -31,12 +33,16 @@ export function Workspace() {
       return;
     }
 
+    if (!isAutoCorrectEnabled) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       handleSpellCheck(text);
-    }, 2500);
+    }, autoCorrectDelay);
 
     return () => clearTimeout(timer);
-  }, [text, isBoosterEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text, isBoosterEnabled, isAutoCorrectEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
@@ -132,6 +138,8 @@ export function Workspace() {
         isSubmitDisabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
         isBoosterEnabled={isBoosterEnabled}
         setIsBoosterEnabled={setIsBoosterEnabled}
+        isAutoCorrectEnabled={isAutoCorrectEnabled}
+        setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
       />
     </>
   );
