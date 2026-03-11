@@ -13,6 +13,8 @@ interface CorrecteurSidebarProps {
   isSubmitDisabled: boolean;
   isBoosterEnabled: boolean;
   setIsBoosterEnabled: (val: boolean) => void;
+  isAutoCorrectEnabled: boolean;
+  setIsAutoCorrectEnabled: (val: boolean) => void;
 }
 
 export function CorrecteurSidebar({
@@ -23,6 +25,8 @@ export function CorrecteurSidebar({
   isSubmitDisabled,
   isBoosterEnabled,
   setIsBoosterEnabled,
+  isAutoCorrectEnabled,
+  setIsAutoCorrectEnabled,
 }: CorrecteurSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
@@ -39,6 +43,22 @@ export function CorrecteurSidebar({
                 className={styles.toggleCheckbox}
                 checked={isBoosterEnabled}
                 onChange={(e) => setIsBoosterEnabled(e.target.checked)}
+                disabled={isProcessing}
+              />
+              <div className={styles.toggleSlider}></div>
+            </div>
+          </label>
+        </div>
+
+        <div className={styles.toggleContainer}>
+          <label className={styles.toggleLabel}>
+            <span className={styles.toggleText}>Correction automatique</span>
+            <div className={styles.toggleWrapper}>
+              <input
+                type="checkbox"
+                className={styles.toggleCheckbox}
+                checked={isAutoCorrectEnabled}
+                onChange={(e) => setIsAutoCorrectEnabled(e.target.checked)}
                 disabled={isProcessing}
               />
               <div className={styles.toggleSlider}></div>

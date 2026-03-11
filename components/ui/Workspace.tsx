@@ -19,7 +19,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const [globalText, setGlobalText] = useState<string>("");
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
+  const [isBoosterEnabled, setIsBoosterEnabled] = useState(true);
+  const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -30,6 +31,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const skipDebounceRef = useRef(false);
   const lastProcessedText = useRef<string>('');
   const lastProcessedBoosterState = useRef<boolean>(false);
+  const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
 
   useEffect(() => {
     if (skipDebounceRef.current) {
@@ -37,14 +39,14 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
       return;
     }
 
-    if (globalText.trim() === '' || isProcessing || globalText.length > MAX_CHARS || currentMode === 'traduction') {
+    if (globalText.trim() === '' || isProcessing || globalText.length > MAX_CHARS || currentMode === 'traduction' || !isAutoCorrectEnabled) {
       return;
     }
 
     const timer = setTimeout(() => {
       // Pour l'instant on garde la logique métier identique pour correcteur et assistant-redacteur
       handleSpellCheck(globalText);
-    }, 2500);
+    }, autoCorrectDelay);
 
     return () => clearTimeout(timer);
   }, [globalText, isBoosterEnabled, currentMode]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -165,6 +167,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
             isBoosterEnabled={isBoosterEnabled}
             setIsBoosterEnabled={setIsBoosterEnabled}
+            isAutoCorrectEnabled={isAutoCorrectEnabled}
+            setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />
         )}
 
@@ -177,6 +181,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
             isBoosterEnabled={isBoosterEnabled}
             setIsBoosterEnabled={setIsBoosterEnabled}
+            isAutoCorrectEnabled={isAutoCorrectEnabled}
+            setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />
         )}
 
