@@ -9,7 +9,7 @@ import { spellcheckAction } from '@/actions/spellcheck.action';
 export function Workspace() {
   const [text, setText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
+  const [isBoosterEnabled, setIsBoosterEnabled] = useState(true);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
@@ -21,7 +21,7 @@ export function Workspace() {
   const skipDebounceRef = useRef(false);
   const lastProcessedText = useRef<string>('');
   const lastProcessedBoosterState = useRef<boolean>(false);
-  const autoCorrectDelay : number = 3000; //change the delay time here for auto correct
+  const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
 
   useEffect(() => {
     if (skipDebounceRef.current) {
