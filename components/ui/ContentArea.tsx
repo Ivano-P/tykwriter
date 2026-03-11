@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Copy, Undo2, Redo2, ChevronDown } from 'lucide-react';
+import { Copy, Undo2, Redo2, ChevronDown, Trash2 } from 'lucide-react';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 
@@ -55,6 +55,12 @@ export function ContentArea({
       await navigator.clipboard.writeText(text);
     } catch (err) {
       console.error('Failed to copy text', err);
+    }
+  };
+
+  const handleDelete = () => {
+    if (confirm('Voulez-vous vraiment supprimer tout le texte ?')) {
+      onChange('');
     }
   };
 
@@ -124,6 +130,15 @@ export function ContentArea({
         </div>
 
         <div className={styles.toolbarRight}>
+          <button
+            className={styles.toolbarButton}
+            onClick={handleDelete}
+            disabled={text.length === 0 || currentMode === 'traduction'}
+            title="Supprimer tout le texte"
+          >
+            <Trash2 size={18} />
+            <span className={styles.toolbarButtonText}>Supprimer</span>
+          </button>
           <button
             className={styles.toolbarButton}
             onClick={handleCopy}
