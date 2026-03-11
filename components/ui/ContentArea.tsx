@@ -1,7 +1,7 @@
 'use client';
 
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Undo2, Redo2 } from 'lucide-react';
+import { Copy, Undo2, Redo2, Trash2 } from 'lucide-react';
 import styles from './ContentArea.module.css';
 
 interface ContentAreaProps {
@@ -38,6 +38,12 @@ export function ContentArea({
     }
   };
 
+  const handleDelete = () => {
+    if (confirm('Voulez-vous vraiment supprimer tout le texte ?')) {
+      onChange('');
+    }
+  };
+
   return (
     <div className={styles.contentContainer}>
       <div className={styles.toolbar}>
@@ -65,6 +71,15 @@ export function ContentArea({
         </div>
 
         <div className={styles.toolbarRight}>
+          <button
+            className={styles.toolbarButton}
+            onClick={handleDelete}
+            disabled={text.length === 0}
+            title="Supprimer tout le texte"
+          >
+            <Trash2 size={18} />
+            <span className={styles.toolbarButtonText}>Supprimer</span>
+          </button>
           <button
             className={styles.toolbarButton}
             onClick={handleCopy}
