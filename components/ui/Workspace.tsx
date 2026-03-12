@@ -19,7 +19,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const [globalText, setGlobalText] = useState<string>("");
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isBoosterEnabled, setIsBoosterEnabled] = useState(true);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
@@ -49,13 +48,13 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }, autoCorrectDelay);
 
     return () => clearTimeout(timer);
-  }, [globalText, isBoosterEnabled, currentMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [globalText, currentMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing || currentMode === 'traduction') return;
 
     if (textToCheck === lastProcessedText.current) {
-      const isUpgrading: boolean = !lastProcessedBoosterState.current && isBoosterEnabled;
+      const isUpgrading: boolean = !lastProcessedBoosterState.current;
       if (!isUpgrading) {
         return;
       }
@@ -63,7 +62,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
     setIsProcessing(true);
     try {
-      const result = await spellcheckAction(textToCheck, isBoosterEnabled);
+      const result = await spellcheckAction(textToCheck);
 
       if (result !== textToCheck) {
         const calculatedDiff = Diff.diffWords(textToCheck, result);
@@ -81,7 +80,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
         lastProcessedText.current = textToCheck;
       }
 
-      lastProcessedBoosterState.current = isBoosterEnabled;
     } catch (error) {
       console.error(error);
     } finally {
@@ -165,8 +163,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             handleUndo={handleUndo}
             handleManualSubmit={handleManualSubmit}
             isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
-            isBoosterEnabled={isBoosterEnabled}
-            setIsBoosterEnabled={setIsBoosterEnabled}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />
@@ -179,8 +175,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             handleUndo={handleUndo}
             handleManualSubmit={handleManualSubmit}
             isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
-            isBoosterEnabled={isBoosterEnabled}
-            setIsBoosterEnabled={setIsBoosterEnabled}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />

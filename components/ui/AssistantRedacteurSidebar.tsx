@@ -11,8 +11,6 @@ interface AssistantRedacteurSidebarProps {
   handleUndo: () => void;
   handleManualSubmit: () => void;
   isSubmitDisabled: boolean;
-  isBoosterEnabled: boolean;
-  setIsBoosterEnabled: (val: boolean) => void;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
 }
@@ -23,8 +21,6 @@ export function AssistantRedacteurSidebar({
   handleUndo,
   handleManualSubmit,
   isSubmitDisabled,
-  isBoosterEnabled,
-  setIsBoosterEnabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
 }: AssistantRedacteurSidebarProps) {
@@ -34,22 +30,6 @@ export function AssistantRedacteurSidebar({
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>
-        <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Booster (Mode Pro)</span>
-            <div className={styles.toggleWrapper}>
-              <input
-                type="checkbox"
-                className={styles.toggleCheckbox}
-                checked={isBoosterEnabled}
-                onChange={(e) => setIsBoosterEnabled(e.target.checked)}
-                disabled={isProcessing}
-              />
-              <div className={styles.toggleSlider}></div>
-            </div>
-          </label>
-        </div>
-
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
             <span className={styles.toggleText}>Correction automatique</span>
