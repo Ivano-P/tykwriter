@@ -6,7 +6,8 @@ import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
 import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
-import { spellcheckAction } from '@/actions/spellcheck.action';
+import { spellcheckAction, checkSpellingIssuesAction } from '@/actions/spellcheck.action';
+import { CorrectionIssue } from '@/services/MistralAiProService';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -17,6 +18,15 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     setCurrentMode(initialMode);
   }, [initialMode]);
   const [globalText, setGlobalText] = useState<string>("");
+  const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
+
+  const applyCorrection = (issueToApply: CorrectionIssue, source: 'sidebar' | 'editor' = 'sidebar') => {
+    if (source === 'sidebar') {
+      const newText = globalText.replace(issueToApply.texte_original, issueToApply.correction);
+      setGlobalText(newText);
+    }
+    setCorrectionIssues(prev => prev.filter(issue => issue !== issueToApply));
+  };
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
@@ -43,12 +53,37 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }
 
     const timer = setTimeout(() => {
-      // Pour l'instant on garde la logique métier identique pour correcteur et assistant-redacteur
-      handleSpellCheck(globalText);
+      if (currentMode === 'correcteur') {
+        handleAutoSpellcheckIssues(globalText);
+      } else if (currentMode === 'assistant-redacteur') {
+        handleSpellCheck(globalText);
+      }
     }, autoCorrectDelay);
 
     return () => clearTimeout(timer);
-  }, [globalText, currentMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [globalText, currentMode, isAutoCorrectEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAutoSpellcheckIssues = async (textToCheck: string) => {
+    if (!textToCheck.trim() || isProcessing) return;
+
+    if (textToCheck === lastProcessedText.current) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setCorrectionIssues([]);
+    try {
+      const response = await checkSpellingIssuesAction(textToCheck);
+      if (response && response.erreurs) {
+        setCorrectionIssues(response.erreurs);
+      }
+      lastProcessedText.current = textToCheck;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing || currentMode === 'traduction') return;
@@ -153,6 +188,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             handleUndo={handleUndo}
             handleRedo={handleRedo}
             MAX_CHARS={MAX_CHARS}
+            correctionIssues={correctionIssues}
+            applyCorrection={applyCorrection}
           />
         </div>
 
@@ -165,6 +202,10 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
+            globalText={globalText}
+            correctionIssues={correctionIssues}
+            setCorrectionIssues={setCorrectionIssues}
+            applyCorrection={applyCorrection}
           />
         )}
 

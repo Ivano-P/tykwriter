@@ -16,3 +16,13 @@ export async function spellcheckAction(text: string, useBooster: boolean = false
   return await MistralAiProService.autoCheckSpellingAndFormat(text);
   //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
 }
+
+import { CorrectionResponse } from '@/services/MistralAiProService';
+
+export async function checkSpellingIssuesAction(text: string): Promise<CorrectionResponse> {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Invalid text provided for spellcheck.');
+  }
+  return await MistralAiProService.checkSpelling(text);
+}
+

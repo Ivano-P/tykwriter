@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
+import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
+import { CorrectionIssue } from '@/services/MistralAiProService';
 
 interface CorrecteurSidebarProps {
   isProcessing: boolean;
@@ -13,6 +16,10 @@ interface CorrecteurSidebarProps {
   isSubmitDisabled: boolean;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
+  globalText: string;
+  correctionIssues: CorrectionIssue[];
+  setCorrectionIssues: (issues: CorrectionIssue[]) => void;
+  applyCorrection: (issue: CorrectionIssue) => void;
 }
 
 export function CorrecteurSidebar({
@@ -23,7 +30,29 @@ export function CorrecteurSidebar({
   isSubmitDisabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
+  globalText,
+  correctionIssues,
+  setCorrectionIssues,
+  applyCorrection,
 }: CorrecteurSidebarProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onVerifyClick = async () => {
+    if (!globalText.trim() || isLoading) return;
+    setIsLoading(true);
+    setCorrectionIssues([]);
+    try {
+      const response = await checkSpellingIssuesAction(globalText);
+      if (response && response.erreurs) {
+        setCorrectionIssues(response.erreurs);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <aside className={styles.sidebarContainer}>
       <h2 className={styles.title}>Actions</h2>
@@ -32,7 +61,7 @@ export function CorrecteurSidebar({
       <div className={styles.actionSection}>
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Correction automatique</span>
+            <span className={styles.toggleText}>Vérification automatique</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
@@ -47,15 +76,31 @@ export function CorrecteurSidebar({
         </div>
 
         <Button
-          onClick={handleManualSubmit}
-          disabled={isSubmitDisabled}
+          onClick={onVerifyClick}
+          disabled={isSubmitDisabled || isLoading}
           className={styles.submitButton}
         >
-          {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
+          {isLoading ? 'Vérification...' : "Vérifier maintenant"}
         </Button>
       </div>
 
-      {diffParts && !isProcessing && (
+      <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2">
+        {correctionIssues.map((issue, index) => (
+          <div 
+            key={index} 
+            onClick={() => applyCorrection(issue)}
+            className="p-3 border rounded-md cursor-pointer hover:bg-slate-50 transition-colors text-sm"
+          >
+            <span className="text-[var(--destructive)] font-medium line-through">{issue.texte_original}</span>
+            {' -> '}
+            <span className="text-[var(--tyk-sapphire)] font-bold">{issue.correction}</span>
+            {' - '}
+            <span className="text-gray-500">{issue.explication}</span>
+          </div>
+        ))}
+      </div>
+
+      {diffParts && !isProcessing && correctionIssues.length === 0 && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
             <span className={styles.diffTitle}>Changements détectés</span>

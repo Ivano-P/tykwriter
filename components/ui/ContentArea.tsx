@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Copy, Undo2, Redo2, ChevronDown, Trash2 } from 'lucide-react';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
+import { CorrectionIssue } from '@/services/MistralAiProService';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -18,6 +19,8 @@ interface ContentAreaProps {
   handleUndo: () => void;
   handleRedo: () => void;
   MAX_CHARS: number;
+  correctionIssues?: CorrectionIssue[];
+  applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
 }
 
 export function ContentArea({
@@ -31,6 +34,8 @@ export function ContentArea({
   handleUndo,
   handleRedo,
   MAX_CHARS,
+  correctionIssues,
+  applyCorrection,
 }: ContentAreaProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -163,6 +168,8 @@ export function ContentArea({
             isProcessing={isProcessing}
             maxLength={MAX_CHARS}
             className={styles.textArea}
+            correctionIssues={correctionIssues}
+            applyCorrection={applyCorrection}
           />
         </div>
       )}
