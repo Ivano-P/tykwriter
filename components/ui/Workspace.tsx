@@ -48,7 +48,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
   const skipDebounceRef = useRef(false);
   const [lastCheckedText, setLastCheckedText] = useState<string>('');
-  const lastProcessedBoosterState = useRef<boolean>(false);
   const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
 
   useEffect(() => {
@@ -98,10 +97,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     if (!textToCheck.trim() || isProcessing || currentMode === 'traduction') return;
 
     if (textToCheck === lastCheckedText) {
-      const isUpgrading: boolean = !lastProcessedBoosterState.current;
-      if (!isUpgrading) {
-        return;
-      }
+      return;
     }
 
     setIsProcessing(true);
