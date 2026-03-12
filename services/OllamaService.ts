@@ -1,3 +1,4 @@
+//deactivated for now, need to be activated in spellcheck.action.ts
 import { env } from 'process';
 
 export class OllamaService {

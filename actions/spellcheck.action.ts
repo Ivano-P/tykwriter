@@ -11,5 +11,8 @@ export async function spellcheckAction(text: string, useBooster: boolean = false
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid text provided for spellcheck.');
   }
+
+
     return await MistralAiProService.checkSpelling(text);
+    //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
 }

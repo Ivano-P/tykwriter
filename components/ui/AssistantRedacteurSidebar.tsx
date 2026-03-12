@@ -30,6 +30,7 @@ export function AssistantRedacteurSidebar({
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>
+
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
             <span className={styles.toggleText}>Correction automatique</span>
