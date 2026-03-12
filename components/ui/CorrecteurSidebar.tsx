@@ -20,6 +20,7 @@ interface CorrecteurSidebarProps {
   correctionIssues: CorrectionIssue[];
   setCorrectionIssues: (issues: CorrectionIssue[]) => void;
   applyCorrection: (issue: CorrectionIssue) => void;
+  applyAllCorrections: () => void;
 }
 
 export function CorrecteurSidebar({
@@ -34,6 +35,7 @@ export function CorrecteurSidebar({
   correctionIssues,
   setCorrectionIssues,
   applyCorrection,
+  applyAllCorrections,
 }: CorrecteurSidebarProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -82,6 +84,15 @@ export function CorrecteurSidebar({
         >
           {isLoading ? 'Vérification...' : "Vérifier maintenant"}
         </Button>
+        {correctionIssues.length > 0 && (
+          <Button
+            onClick={applyAllCorrections}
+            variant="outline"
+            className="w-full mt-2 border-[var(--tyk-sapphire)] text-[var(--tyk-sapphire)] hover:bg-[var(--tyk-sapphire)] hover:text-white transition-colors"
+          >
+            Tout corriger ({correctionIssues.length})
+          </Button>
+        )}
       </div>
 
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2">

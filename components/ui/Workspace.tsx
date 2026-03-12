@@ -28,6 +28,15 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     setCorrectionIssues(prev => prev.filter(issue => issue !== issueToApply));
   };
 
+  const applyAllCorrections = () => {
+    let newText = globalText;
+    correctionIssues.forEach(issue => {
+      newText = newText.replace(issue.texte_original, issue.correction);
+    });
+    setGlobalText(newText);
+    setCorrectionIssues([]);
+  };
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
 
@@ -206,6 +215,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             correctionIssues={correctionIssues}
             setCorrectionIssues={setCorrectionIssues}
             applyCorrection={applyCorrection}
+            applyAllCorrections={applyAllCorrections}
           />
         )}
 
