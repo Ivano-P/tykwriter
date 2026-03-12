@@ -47,7 +47,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const MAX_CHARS = 2000;
 
   const skipDebounceRef = useRef(false);
-  const lastProcessedText = useRef<string>('');
+  const [lastCheckedText, setLastCheckedText] = useState<string>('');
   const lastProcessedBoosterState = useRef<boolean>(false);
   const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
 
@@ -75,7 +75,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const handleAutoSpellcheckIssues = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
 
-    if (textToCheck === lastProcessedText.current) {
+    if (textToCheck === lastCheckedText) {
       return;
     }
 
@@ -86,7 +86,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
       if (response && response.erreurs) {
         setCorrectionIssues(response.erreurs);
       }
-      lastProcessedText.current = textToCheck;
+      setLastCheckedText(textToCheck);
     } catch (error) {
       console.error(error);
     } finally {
@@ -97,7 +97,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing || currentMode === 'traduction') return;
 
-    if (textToCheck === lastProcessedText.current) {
+    if (textToCheck === lastCheckedText) {
       const isUpgrading: boolean = !lastProcessedBoosterState.current;
       if (!isUpgrading) {
         return;
@@ -118,10 +118,10 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
         skipDebounceRef.current = true;
         setGlobalText(result);
 
-        lastProcessedText.current = result;
+        setLastCheckedText(result);
       } else {
         setDiffParts(null);
-        lastProcessedText.current = textToCheck;
+        setLastCheckedText(textToCheck);
       }
 
     } catch (error) {
@@ -165,7 +165,11 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const handleManualSubmit = () => {
     if (currentMode === 'traduction') return;
     skipDebounceRef.current = true;
-    handleSpellCheck(globalText);
+    if (currentMode === 'correcteur') {
+      handleAutoSpellcheckIssues(globalText);
+    } else {
+      handleSpellCheck(globalText);
+    }
   };
 
   return (
@@ -208,7 +212,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             diffParts={diffParts}
             handleUndo={handleUndo}
             handleManualSubmit={handleManualSubmit}
-            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
+            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS || globalText === lastCheckedText}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
             globalText={globalText}
@@ -225,7 +229,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             diffParts={diffParts}
             handleUndo={handleUndo}
             handleManualSubmit={handleManualSubmit}
-            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
+            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS || globalText === lastCheckedText}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />

@@ -100,6 +100,12 @@ export class MistralAiProService {
       });
 
       const result = response.choices?.[0]?.message?.content;
+
+      //  LOG DE DEBUG : INDISPENSABLE POUR VOS TESTS 
+      console.log("\n---  RÉPONSE BRUTE MISTRAL agent spell checker---");
+      console.log('Mistral AI JSON Parsing Result:', result);
+      console.log("--------------------------------\n");
+
       if (typeof result !== 'string') {
         throw new Error('Invalid response from Mistral AI');
       }

@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
-import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 
 interface CorrecteurSidebarProps {
@@ -37,23 +35,6 @@ export function CorrecteurSidebar({
   applyCorrection,
   applyAllCorrections,
 }: CorrecteurSidebarProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const onVerifyClick = async () => {
-    if (!globalText.trim() || isLoading) return;
-    setIsLoading(true);
-    setCorrectionIssues([]);
-    try {
-      const response = await checkSpellingIssuesAction(globalText);
-      if (response && response.erreurs) {
-        setCorrectionIssues(response.erreurs);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <aside className={styles.sidebarContainer}>
@@ -78,11 +59,11 @@ export function CorrecteurSidebar({
         </div>
 
         <Button
-          onClick={onVerifyClick}
-          disabled={isSubmitDisabled || isLoading}
+          onClick={handleManualSubmit}
+          disabled={isSubmitDisabled}
           className={styles.submitButton}
         >
-          {isLoading ? 'Vérification...' : "Vérifier maintenant"}
+          {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
         </Button>
         {correctionIssues.length > 0 && (
           <Button
