@@ -13,6 +13,6 @@ export async function spellcheckAction(text: string, useBooster: boolean = false
   }
 
 
-    return await MistralAiProService.checkSpelling(text);
-    //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
+  return await MistralAiProService.autoCheckSpellingAndFormat(text);
+  //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
 }
