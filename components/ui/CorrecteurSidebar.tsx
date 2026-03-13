@@ -77,6 +77,9 @@ export function CorrecteurSidebar({
       </div>
 
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2">
+        <div className={styles.diffHeader}>
+            <span className={styles.diffTitle}>Erreurs détectées</span>
+          </div>
         {correctionIssues.map((issue, index) => (
           <div 
             key={index} 
@@ -92,24 +95,7 @@ export function CorrecteurSidebar({
         ))}
       </div>
 
-      {diffParts && !isProcessing && correctionIssues.length === 0 && (
-        <div className={styles.diffViewer}>
-          <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Changements détectés</span>
-            <button className={styles.undoButton} onClick={handleUndo} title="Annuler la correction">
-              <RotateCcw size={16} />
-              <span>Annuler</span>
-            </button>
-          </div>
-          <div className={styles.diffContent}>
-            {diffParts.map((part: Diff.Change, index: number) => {
-              if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
-              if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
-              return <span key={index}>{part.value}</span>;
-            })}
-          </div>
-        </div>
-      )}
+      
 
     </aside>
   );
