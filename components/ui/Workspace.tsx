@@ -8,6 +8,8 @@ import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSid
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
 import { spellcheckAction, checkSpellingIssuesAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/MistralAiProService';
+import { SpellcheckService } from '@/services/SpellcheckService';
+import { AutoCorrect } from '@/services/AutoCorrect';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -22,17 +24,14 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
   const applyCorrection = (issueToApply: CorrectionIssue, source: 'sidebar' | 'editor' = 'sidebar') => {
     if (source === 'sidebar') {
-      const newText = globalText.replace(issueToApply.texte_original, issueToApply.correction);
+      const newText = SpellcheckService.applyCorrectionText(globalText, issueToApply);
       setGlobalText(newText);
     }
     setCorrectionIssues(prev => prev.filter(issue => issue !== issueToApply));
   };
 
   const applyAllCorrections = () => {
-    let newText = globalText;
-    correctionIssues.forEach(issue => {
-      newText = newText.replace(issue.texte_original, issue.correction);
-    });
+    const newText = SpellcheckService.applyAllCorrectionsText(globalText, correctionIssues);
     setGlobalText(newText);
     setCorrectionIssues([]);
   };
@@ -82,9 +81,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     setCorrectionIssues([]);
     try {
       const response = await checkSpellingIssuesAction(textToCheck);
-      if (response && response.erreurs) {
-        setCorrectionIssues(response.erreurs);
-      }
+      const processedIssues = SpellcheckService.processResponse(response);
+      setCorrectionIssues(processedIssues);
       setLastCheckedText(textToCheck);
     } catch (error) {
       console.error(error);
@@ -103,18 +101,16 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     setIsProcessing(true);
     try {
       const result = await spellcheckAction(textToCheck);
+      const processed = AutoCorrect.processCorrections(textToCheck, result);
 
-      if (result !== textToCheck) {
-        const calculatedDiff = Diff.diffWords(textToCheck, result);
-        setDiffParts(calculatedDiff);
-
+      if (processed.hasChanges) {
+        setDiffParts(processed.diffParts);
         setUndoStack((prev: string[]) => [...prev, textToCheck]);
         setRedoStack([]);
 
         skipDebounceRef.current = true;
-        setGlobalText(result);
-
-        setLastCheckedText(result);
+        setGlobalText(processed.newText);
+        setLastCheckedText(processed.newText);
       } else {
         setDiffParts(null);
         setLastCheckedText(textToCheck);

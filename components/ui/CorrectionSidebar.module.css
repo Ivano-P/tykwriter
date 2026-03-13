@@ -183,8 +183,9 @@
 }
 
 .diffAdded {
-  background-color: rgba(76, 175, 80, 0.15);
-  color: #1b5e20;
+  background-color: rgba(15, 82, 186, 0.15);
+  color: var(--tyk-sapphire, #0F52BA);
+  font-weight: 600;
   border-radius: 3px;
   padding: 0 3px;
   text-decoration: none;
@@ -193,6 +194,7 @@
 .diffRemoved {
   background-color: rgba(244, 67, 54, 0.15);
   color: #b71c1c;
+  font-weight: 500;
   border-radius: 3px;
   padding: 0 3px;
   text-decoration: line-through;

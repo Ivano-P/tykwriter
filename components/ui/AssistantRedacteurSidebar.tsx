@@ -59,7 +59,7 @@ export function AssistantRedacteurSidebar({
       {diffParts && !isProcessing && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Changements détectés</span>
+            <span className={styles.diffTitle}>Correction appliquée</span>
             <button className={styles.undoButton} onClick={handleUndo} title="Annuler la correction">
               <RotateCcw size={16} />
               <span>Annuler</span>

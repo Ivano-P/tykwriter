@@ -28,15 +28,18 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
   const issuesRef = useRef(correctionIssues);
   const applyCorrectionRef = useRef(applyCorrection);
+  const isExternalUpdate = useRef(false);
+  const latestGlobalTextRef = useRef(globalText);
 
   useEffect(() => {
     issuesRef.current = correctionIssues;
     applyCorrectionRef.current = applyCorrection;
+    latestGlobalTextRef.current = globalText; // Keep ref updated
     if (editor) {
       // Force ProseMirror to re-execute the plugin's apply method
       editor.view.dispatch(editor.state.tr.setMeta('updateCorrections', true));
     }
-  }, [correctionIssues, applyCorrection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [correctionIssues, applyCorrection, globalText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const CorrectionHighlighter = Extension.create({
     name: 'correctionHighlighter',
@@ -140,11 +143,23 @@ export function TiptapEditor({
         class: `focus:outline-none overflow-y-auto flex-1 h-full w-full ${className}`,
       },
     },
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor, transaction }) => {
+      if (!transaction.docChanged) return;
+      
+      if (isExternalUpdate.current) {
+        isExternalUpdate.current = false;
+        return;
+      }
       let text = editor.getText();
       if (maxLength && text.length > maxLength) {
         text = text.substring(0, maxLength);
       }
+      
+      // Prevent cyclic updates or re-formatting from triggering an unnecessary state change
+      if (text === latestGlobalTextRef.current) {
+        return;
+      }
+      
       setGlobalText(text);
     },
   });
@@ -152,6 +167,7 @@ export function TiptapEditor({
   // Sync external changes (like undo/redo or corrections from sidebar) into the editor
   useEffect(() => {
     if (editor && globalText !== editor.getText()) {
+      isExternalUpdate.current = true;
       // Syncing via setContent can reset cursor but it works flawlessly for simple textarea replacements
       editor.commands.setContent(globalText);
     }
