@@ -19,6 +19,7 @@ interface CorrecteurSidebarProps {
   setCorrectionIssues: (issues: CorrectionIssue[]) => void;
   applyCorrection: (issue: CorrectionIssue) => void;
   applyAllCorrections: () => void;
+  ignoreCorrection: (issue: CorrectionIssue) => void;
 }
 
 export function CorrecteurSidebar({
@@ -34,6 +35,7 @@ export function CorrecteurSidebar({
   setCorrectionIssues,
   applyCorrection,
   applyAllCorrections,
+  ignoreCorrection,
 }: CorrecteurSidebarProps) {
 
   return (
@@ -88,14 +90,21 @@ export function CorrecteurSidebar({
         {correctionIssues.map((issue, index) => (
           <div 
             key={index} 
-            onClick={() => applyCorrection(issue)}
-            className="p-3 border rounded-md cursor-pointer hover:bg-slate-50 transition-colors text-sm"
+            className="relative p-3 border rounded-md hover:bg-slate-50 transition-colors text-sm group"
           >
-            <span className="text-[var(--destructive)] font-medium line-through">{issue.texte_original}</span>
-            {' -> '}
-            <span className="text-[var(--tyk-sapphire)] font-bold">{issue.correction}</span>
-            {' - '}
-            <span className="text-gray-500">{issue.explication}</span>
+            <div className="cursor-pointer pb-2" onClick={() => applyCorrection(issue)}>
+              <span className="text-[var(--destructive)] font-medium line-through">{issue.texte_original}</span>
+              {' → '}
+              <span className="text-[var(--tyk-sapphire)] font-bold">{issue.correction}</span>
+              <div className="text-gray-500 mt-1">{issue.explication}</div>
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); ignoreCorrection(issue); }}
+              className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+              title="Ignorer cette erreur"
+            >
+              ×
+            </button>
           </div>
         ))}
       </div>

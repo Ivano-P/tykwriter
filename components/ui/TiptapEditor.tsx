@@ -4,7 +4,7 @@ import { useEditor, EditorContent, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 
 interface TiptapEditorProps {
@@ -15,6 +15,14 @@ interface TiptapEditorProps {
   className?: string;
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
+  ignoreCorrection?: (issue: CorrectionIssue) => void;
+}
+
+interface PopupState {
+  issue: CorrectionIssue;
+  coords: { top: number; left: number };
+  from: number;
+  to: number;
 }
 
 export function TiptapEditor({
@@ -25,21 +33,26 @@ export function TiptapEditor({
   className = '',
   correctionIssues = [],
   applyCorrection,
+  ignoreCorrection,
 }: TiptapEditorProps) {
   const issuesRef = useRef(correctionIssues);
   const applyCorrectionRef = useRef(applyCorrection);
+  const ignoreCorrectionRef = useRef(ignoreCorrection);
   const isExternalUpdate = useRef(false);
   const latestGlobalTextRef = useRef(globalText);
+  const [popup, setPopup] = useState<PopupState | null>(null);
 
   useEffect(() => {
     issuesRef.current = correctionIssues;
     applyCorrectionRef.current = applyCorrection;
+    ignoreCorrectionRef.current = ignoreCorrection;
     latestGlobalTextRef.current = globalText; // Keep ref updated
     if (editor) {
       // Force ProseMirror to re-execute the plugin's apply method
       editor.view.dispatch(editor.state.tr.setMeta('updateCorrections', true));
+      setPopup(null);
     }
-  }, [correctionIssues, applyCorrection, globalText]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [correctionIssues, applyCorrection, ignoreCorrection, globalText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const CorrectionHighlighter = Extension.create({
     name: 'correctionHighlighter',
@@ -78,7 +91,9 @@ export function TiptapEditor({
                       decorations.push(
                         Decoration.inline(from, to, {
                           class: 'border-b-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)] cursor-pointer',
-                          'data-correction-index': index.toString()
+                          'data-correction-id': issue.id
+                        }, {
+                          'data-correction-id': issue.id
                         })
                       );
 
@@ -95,36 +110,43 @@ export function TiptapEditor({
               return pluginKey.getState(state);
             },
             handleClick(view, pos, event) {
-              const target = event.target as HTMLElement;
-              // Check if we clicked on a correction highlight
-              if (target && target.hasAttribute('data-correction-index')) {
-                const indexStr = target.getAttribute('data-correction-index');
-                if (indexStr !== null) {
-                  const issue = issuesRef.current[parseInt(indexStr, 10)];
+              const target = event.target as Node;
+              const element = (target.nodeType === 3 ? target.parentElement : target) as HTMLElement;
+              const decoElement = element?.closest ? element.closest('[data-correction-id]') : null;
+              
+              if (decoElement) {
+                const idStr = decoElement.getAttribute('data-correction-id');
+                if (idStr) {
+                  const issue = issuesRef.current.find(i => i.id === idStr);
                   const applyFn = applyCorrectionRef.current;
 
                   if (issue && applyFn) {
-                    // Find the exact decoration bounds
                     const state = view.state;
                     const decos = pluginKey.getState(state) as DecorationSet;
-                    const found = decos.find(pos, pos);
-
-                    const deco = found.find(d => {
-                      return d.spec['data-correction-index'] === indexStr;
-                    });
+                    const allDecos = decos.find();
+                    const deco = allDecos.find(d => d.spec['data-correction-id'] === idStr);
 
                     if (deco) {
-                      // Perform Replacement using ProseMirror transaction
-                      const tr = state.tr.insertText(issue.correction, deco.from, deco.to);
-                      view.dispatch(tr);
-
-                      // Notify parent
-                      applyFn(issue, 'editor');
+                      const rect = decoElement.getBoundingClientRect();
+                      const wrapper = document.querySelector('.tiptap-wrapper');
+                      const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : { top: 0, left: 0 };
+                      
+                      // Positionne la popup juste sous le mot cliqué
+                      setPopup({
+                        issue,
+                        coords: {
+                          top: rect.bottom - wrapperRect.top + 8,
+                          left: Math.max(0, rect.left - wrapperRect.left - 20)
+                        },
+                        from: deco.from,
+                        to: deco.to
+                      });
                     }
                     return true;
                   }
                 }
               }
+              setPopup(null);
               return false;
             }
           }
@@ -150,6 +172,9 @@ export function TiptapEditor({
         isExternalUpdate.current = false;
         return;
       }
+      
+      setPopup(null);
+      
       let text = editor.getText();
       if (maxLength && text.length > maxLength) {
         text = text.substring(0, maxLength);
@@ -185,8 +210,46 @@ export function TiptapEditor({
   }
 
   return (
-    <div className={`tiptap-wrapper w-full h-full flex flex-col overflow-hidden min-h-0 ${className}`}>
+    <div className={`tiptap-wrapper relative w-full h-full flex flex-col overflow-hidden min-h-0 ${className}`}>
       <EditorContent editor={editor} className="w-full flex-1 flex flex-col overflow-hidden min-h-0 outline-none prose prose-sm max-w-none" />
+      
+      {popup && (
+        <div 
+          className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 flex flex-col gap-2 w-72 animate-in fade-in zoom-in-95 duration-200"
+          style={{ top: popup.coords.top, left: popup.coords.left }}
+        >
+          <div className="text-gray-600 font-medium text-[13px] leading-relaxed">
+            {popup.issue.explication}
+          </div>
+          <div className="flex justify-between items-center mt-1 gap-2">
+            <button
+              className="flex-1 bg-[var(--tyk-sapphire)] text-white px-3 py-1.5 rounded-md font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!editor) return;
+                const tr = editor.state.tr.insertText(popup.issue.correction, popup.from, popup.to);
+                editor.view.dispatch(tr);
+                if (applyCorrection) applyCorrection(popup.issue, 'editor');
+                setPopup(null);
+              }}
+            >
+              {popup.issue.correction}
+            </button>
+            <button
+              className="flex-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md font-medium hover:bg-gray-200 transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (ignoreCorrection) ignoreCorrection(popup.issue);
+                setPopup(null);
+              }}
+            >
+              Ignorer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

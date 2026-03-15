@@ -53,7 +53,11 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
       const newText = SpellcheckService.applyCorrectionText(globalText, issueToApply);
       setGlobalText(newText);
     }
-    setCorrectionIssues(prev => prev.filter(issue => issue !== issueToApply));
+    setCorrectionIssues(prev => prev.filter(issue => issue.id !== issueToApply.id));
+  };
+
+  const ignoreCorrection = (issueToIgnore: CorrectionIssue) => {
+    setCorrectionIssues(prev => prev.filter(issue => issue.id !== issueToIgnore.id));
   };
 
   const applyAllCorrections = () => {
@@ -220,6 +224,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             MAX_CHARS={MAX_CHARS}
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
+            ignoreCorrection={ignoreCorrection}
           />
         </div>
 
@@ -237,6 +242,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             setCorrectionIssues={setCorrectionIssues}
             applyCorrection={applyCorrection}
             applyAllCorrections={applyAllCorrections}
+            ignoreCorrection={ignoreCorrection}
           />
         )}
 

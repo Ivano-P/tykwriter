@@ -26,11 +26,14 @@ export class SpellcheckService {
   }
 
   /**
-   * Traite la réponse brute de Mistral et retourne un tableau validé d'erreurs.
+   * Traite la réponse brute de Mistral et retourne un tableau validé d'erreurs avec des UUIDs.
    */
   static processResponse(response: any): CorrectionIssue[] {
      if (response && response.erreurs && Array.isArray(response.erreurs)) {
-       return response.erreurs;
+       return response.erreurs.map((issue: any) => ({
+         ...issue,
+         id: issue.id || crypto.randomUUID(),
+       }));
      }
      return [];
   }

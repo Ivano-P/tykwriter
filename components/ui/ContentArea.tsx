@@ -21,6 +21,7 @@ interface ContentAreaProps {
   MAX_CHARS: number;
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
+  ignoreCorrection?: (issue: CorrectionIssue) => void;
 }
 
 export function ContentArea({
@@ -36,6 +37,7 @@ export function ContentArea({
   MAX_CHARS,
   correctionIssues,
   applyCorrection,
+  ignoreCorrection,
 }: ContentAreaProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -170,6 +172,7 @@ export function ContentArea({
             className={styles.textArea}
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
+            ignoreCorrection={ignoreCorrection}
           />
         </div>
       )}

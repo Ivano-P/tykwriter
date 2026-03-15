@@ -1,6 +1,7 @@
 import { Mistral } from '@mistralai/mistralai';
 
 export interface CorrectionIssue {
+  id: string;
   texte_original: string;
   correction: string;
   type: "orthographe" | "grammaire" | "typographie" | "style" | "ponctuation";
