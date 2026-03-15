@@ -10,6 +10,7 @@ import { spellcheckAction, checkSpellingIssuesAction } from '@/actions/spellchec
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
 import { AutoCorrect } from '@/services/AutoCorrect';
+import { ChunkManager } from '@/services/ChunkManager';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -18,6 +19,15 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const [globalText, setGlobalText] = useState<string>("");
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
   const [lastCheckedText, setLastCheckedText] = useState<string>('');
+  
+  const pendingRequestsRef = useRef<Map<string, AbortController>>(new Map());
+  const processedCacheRef = useRef<Map<string, { correctedText: string; isPartial: boolean; hasChanges: boolean }>>(new Map());
+  const processingBlocksRef = useRef<Set<string>>(new Set());
+  const latestGlobalTextRef = useRef(globalText);
+  
+  useEffect(() => {
+    latestGlobalTextRef.current = globalText;
+  }, [globalText]);
 
   useEffect(() => {
     setCurrentMode(initialMode);
@@ -88,19 +98,119 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }
 
     if (globalText.trim() === '' || isProcessing || globalText.length > MAX_CHARS || currentMode === 'traduction' || !isAutoCorrectEnabled) {
+      if (currentMode === 'assistant-redacteur' && globalText.trim() === '') {
+        // clear caches when empty
+        pendingRequestsRef.current.forEach(c => c.abort());
+        pendingRequestsRef.current.clear();
+        processingBlocksRef.current.clear();
+        processedCacheRef.current.clear();
+      }
       return;
     }
 
-    const timer = setTimeout(() => {
-      if (currentMode === 'correcteur') {
+    // Correcteur Mode uses debounce
+    if (currentMode === 'correcteur') {
+      const timer = setTimeout(() => {
         handleAutoSpellcheckIssues(globalText);
-      } else if (currentMode === 'assistant-redacteur') {
-        handleSpellCheck(globalText);
-      }
-    }, autoCorrectDelay);
+      }, autoCorrectDelay);
+      return () => clearTimeout(timer);
+    }
+  }, [globalText, currentMode, isAutoCorrectEnabled, isProcessing]);
 
-    return () => clearTimeout(timer);
-  }, [globalText, currentMode, isAutoCorrectEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Assistant Rédacteur Mode (Non-blocking Hybrid Trigger)
+  useEffect(() => {
+    if (currentMode !== 'assistant-redacteur' || !isAutoCorrectEnabled || globalText.trim() === '') return;
+
+    const chunks = ChunkManager.splitIntoBlocks(globalText);
+    const currentChunkOriginals = new Set(chunks.map(c => c.originalText));
+
+    // Abort out-of-date requests
+    Array.from(pendingRequestsRef.current.entries()).forEach(([originalText, controller]) => {
+      if (!currentChunkOriginals.has(originalText)) {
+        controller.abort();
+        pendingRequestsRef.current.delete(originalText);
+        processingBlocksRef.current.delete(originalText);
+      }
+    });
+
+    // Check which chunks need to be sent immediately (Complete chunks)
+    chunks.forEach((chunk) => {
+      const { originalText, isComplete } = chunk;
+      if (!originalText.trim()) return;
+
+      const cached = processedCacheRef.current.get(originalText);
+      const isProcessingChunk = processingBlocksRef.current.has(originalText);
+      
+      // If cached and wasn't a partial chunk that became complete
+      if (cached && !(cached.isPartial && isComplete)) return;
+      if (isProcessingChunk) return;
+
+      if (isComplete) {
+         triggerAssistantApi(originalText, true);
+      }
+    });
+
+    // Handle the final partial chunk with debounce
+    const lastChunk = chunks[chunks.length - 1];
+    if (lastChunk && !lastChunk.isComplete && lastChunk.originalText.trim()) {
+       const timeoutId = setTimeout(() => {
+          if (!processedCacheRef.current.has(lastChunk.originalText) && !processingBlocksRef.current.has(lastChunk.originalText)) {
+             triggerAssistantApi(lastChunk.originalText, false);
+          }
+       }, autoCorrectDelay);
+       return () => clearTimeout(timeoutId);
+    }
+  }, [globalText, currentMode, isAutoCorrectEnabled]);
+
+  const triggerAssistantApi = async (originalText: string, isComplete: boolean) => {
+    const controller = new AbortController();
+    pendingRequestsRef.current.set(originalText, controller);
+    processingBlocksRef.current.add(originalText);
+
+    try {
+      const resp = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: originalText }),
+        signal: controller.signal
+      });
+      
+      if (!resp.ok) {
+        throw new Error('API Request failed');
+      }
+
+      const data = await resp.json();
+      const correctedText = data.correctedText;
+      const processed = AutoCorrect.processCorrections(originalText, correctedText);
+
+      processedCacheRef.current.set(originalText, {
+        correctedText,
+        isPartial: !isComplete,
+        hasChanges: processed.hasChanges
+      });
+
+      if (processed.hasChanges) {
+        // Dispatch to TiptapEditor to handle text replacement via transaction
+        window.dispatchEvent(new CustomEvent('tyk:replaceText', {
+          detail: { oldText: originalText, newText: correctedText }
+        }));
+        
+        // set history based on the latest known text
+        setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
+        setRedoStack([]);
+        setDiffParts(processed.diffParts);
+        skipDebounceRef.current = true;
+      }
+
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('API Error:', err);
+      }
+    } finally {
+      pendingRequestsRef.current.delete(originalText);
+      processingBlocksRef.current.delete(originalText);
+    }
+  };
 
   const handleAutoSpellcheckIssues = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
@@ -123,6 +233,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }
   };
 
+  // Legacy manual check fallback if ever required
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing || currentMode === 'traduction') return;
 
@@ -209,6 +320,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     if (currentMode === 'correcteur') {
       handleAutoSpellcheckIssues(globalText);
     } else {
+      // In non-blocking Assistant mode, the auto-sync runs. Manual check could just force evaluating.
       handleSpellCheck(globalText);
     }
   };
@@ -236,7 +348,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             setCurrentMode={handleModeChange}
             text={globalText}
             onChange={handleChange}
-            isProcessing={isProcessing}
+            isProcessing={currentMode === 'correcteur' ? isProcessing : false}
             undoStackLength={undoStack.length}
             redoStackLength={redoStack.length}
             handleUndo={handleUndo}
@@ -268,11 +380,11 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
         {currentMode === 'assistant-redacteur' && (
           <AssistantRedacteurSidebar
-            isProcessing={isProcessing}
+            isProcessing={processingBlocksRef.current.size > 0}
             diffParts={diffParts}
             handleUndo={handleUndo}
             handleManualSubmit={handleManualSubmit}
-            isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS || globalText === lastCheckedText}
+            isSubmitDisabled={processingBlocksRef.current.size > 0 || !globalText.trim() || globalText.length > MAX_CHARS}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           />

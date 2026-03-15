@@ -191,12 +191,83 @@ export function TiptapEditor({
 
   // Sync external changes (like undo/redo or corrections from sidebar) into the editor
   useEffect(() => {
-    if (editor && globalText !== editor.getText()) {
+    if (editor && globalText !== editor.getText() && !isExternalUpdate.current) {
       isExternalUpdate.current = true;
       // Syncing via setContent can reset cursor but it works flawlessly for simple textarea replacements
       editor.commands.setContent(globalText);
     }
   }, [globalText, editor]);
+
+  // Listen for non-blocking seamless text replacements (from Assistant Rédacteur)
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleReplaceText = (e: Event) => {
+      const customEvent = e as CustomEvent<{ oldText: string, newText: string }>;
+      const { oldText, newText } = customEvent.detail;
+      
+      const trimmedOld = oldText.trim();
+      const trimmedNew = newText.trim();
+      if (!trimmedOld) return; // skip if purely whitespace
+      
+      let from = -1;
+      let to = -1;
+      
+      editor.state.doc.descendants((node, pos) => {
+        if (from !== -1) return false; // Early exit if found
+        
+        if (node.isBlock) {
+          let blockText = '';
+          const childPositions: { pos: number, textIndex: number }[] = [];
+          
+          node.descendants((child, childPos) => {
+            if (child.isText && child.text) {
+              childPositions.push({ pos: childPos, textIndex: blockText.length });
+              blockText += child.text;
+            } else if (child.type.name === 'hardBreak') {
+              childPositions.push({ pos: childPos, textIndex: blockText.length });
+              blockText += '\n';
+            }
+          });
+          
+          // Match the last occurrence since user types at the end usually
+          const index = blockText.lastIndexOf(trimmedOld);
+          if (index !== -1) {
+            let mappedPos = -1;
+            for (let i = childPositions.length - 1; i >= 0; i--) {
+              if (index >= childPositions[i].textIndex) {
+                mappedPos = childPositions[i].pos + (index - childPositions[i].textIndex);
+                break;
+              }
+            }
+            
+            if (mappedPos !== -1) {
+              from = pos + 1 + mappedPos;
+              // ProsMirror uses 1 space for hardBreaks and 1 for text chars, maps 1:1
+              to = from + trimmedOld.length;
+            }
+          }
+        }
+      });
+      
+      if (from !== -1 && to !== -1) {
+        // We know we are doing an external injection, but it's seamless
+        isExternalUpdate.current = true;
+        editor.view.dispatch(editor.state.tr.insertText(trimmedNew, from, to));
+      } else {
+        // Fallback: if we couldn't find the exact subset, we fallback to updating everything
+        isExternalUpdate.current = true;
+        const { from: selFrom, to: selTo } = editor.state.selection;
+        editor.commands.setContent(editor.getText().replace(oldText, newText));
+        try {
+           editor.commands.setTextSelection({ from: selFrom, to: selTo });
+        } catch(e) {}
+      }
+    };
+
+    window.addEventListener('tyk:replaceText', handleReplaceText);
+    return () => window.removeEventListener('tyk:replaceText', handleReplaceText);
+  }, [editor]);
 
   // Sync disabled state
   useEffect(() => {
