@@ -15,12 +15,38 @@ type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
 export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }) {
   const [currentMode, setCurrentMode] = useState<Mode>(initialMode);
+  const [globalText, setGlobalText] = useState<string>("");
+  const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
+  const [lastCheckedText, setLastCheckedText] = useState<string>('');
 
   useEffect(() => {
     setCurrentMode(initialMode);
   }, [initialMode]);
-  const [globalText, setGlobalText] = useState<string>("");
-  const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
+
+  const handleModeChange = (newMode: Mode) => {
+    if (newMode === currentMode) return;
+
+    if (globalText) {
+      const storedText = globalText;
+      
+      // 1. Supprimé de la zone de saisie
+      setGlobalText('');
+      setCorrectionIssues([]);
+      setDiffParts(null);
+      setUndoStack([]);
+      setRedoStack([]);
+      setLastCheckedText('');
+      setCurrentMode(newMode);
+      
+      // 2. Coller dans la nouvelle zone de saisie (setTimeout permet à React de rendre la zone vide d'abord)
+      setTimeout(() => {
+        setGlobalText(storedText);
+      }, 50);
+    } else {
+      setLastCheckedText('');
+      setCurrentMode(newMode);
+    }
+  };
 
   const applyCorrection = (issueToApply: CorrectionIssue, source: 'sidebar' | 'editor' = 'sidebar') => {
     if (source === 'sidebar') {
@@ -46,7 +72,6 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   const MAX_CHARS = 2000;
 
   const skipDebounceRef = useRef(false);
-  const [lastCheckedText, setLastCheckedText] = useState<string>('');
   const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
 
   useEffect(() => {
@@ -184,7 +209,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
           <ContentArea
             currentMode={currentMode}
-            setCurrentMode={setCurrentMode}
+            setCurrentMode={handleModeChange}
             text={globalText}
             onChange={handleChange}
             isProcessing={isProcessing}
