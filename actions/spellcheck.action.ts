@@ -12,10 +12,17 @@ export async function spellcheckAction(text: string, useBooster: boolean = false
     throw new Error('Invalid text provided for spellcheck.');
   }
 
-  // Ensure dynamic APIs are awaited if any are added here in the future
-  if (useBooster) {
-    return await MistralAiProService.checkSpelling(text);
-  } else {
-    return await OllamaService.checkSpelling(text);
-  }
+
+  return await MistralAiProService.autoCheckSpellingAndFormat(text);
+  //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
 }
+
+import { CorrectionResponse } from '@/services/MistralAiProService';
+
+export async function checkSpellingIssuesAction(text: string): Promise<CorrectionResponse> {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Invalid text provided for spellcheck.');
+  }
+  return await MistralAiProService.checkSpelling(text);
+}
+

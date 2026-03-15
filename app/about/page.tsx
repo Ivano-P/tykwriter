@@ -19,12 +19,6 @@ export default function AboutPage() {
           l'amélioration de l'application.
         </p>
       </div>
-
-      <div className={styles.links}>
-        <Link href="/legal" className={styles.linkItem}>Mentions Légales</Link>
-        <Link href="/privacy" className={styles.linkItem}>Confidentialité</Link>
-        <Link href="/terms" className={styles.linkItem}>CGU</Link>
-      </div>
     </div>
   );
 }

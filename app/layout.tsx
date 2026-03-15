@@ -28,6 +28,7 @@ export const metadata: Metadata = {
 
 import { Navbar } from '@/components/ui/Navbar';
 import { Footer } from '@/components/ui/Footer';
+import { Suspense } from 'react';
 
 export default function RootLayout({
   children,
@@ -37,13 +38,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}
       >
-        <Navbar />
-        <main className="flex-grow">
-          {children}
+        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-100"></div>}>
+          <Navbar />
+        </Suspense>
+        <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </main>
-        <Footer />
       </body>
     </html>
   );

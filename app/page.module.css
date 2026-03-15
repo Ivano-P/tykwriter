@@ -1,28 +1,9 @@
 /* Mobile-first base styles */
 .pageContainer {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  background-color: var(--page-bg);
-}
-
-.mainLayout {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  max-width: 1200px;
+  height: 100%;
   width: 100%;
-  margin: 0 auto;
-}
-
-/************** Larger screens adjustments ****************************/
-@media (min-width: 768px) {
-  .pageContainer {
-    padding: 2rem;
-  }
-
-  .mainLayout {
-    flex-direction: row;
-  }
+  display: flex;
+  flex-direction: column;
+  background-color: var(--page-bg);
+  overflow: hidden;
 }

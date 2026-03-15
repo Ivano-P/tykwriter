@@ -2,53 +2,41 @@
 
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css';
 
-interface CorrectionSidebarProps {
+interface AssistantRedacteurSidebarProps {
   isProcessing: boolean;
   diffParts: Diff.Change[] | null;
   handleUndo: () => void;
   handleManualSubmit: () => void;
   isSubmitDisabled: boolean;
-  isBoosterEnabled: boolean;
-  setIsBoosterEnabled: (val: boolean) => void;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
+  handleFormatEmail: () => void;
+  isSnLinkEnabled: boolean;
+  setIsSnLinkEnabled: (val: boolean) => void;
 }
 
-export function CorrectionSidebar({
+export function AssistantRedacteurSidebar({
   isProcessing,
   diffParts,
   handleUndo,
   handleManualSubmit,
   isSubmitDisabled,
-  isBoosterEnabled,
-  setIsBoosterEnabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
-}: CorrectionSidebarProps) {
+  handleFormatEmail,
+  isSnLinkEnabled,
+  setIsSnLinkEnabled,
+}: AssistantRedacteurSidebarProps) {
+
   return (
     <aside className={styles.sidebarContainer}>
       <h2 className={styles.title}>Actions</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>
-        <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Booster (Mode Pro)</span>
-            <div className={styles.toggleWrapper}>
-              <input
-                type="checkbox"
-                className={styles.toggleCheckbox}
-                checked={isBoosterEnabled}
-                onChange={(e) => setIsBoosterEnabled(e.target.checked)}
-                disabled={isProcessing}
-              />
-              <div className={styles.toggleSlider}></div>
-            </div>
-          </label>
-        </div>
 
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
@@ -73,12 +61,40 @@ export function CorrectionSidebar({
         >
           {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
         </Button>
+
+        <div className={styles.secondaryActionsGrid}>
+          <button
+            onClick={handleFormatEmail}
+            disabled={isProcessing || isSubmitDisabled}
+            className={styles.secondaryActionBtn}
+            title="Ajouter les formules de politesse"
+          >
+            <Mail size={16} />
+            <span>Politesse email</span>
+          </button>
+
+          <button
+            onClick={() => setIsSnLinkEnabled(!isSnLinkEnabled)}
+            disabled={isProcessing}
+            className={`${styles.secondaryActionBtn} ${isSnLinkEnabled ? styles.secondaryActionBtnActive : ''}`}
+            title="Activer/Désactiver Lien SN"
+          >
+            <LinkIcon size={16} />
+            <span>Lien SN</span>
+          </button>
+        </div>
       </div>
 
-      {diffParts && !isProcessing && (
+      {diffParts && diffParts.length === 0 && !isProcessing && (
+        <div className="mt-4 p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
+          Aucune erreur détectées
+        </div>
+      )}
+
+      {diffParts && diffParts.length > 0 && !isProcessing && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Changements détectés</span>
+            <span className={styles.diffTitle}>Correction appliquée</span>
             <button className={styles.undoButton} onClick={handleUndo} title="Annuler la correction">
               <RotateCcw size={16} />
               <span>Annuler</span>
