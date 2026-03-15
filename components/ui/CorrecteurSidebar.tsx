@@ -78,10 +78,13 @@ export function CorrecteurSidebar({
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2">
+      <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2 flex-1 min-h-0">
+        {correctionIssues.length > 0 && !isProcessing && (
         <div className={styles.diffHeader}>
             <span className={styles.diffTitle}>Erreurs détectées</span>
           </div>
+        )}
+
         {correctionIssues.length === 0 && !isProcessing && (
           <div className="p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
             Aucune erreur détectées
