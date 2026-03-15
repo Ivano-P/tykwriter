@@ -56,7 +56,13 @@ export function AssistantRedacteurSidebar({
         </Button>
       </div>
 
-      {diffParts && !isProcessing && (
+      {diffParts && diffParts.length === 0 && !isProcessing && (
+        <div className="mt-4 p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
+          Aucune erreur détectées
+        </div>
+      )}
+
+      {diffParts && diffParts.length > 0 && !isProcessing && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
             <span className={styles.diffTitle}>Correction appliquée</span>

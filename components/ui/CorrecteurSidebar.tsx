@@ -80,6 +80,11 @@ export function CorrecteurSidebar({
         <div className={styles.diffHeader}>
             <span className={styles.diffTitle}>Erreurs détectées</span>
           </div>
+        {correctionIssues.length === 0 && !isProcessing && (
+          <div className="p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
+            Aucune erreur détectées
+          </div>
+        )}
         {correctionIssues.map((issue, index) => (
           <div 
             key={index} 

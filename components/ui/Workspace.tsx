@@ -112,7 +112,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
         setGlobalText(processed.newText);
         setLastCheckedText(processed.newText);
       } else {
-        setDiffParts(null);
+        setDiffParts([]);
         setLastCheckedText(textToCheck);
       }
 
