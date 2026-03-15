@@ -49,6 +49,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   };
 
   const applyCorrection = (issueToApply: CorrectionIssue, source: 'sidebar' | 'editor' = 'sidebar') => {
+    skipDebounceRef.current = true;
     if (source === 'sidebar') {
       const newText = SpellcheckService.applyCorrectionText(globalText, issueToApply);
       setGlobalText(newText);
@@ -57,10 +58,12 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   };
 
   const ignoreCorrection = (issueToIgnore: CorrectionIssue) => {
+    skipDebounceRef.current = true;
     setCorrectionIssues(prev => prev.filter(issue => issue.id !== issueToIgnore.id));
   };
 
   const applyAllCorrections = () => {
+    skipDebounceRef.current = true;
     const newText = SpellcheckService.applyAllCorrectionsText(globalText, correctionIssues);
     setGlobalText(newText);
     setCorrectionIssues([]);
@@ -153,6 +156,15 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
   };
 
   const handleChange = (val: string) => {
+    // Flag pour activer/désactiver le saut de vérification lors d'une suppression de texte
+    //TODO: decide if this should always be on, off or be a user setting
+    const SKIP_SPELLCHECK_ON_DELETE = true;
+
+    // Prevent AI call if text is purely being deleted/shortened AND the flag is true
+    if (SKIP_SPELLCHECK_ON_DELETE && val.length < globalText.length) {
+      skipDebounceRef.current = true;
+    }
+    
     if (val.length <= MAX_CHARS) {
       setGlobalText(val);
       setDiffParts(null);
