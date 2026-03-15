@@ -22,6 +22,7 @@ interface ContentAreaProps {
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
   ignoreCorrection?: (issue: CorrectionIssue) => void;
+  isSnLinkEnabled?: boolean;
 }
 
 export function ContentArea({
@@ -38,6 +39,7 @@ export function ContentArea({
   correctionIssues,
   applyCorrection,
   ignoreCorrection,
+  isSnLinkEnabled,
 }: ContentAreaProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,7 +61,8 @@ export function ContentArea({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      // Dispatch event so TiptapEditor can handle SN link transformation
+      window.dispatchEvent(new CustomEvent('tyk:copyAll'));
     } catch (err) {
       console.error('Failed to copy text', err);
     }
@@ -173,6 +176,7 @@ export function ContentArea({
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
+            isSnLinkEnabled={isSnLinkEnabled}
           />
         </div>
       )}

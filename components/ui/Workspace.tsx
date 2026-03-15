@@ -82,6 +82,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
+  const [isSnLinkEnabled, setIsSnLinkEnabled] = useState(false);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -373,6 +374,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
+            isSnLinkEnabled={isSnLinkEnabled}
           />
         </div>
 
@@ -404,6 +406,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
             handleFormatEmail={handleFormatEmail}
+            isSnLinkEnabled={isSnLinkEnabled}
+            setIsSnLinkEnabled={setIsSnLinkEnabled}
           />
         )}
 
