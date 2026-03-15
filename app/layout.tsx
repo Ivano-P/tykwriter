@@ -38,15 +38,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col overflow-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}
       >
         <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-100"></div>}>
           <Navbar />
         </Suspense>
-        <main className="flex-1 overflow-hidden min-h-0 flex flex-col">
-          {children}
+        <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
         </main>
-        <Footer />
       </body>
     </html>
   );
