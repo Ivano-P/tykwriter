@@ -97,6 +97,16 @@
   color: rgba(15, 82, 186, 0.5);
 }
 
+.secondaryActionBtnActive {
+  background: var(--tyk-sapphire, #0F52BA);
+  color: white;
+}
+
+.secondaryActionBtnActive:hover:not(:disabled) {
+  background: var(--tyk-sapphire, #0F52BA);
+  opacity: 0.9;
+}
+
 .toggleContainer {
   display: flex;
   justify-content: center;

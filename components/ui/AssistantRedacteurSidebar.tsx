@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Mail } from 'lucide-react';
+import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css';
 
 interface AssistantRedacteurSidebarProps {
@@ -26,6 +27,8 @@ export function AssistantRedacteurSidebar({
   setIsAutoCorrectEnabled,
   handleFormatEmail,
 }: AssistantRedacteurSidebarProps) {
+  const [isLienSnEnabled, setIsLienSnEnabled] = useState(false);
+
   return (
     <aside className={styles.sidebarContainer}>
       <h2 className={styles.title}>Actions</h2>
@@ -66,6 +69,16 @@ export function AssistantRedacteurSidebar({
           >
             <Mail size={16} />
             <span>Politesse email</span>
+          </button>
+
+          <button
+            onClick={() => setIsLienSnEnabled(!isLienSnEnabled)}
+            disabled={isProcessing}
+            className={`${styles.secondaryActionBtn} ${isLienSnEnabled ? styles.secondaryActionBtnActive : ''}`}
+            title="Activer/Désactiver Lien SN"
+          >
+            <LinkIcon size={16} />
+            <span>Lien SN</span>
           </button>
         </div>
       </div>
