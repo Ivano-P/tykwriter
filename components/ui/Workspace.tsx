@@ -156,6 +156,14 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     if (val.length <= MAX_CHARS) {
       setGlobalText(val);
       setDiffParts(null);
+      
+      if (val.trim() === '') {
+        setCorrectionIssues([]);
+      } else {
+        setCorrectionIssues(prev => 
+          prev.filter(issue => val.includes(issue.texte_original))
+        );
+      }
     }
   };
 
