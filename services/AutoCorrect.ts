@@ -11,6 +11,8 @@ export class AutoCorrect {
     return Diff.diffWords(originalText, correctedText);
   }
 
+   
+
   /**
    * Compare le texte original et corrigé, renvoie les modifications formatées.
    */

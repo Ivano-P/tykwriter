@@ -193,8 +193,22 @@ export function TiptapEditor({
   useEffect(() => {
     if (editor && globalText !== editor.getText() && !isExternalUpdate.current) {
       isExternalUpdate.current = true;
+      
+      const escapeHtml = (unsafe: string) => unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+      // Convert plain text with \n\n to HTML paragraphs to preserve line breaks
+      const htmlContent = globalText
+        .split('\n\n')
+        .map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
+        .join('');
+
       // Syncing via setContent can reset cursor but it works flawlessly for simple textarea replacements
-      editor.commands.setContent(globalText);
+      editor.commands.setContent(htmlContent);
     }
   }, [globalText, editor]);
 
@@ -258,7 +272,21 @@ export function TiptapEditor({
         // Fallback: if we couldn't find the exact subset, we fallback to updating everything
         isExternalUpdate.current = true;
         const { from: selFrom, to: selTo } = editor.state.selection;
-        editor.commands.setContent(editor.getText().replace(oldText, newText));
+        const newTextFull = editor.getText().replace(oldText, newText);
+        
+        const escapeHtml = (unsafe: string) => unsafe
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+          
+        const htmlContent = newTextFull
+          .split('\n\n')
+          .map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
+          .join('');
+          
+        editor.commands.setContent(htmlContent);
         try {
            editor.commands.setTextSelection({ from: selFrom, to: selTo });
         } catch(e) {}

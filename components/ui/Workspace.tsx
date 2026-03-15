@@ -11,6 +11,7 @@ import { CorrectionIssue } from '@/services/MistralAiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
 import { AutoCorrect } from '@/services/AutoCorrect';
 import { ChunkManager } from '@/services/ChunkManager';
+import { formatEmailText } from '@/lib/utils';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -90,6 +91,8 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
 
   const skipDebounceRef = useRef(false);
   const autoCorrectDelay: number = 3000; //change the delay time here for auto correct
+  const assRedacteurFullCheckDelay: number = 5000; //change the delay time here for auto correct
+ 
 
   useEffect(() => {
     if (skipDebounceRef.current) {
@@ -325,6 +328,19 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
     }
   };
 
+  const handleFormatEmail = () => {
+    if (currentMode !== 'assistant-redacteur') return;
+    
+    skipDebounceRef.current = true;
+    const formattedText = formatEmailText(globalText);
+    
+    if (formattedText !== globalText) {
+      setUndoStack((prev) => [...prev, globalText]);
+      setRedoStack([]);
+      setGlobalText(formattedText);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full overflow-hidden">
       <div className="text-center py-6 px-4 shrink-0">
@@ -387,6 +403,7 @@ export function Workspace({ initialMode = "correcteur" }: { initialMode?: Mode }
             isSubmitDisabled={processingBlocksRef.current.size > 0 || !globalText.trim() || globalText.length > MAX_CHARS}
             isAutoCorrectEnabled={isAutoCorrectEnabled}
             setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
+            handleFormatEmail={handleFormatEmail}
           />
         )}
 

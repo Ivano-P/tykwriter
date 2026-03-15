@@ -61,6 +61,42 @@
   box-shadow: none;
 }
 
+.secondaryActionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.secondaryActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--tyk-sapphire, #0F52BA);
+  color: var(--tyk-sapphire, #0F52BA);
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.secondaryActionBtn:hover:not(:disabled) {
+  background: var(--tyk-sapphire, #0F52BA);
+  color: white;
+}
+
+.secondaryActionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(15, 82, 186, 0.5);
+  color: rgba(15, 82, 186, 0.5);
+}
+
 .toggleContainer {
   display: flex;
   justify-content: center;

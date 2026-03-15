@@ -2,7 +2,7 @@
 
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Mail } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css';
 
 interface AssistantRedacteurSidebarProps {
@@ -13,6 +13,7 @@ interface AssistantRedacteurSidebarProps {
   isSubmitDisabled: boolean;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
+  handleFormatEmail: () => void;
 }
 
 export function AssistantRedacteurSidebar({
@@ -23,6 +24,7 @@ export function AssistantRedacteurSidebar({
   isSubmitDisabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
+  handleFormatEmail,
 }: AssistantRedacteurSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
@@ -54,6 +56,18 @@ export function AssistantRedacteurSidebar({
         >
           {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
         </Button>
+
+        <div className={styles.secondaryActionsGrid}>
+          <button
+            onClick={handleFormatEmail}
+            disabled={isProcessing || isSubmitDisabled}
+            className={styles.secondaryActionBtn}
+            title="Ajouter les formules de politesse"
+          >
+            <Mail size={16} />
+            <span>Politesse email</span>
+          </button>
+        </div>
       </div>
 
       {diffParts && diffParts.length === 0 && !isProcessing && (
