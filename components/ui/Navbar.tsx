@@ -95,6 +95,7 @@ export function Navbar() {
                 <div className={styles.dropdownMenuRight}>
                   <Link href="/about" className={styles.dropdownItem}>À propos de nous</Link>
                   <Link href="/feuille-de-route" className={styles.dropdownItem}>Feuille de route</Link>
+                  <Link href="https://tykwriter-test.tykdev.com/" className={styles.dropdownItem}>Tester la nouvelle version</Link>
                 </div>
               )}
             </div>
@@ -121,6 +122,7 @@ export function Navbar() {
           <div className="px-4 py-2 font-bold text-[#0F52BA]">En savoir plus</div>
           <Link href="/about" className="px-6 py-2 hover:bg-gray-50 text-gray-700">À propos de nous</Link>
           <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 text-gray-700">Feuille de route</Link>
+          <Link href="https://tykwriter-test.tykdev.com/" className="px-6 py-2 hover:bg-gray-50 text-gray-700">text next version</Link>
         </div>
       )}
     </nav>
