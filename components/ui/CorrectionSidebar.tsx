@@ -32,7 +32,7 @@ export function CorrectionSidebar({
       <div className={styles.actionSection}>
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Correction auto</span>
+            <span className={styles.toggleText}>Vérification automatique</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
