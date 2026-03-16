@@ -76,6 +76,7 @@ export function Navbar() {
                 <div className={styles.dropdownMenuRight}>
                   <Link href="/about" className={styles.dropdownItem}>À propos de nous</Link>
                   <Link href="/feuille-de-route" className={styles.dropdownItem}>Feuille de route</Link>
+                  <Link href="https://tykwriter.tykdev.com/" className={styles.dropdownItem}>Retourner à la version production</Link>
                 </div>
               )}
             </div>
