@@ -11,8 +11,8 @@ interface CorrectionSidebarProps {
   handleUndo: () => void;
   handleManualSubmit: () => void;
   isSubmitDisabled: boolean;
-  isBoosterEnabled: boolean;
-  setIsBoosterEnabled: (val: boolean) => void;
+  isAutoCorrectEnabled: boolean;
+  setIsAutoCorrectEnabled: (val: boolean) => void;
 }
 
 export function CorrectionSidebar({
@@ -21,8 +21,8 @@ export function CorrectionSidebar({
   handleUndo,
   handleManualSubmit,
   isSubmitDisabled,
-  isBoosterEnabled,
-  setIsBoosterEnabled,
+  isAutoCorrectEnabled,
+  setIsAutoCorrectEnabled,
 }: CorrectionSidebarProps) {
   return (
     <aside className={styles.sidebarContainer}>
@@ -32,13 +32,13 @@ export function CorrectionSidebar({
       <div className={styles.actionSection}>
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Booster (Mode Pro)</span>
+            <span className={styles.toggleText}>Correction auto</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
                 className={styles.toggleCheckbox}
-                checked={isBoosterEnabled}
-                onChange={(e) => setIsBoosterEnabled(e.target.checked)}
+                checked={isAutoCorrectEnabled}
+                onChange={(e) => setIsAutoCorrectEnabled(e.target.checked)}
                 disabled={isProcessing}
               />
               <div className={styles.toggleSlider}></div>

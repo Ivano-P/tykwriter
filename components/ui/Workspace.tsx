@@ -9,7 +9,7 @@ import { spellcheckAction } from '@/actions/spellcheck.action';
 export function Workspace() {
   const [text, setText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isBoosterEnabled, setIsBoosterEnabled] = useState(false);
+  const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(false);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -19,7 +19,7 @@ export function Workspace() {
 
   const skipDebounceRef = useRef(false);
   const lastProcessedText = useRef<string>('');
-  const lastProcessedBoosterState = useRef<boolean>(false);
+  const autoCorrectDelay = 3500;//change this value to change the auto-correct delay
 
   useEffect(() => {
     if (skipDebounceRef.current) {
@@ -31,26 +31,25 @@ export function Workspace() {
       return;
     }
 
+    if (!isAutoCorrectEnabled) return;
+
     const timer = setTimeout(() => {
       handleSpellCheck(text);
-    }, 2500);
+    }, autoCorrectDelay);
 
     return () => clearTimeout(timer);
-  }, [text, isBoosterEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [text, isAutoCorrectEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpellCheck = async (textToCheck: string) => {
     if (!textToCheck.trim() || isProcessing) return;
 
     if (textToCheck === lastProcessedText.current) {
-      const isUpgrading: boolean = !lastProcessedBoosterState.current && isBoosterEnabled;
-      if (!isUpgrading) {
-        return;
-      }
+      return;
     }
 
     setIsProcessing(true);
     try {
-      const result = await spellcheckAction(textToCheck, isBoosterEnabled);
+      const result = await spellcheckAction(textToCheck);
 
       if (result !== textToCheck) {
         const calculatedDiff = Diff.diffWords(textToCheck, result);
@@ -67,8 +66,6 @@ export function Workspace() {
         setDiffParts(null);
         lastProcessedText.current = textToCheck;
       }
-
-      lastProcessedBoosterState.current = isBoosterEnabled;
     } catch (error) {
       console.error(error);
     } finally {
@@ -130,8 +127,8 @@ export function Workspace() {
         handleUndo={handleUndo}
         handleManualSubmit={handleManualSubmit}
         isSubmitDisabled={isProcessing || !text.trim() || text.length > MAX_CHARS}
-        isBoosterEnabled={isBoosterEnabled}
-        setIsBoosterEnabled={setIsBoosterEnabled}
+        isAutoCorrectEnabled={isAutoCorrectEnabled}
+        setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
       />
     </>
   );
