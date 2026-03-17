@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import styles from './Navbar.module.css';
 
@@ -12,9 +12,7 @@ export function Navbar() {
   const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
   const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false);
 
-  const searchParams = useSearchParams();
-  const modeParam = searchParams.get('mode');
-  const displayMode = modeParam === 'assistant-redacteur' ? 'assistant rédacteur' : modeParam === 'traduction' ? 'traduction' : 'correcteur';
+  const pathname = usePathname();
 
   return (
     <nav className={styles.navbar}>
@@ -34,8 +32,6 @@ export function Navbar() {
             </Link>
           </div>
           <div className="flex items-center mr-2 gap-4">
-            {/* Espace vide commenté pour l'authentification */}
-            {/* <AuthButtons /> */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={styles.iconButton}
@@ -88,22 +84,17 @@ export function Navbar() {
               >
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-base">Mode</span>
-                  {/* <span className="font-medium opacity-80 text-sm">{displayMode}</span> */}
                 </div>
                 <ChevronDown size={16} className="ml-1" />
               </button>
               {isModesDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
-                  <Link href="/?mode=correcteur" className={styles.dropdownItem}>Correcteur</Link>
-                  <Link href="/?mode=assistant-redacteur" className={styles.dropdownItem}>Assistant rédacteur (Expérimentale)</Link>
+                  <Link href="/correcteur" className={styles.dropdownItem}>Correcteur</Link>
+                  <Link href="/assistant-redacteur" className={styles.dropdownItem}>Assistant rédacteur (Expérimentale)</Link>
                   <button disabled className={styles.dropdownItemDisabled}>Traduction (Arrive bientôt)</button>
-
                 </div>
               )}
             </div>
-
-            {/* Espace vide commenté pour l'authentification */}
-            {/* <AuthButtons /> */}
           </div>
         </div>
       </div>
@@ -113,11 +104,10 @@ export function Navbar() {
         <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 mt-2 py-2 flex flex-col z-50">
           <div className="px-4 py-2 flex items-center gap-1">
             <span className="font-bold text-[#0F52BA] text-base">Mode:</span>
-            <span className="font-medium text-[#0F52BA] opacity-80 text-sm">{displayMode}</span>
           </div>
-          <Link href="/?mode=correcteur" className={`px-6 py-2 ${modeParam !== 'assistant-redacteur' && modeParam !== 'traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Correcteur</Link>
+          <Link href="/correcteur" className={`px-6 py-2 ${pathname === '/correcteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Correcteur</Link>
           <div className="px-6 py-2 text-gray-400">Traduction (Arrive bientôt)</div>
-          <Link href="/?mode=assistant-redacteur" className={`px-6 py-2 ${modeParam === 'assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Assistant rédacteur</Link>
+          <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>Assistant rédacteur</Link>
 
           <div className="border-t border-gray-100 my-2"></div>
 
