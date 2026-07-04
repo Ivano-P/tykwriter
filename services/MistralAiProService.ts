@@ -8,10 +8,21 @@ import {
   ASSISTANT_REDACTEUR_JSON_SCHEMA,
   type AssistantOptions,
 } from './prompts/assistantRedacteur.prompt';
+import {
+  buildFinalCheckPrompt,
+  FINAL_CHECK_JSON_SCHEMA,
+  type AppliedCorrection,
+} from './prompts/finalCheck.prompt';
 
 /** Modèles Mistral utilisés par le service (prompts versionnés dans services/prompts/). */
 const CORRECTEUR_MODEL = 'mistral-large-latest';
 const ASSISTANT_REDACTEUR_MODEL = 'mistral-small-latest';
+/**
+ * La passe de vérification finale exige une cohérence inter-phrases que
+ * mistral-small ne garantit pas ; elle ne tourne qu'une fois par pause
+ * d'écriture, le surcoût de mistral-medium reste donc borné.
+ */
+const FINAL_CHECK_MODEL = 'mistral-medium-latest';
 
 export interface CorrectionIssue {
   id: string;
@@ -66,6 +77,51 @@ export class MistralAiProService {
     } catch (error) {
       console.error('Mistral AI Pro Service Error:', error);
       throw new Error('Failed to correct spelling with Mistral API.');
+    }
+  }
+
+
+  /**
+   * Passe de vérification finale : relit le texte COMPLET (déjà corrigé phrase
+   * par phrase) et réconcilie les corrections inline avec le contexte global.
+   * Fallback robuste : en cas d'erreur (API, JSON invalide), retourne le texte
+   * d'entrée inchangé pour ne jamais dégrader le contenu de l'utilisateur.
+   */
+  static async finalCheck(
+    text: string,
+    appliedCorrections: AppliedCorrection[],
+    options?: AssistantOptions
+  ): Promise<string> {
+    try {
+      const response = await this.client.chat.complete({
+        model: FINAL_CHECK_MODEL,
+        messages: [
+          { role: 'system', content: buildFinalCheckPrompt(options ?? {}, appliedCorrections) },
+          { role: 'user', content: text },
+        ],
+        responseFormat: {
+          type: 'json_schema',
+          jsonSchema: {
+            name: 'texte_corrige',
+            schemaDefinition: FINAL_CHECK_JSON_SCHEMA,
+            strict: true,
+          },
+        },
+      });
+
+      const result = response.choices?.[0]?.message?.content;
+      if (typeof result !== 'string') {
+        throw new Error('Invalid response from Mistral AI');
+      }
+
+      const parsed: { texte_corrige?: unknown } = JSON.parse(result);
+      if (typeof parsed.texte_corrige !== 'string') {
+        throw new Error('Missing "texte_corrige" field in Mistral AI response');
+      }
+      return parsed.texte_corrige.trim();
+    } catch (error) {
+      console.error('Mistral AI Final Check Error:', error);
+      return text;
     }
   }
 

@@ -26,6 +26,9 @@ interface AssistantRedacteurSidebarProps {
   isSubmitDisabled: boolean;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
+  isFinalCheckEnabled: boolean;
+  setIsFinalCheckEnabled: (val: boolean) => void;
+  isFinalChecking: boolean;
   handleFormatEmail: () => void;
   isLinkEnabled: boolean;
   setIsLinkEnabled: (val: boolean) => void;
@@ -43,6 +46,9 @@ export function AssistantRedacteurSidebar({
   isSubmitDisabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
+  isFinalCheckEnabled,
+  setIsFinalCheckEnabled,
+  isFinalChecking,
   handleFormatEmail,
   isLinkEnabled,
   setIsLinkEnabled,
@@ -74,6 +80,31 @@ export function AssistantRedacteurSidebar({
             </div>
           </label>
         </div>
+
+        <div className={styles.toggleContainer}>
+          <label className={styles.toggleLabel} title="Relecture globale automatique après une pause d'écriture.">
+            <span className={styles.toggleText}>Vérification finale</span>
+            <div className={styles.toggleWrapper}>
+              <input
+                type="checkbox"
+                className={styles.toggleCheckbox}
+                checked={isFinalCheckEnabled}
+                onChange={(e) => setIsFinalCheckEnabled(e.target.checked)}
+                disabled={isProcessing}
+              />
+              <div className={styles.toggleSlider}></div>
+            </div>
+          </label>
+        </div>
+        <p className={styles.toggleHint}>
+          Relecture globale automatique après une pause d&apos;écriture.
+        </p>
+
+        {isFinalChecking && (
+          <div className={styles.processingIndicator}>
+            Vérification finale…
+          </div>
+        )}
 
         <Button
           onClick={handleManualSubmit}

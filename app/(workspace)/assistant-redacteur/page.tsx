@@ -10,16 +10,23 @@ import { ChunkManager } from '@/services/ChunkManager';
 import { formatEmailText } from '@/lib/utils';
 import { useText } from '@/lib/TextContext';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
+import { MAX_APPLIED_CORRECTIONS, type AppliedCorrection } from '@/services/prompts/finalCheck.prompt';
 import layoutStyles from '../layout.module.css';
 
 const ASSISTANT_REDACTEUR_DELAY = 5000;
 const MAX_CHARS = 2000;
+/** Pause d'écriture après laquelle la vérification finale (texte complet) se déclenche. */
+const FINAL_CHECK_IDLE_DELAY = 12000;
+/** Nouvelle tentative si des corrections de chunks sont encore en vol au moment du déclenchement. */
+const FINAL_CHECK_RETRY_DELAY = 2000;
 
 export default function AssistantRedacteurPage() {
   const { globalText, setGlobalText } = useText();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
+  const [isFinalCheckEnabled, setIsFinalCheckEnabled] = useState(true);
+  const [isFinalChecking, setIsFinalChecking] = useState(false);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
   // Options d'écriture (ton + abréviations) injectées dans le prompt système
@@ -35,6 +42,17 @@ export default function AssistantRedacteurPage() {
   const processedCacheRef = useRef<Map<string, { correctedText: string; isPartial: boolean; hasChanges: boolean }>>(new Map());
   const processingBlocksRef = useRef<Set<string>>(new Set());
   const latestGlobalTextRef = useRef(globalText);
+
+  // ── Vérification finale (passe globale de réconciliation) ──────────
+  // Journal des corrections inline appliquées pendant la session de saisie,
+  // consommé (vidé) après chaque passe finale réussie.
+  const appliedCorrectionsRef = useRef<AppliedCorrection[]>([]);
+  // Dernier texte validé par une passe finale : la passe ne re-tourne jamais
+  // tant que le texte n'a pas changé depuis (garde anti-boucle).
+  const lastFinalCheckedTextRef = useRef('');
+  const finalCheckInFlightRef = useRef(false);
+  const finalCheckRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runFinalCheckRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     latestGlobalTextRef.current = globalText;
@@ -53,6 +71,10 @@ export default function AssistantRedacteurPage() {
     pendingRequestsRef.current.clear();
     processingBlocksRef.current.clear();
     processedCacheRef.current.clear();
+    // Le journal des corrections et la garde de la passe finale se réfèrent
+    // aux anciennes options : on repart de zéro.
+    appliedCorrectionsRef.current = [];
+    lastFinalCheckedTextRef.current = '';
   }, [tone, abreviations]);
 
   const triggerAssistantApi = useCallback(async (originalText: string, isComplete: boolean) => {
@@ -83,6 +105,12 @@ export default function AssistantRedacteurPage() {
       });
 
       if (processed.hasChanges) {
+        // Journalise la correction inline pour la passe de vérification finale.
+        appliedCorrectionsRef.current.push({ original: originalText, corrected: correctedText });
+        if (appliedCorrectionsRef.current.length > MAX_APPLIED_CORRECTIONS) {
+          appliedCorrectionsRef.current = appliedCorrectionsRef.current.slice(-MAX_APPLIED_CORRECTIONS);
+        }
+
         window.dispatchEvent(new CustomEvent('tyk:replaceText', {
           detail: { oldText: originalText, newText: correctedText }
         }));
@@ -119,6 +147,8 @@ export default function AssistantRedacteurPage() {
         pendingRequestsRef.current.clear();
         processingBlocksRef.current.clear();
         processedCacheRef.current.clear();
+        appliedCorrectionsRef.current = [];
+        lastFinalCheckedTextRef.current = '';
       }
       return;
     }
@@ -162,6 +192,119 @@ export default function AssistantRedacteurPage() {
       return () => clearTimeout(timeoutId);
     }
   }, [globalText, isAutoCorrectEnabled, triggerAssistantApi]);
+
+  // ── Vérification finale : passe globale après une pause d'écriture ──
+  // Relit le texte COMPLET (mistral-medium) pour réconcilier les corrections
+  // inline (appliquées phrase par phrase, sans contexte) avec le contexte global.
+  const runFinalCheck = useCallback(async () => {
+    if (finalCheckInFlightRef.current) return;
+    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+
+    const sentText = latestGlobalTextRef.current;
+    if (!sentText.trim() || sentText.length > MAX_CHARS) return;
+    if (sentText.trim() === lastFinalCheckedTextRef.current.trim()) return;
+
+    // Des corrections de chunks sont encore en vol : on réessaie un peu plus
+    // tard plutôt que d'abandonner la passe (le texte peut ne plus changer).
+    if (pendingRequestsRef.current.size > 0 || processingBlocksRef.current.size > 0) {
+      if (finalCheckRetryRef.current) clearTimeout(finalCheckRetryRef.current);
+      finalCheckRetryRef.current = setTimeout(() => runFinalCheckRef.current(), FINAL_CHECK_RETRY_DELAY);
+      return;
+    }
+
+    finalCheckInFlightRef.current = true;
+    setIsFinalChecking(true);
+
+    try {
+      const resp = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: sentText,
+          options: { tone, abreviations },
+          mode: 'final',
+          appliedCorrections: appliedCorrectionsRef.current,
+        }),
+      });
+
+      if (!resp.ok) {
+        throw new Error('Final check API request failed');
+      }
+
+      const data = await resp.json();
+      const correctedText: string = data.correctedText;
+      if (typeof correctedText !== 'string') {
+        throw new Error('Invalid final check response');
+      }
+
+      // L'utilisateur a tapé pendant l'appel : le résultat est périmé, on le
+      // jette sans toucher aux gardes (la nouvelle saisie relancera une passe).
+      if (latestGlobalTextRef.current !== sentText) return;
+
+      const processed = AutoCorrect.processCorrections(sentText, correctedText);
+
+      if (!processed.hasChanges) {
+        lastFinalCheckedTextRef.current = sentText;
+        appliedCorrectionsRef.current = [];
+        return;
+      }
+
+      // Pré-cache les chunks du texte final (clés brutes + trimmed) pour que
+      // le pipeline de correction par chunks ne re-traite pas le résultat.
+      const cacheAsProcessed = (key: string) => {
+        processedCacheRef.current.set(key, { correctedText: key, isPartial: false, hasChanges: false });
+        const trimmed = key.trim();
+        if (trimmed && trimmed !== key) {
+          processedCacheRef.current.set(trimmed, { correctedText: trimmed, isPartial: false, hasChanges: false });
+        }
+      };
+      ChunkManager.splitIntoBlocks(correctedText).forEach(chunk => cacheAsProcessed(chunk.originalText));
+      cacheAsProcessed(correctedText);
+
+      lastFinalCheckedTextRef.current = correctedText;
+      appliedCorrectionsRef.current = [];
+
+      window.dispatchEvent(new CustomEvent('tyk:replaceText', {
+        detail: { oldText: sentText, newText: correctedText }
+      }));
+
+      setUndoStack((prev) => [...prev, sentText]);
+      setRedoStack([]);
+      setDiffParts(processed.diffParts);
+      skipDebounceRef.current = true;
+    } catch (err) {
+      console.error('Final check error:', err);
+    } finally {
+      finalCheckInFlightRef.current = false;
+      setIsFinalChecking(false);
+    }
+  }, [isFinalCheckEnabled, isAutoCorrectEnabled, tone, abreviations]);
+
+  useEffect(() => {
+    runFinalCheckRef.current = runFinalCheck;
+  }, [runFinalCheck]);
+
+  // Détection de pause d'écriture : toute modification de globalText réarme le
+  // minuteur ; la passe ne part que si le texte diffère de la dernière passe.
+  useEffect(() => {
+    if (finalCheckRetryRef.current) {
+      clearTimeout(finalCheckRetryRef.current);
+      finalCheckRetryRef.current = null;
+    }
+
+    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+    if (globalText.trim() === '' || globalText.length > MAX_CHARS) return;
+    if (globalText.trim() === lastFinalCheckedTextRef.current.trim()) return;
+
+    const timeoutId = setTimeout(() => runFinalCheckRef.current(), FINAL_CHECK_IDLE_DELAY);
+    return () => {
+      clearTimeout(timeoutId);
+      if (finalCheckRetryRef.current) {
+        clearTimeout(finalCheckRetryRef.current);
+        finalCheckRetryRef.current = null;
+      }
+    };
+  }, [globalText, isFinalCheckEnabled, isAutoCorrectEnabled]);
 
   // Legacy manual check fallback
   const handleSpellCheck = async (textToCheck: string) => {
@@ -216,6 +359,9 @@ export default function AssistantRedacteurPage() {
     setUndoStack((prev: string[]) => prev.slice(0, -1));
 
     skipDebounceRef.current = true;
+    // Ne pas relancer la passe finale sur un texte que l'utilisateur vient
+    // volontairement de restaurer (elle referait la correction annulée).
+    lastFinalCheckedTextRef.current = lastText;
     setGlobalText(lastText);
     setDiffParts(null);
   };
@@ -228,6 +374,7 @@ export default function AssistantRedacteurPage() {
     setRedoStack((prev: string[]) => prev.slice(0, -1));
 
     skipDebounceRef.current = true;
+    lastFinalCheckedTextRef.current = nextText;
     setGlobalText(nextText);
     setDiffParts(null);
   };
@@ -280,6 +427,9 @@ export default function AssistantRedacteurPage() {
           isSubmitDisabled={currentlyProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
           isAutoCorrectEnabled={isAutoCorrectEnabled}
           setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
+          isFinalCheckEnabled={isFinalCheckEnabled}
+          setIsFinalCheckEnabled={setIsFinalCheckEnabled}
+          isFinalChecking={isFinalChecking}
           handleFormatEmail={handleFormatEmail}
           isLinkEnabled={isLinkEnabled}
           setIsLinkEnabled={setIsLinkEnabled}
