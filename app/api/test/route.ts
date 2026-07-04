@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
-import { OllamaService } from '@/services/OllamaService';
+import { MistralAiProService } from '@/services/MistralAiProService';
 
-export async function GET() {
+/**
+ * Route de test dev : POST { "text": "..." } pour vérifier le correcteur Mistral.
+ */
+export async function POST(request: Request) {
   try {
-    const result = await OllamaService.checkSpelling("je tes en local. putain c'est vraimment un gro conard.");
+    const { text } = await request.json();
+    if (!text || typeof text !== 'string') {
+      return NextResponse.json({ error: 'Invalid text provided.' }, { status: 400 });
+    }
+    const result = await MistralAiProService.checkSpelling(text);
     return NextResponse.json({ result });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

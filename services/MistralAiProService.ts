@@ -1,4 +1,16 @@
 import { Mistral } from '@mistralai/mistralai';
+import {
+  CORRECTEUR_SYSTEM_PROMPT,
+  CORRECTEUR_JSON_SCHEMA,
+} from './prompts/correcteur.prompt';
+import {
+  ASSISTANT_REDACTEUR_SYSTEM_PROMPT,
+  ASSISTANT_REDACTEUR_JSON_SCHEMA,
+} from './prompts/assistantRedacteur.prompt';
+
+/** Modèles Mistral utilisés par le service (prompts versionnés dans services/prompts/). */
+const CORRECTEUR_MODEL = 'mistral-large-latest';
+const ASSISTANT_REDACTEUR_MODEL = 'mistral-small-latest';
 
 export interface CorrectionIssue {
   id: string;
@@ -9,63 +21,10 @@ export interface CorrectionIssue {
 }
 
 export interface CorrectionResponse {
+  texte_corrige_complet?: string;
+  raisonnement_global?: string;
   erreurs: CorrectionIssue[];
 }
-
-/**
- * DOCUMENTATION Configuration retour de L'agent correcteur:
- * Ce schéma n'est pas passé directement dans l'appel API car il est configuré
- * en dur sur l'Agent IA (ID: ag_019cc9f46ba17798825ec75aac41c7a8).
- * Il est présent ici à titre de référence pour maintenir la cohérence avec les interfaces ci-dessus.
- */
-export const MISTRAL_AGENT_SCHEMA_REFERENCE = {
-  "type": "object",
-  "required": [
-    "erreurs"
-  ],
-  "properties": {
-    "erreurs": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "texte_original",
-          "correction",
-          "type",
-          "explication"
-        ],
-        "properties": {
-          "type": {
-            "enum": [
-              "orthographe",
-              "grammaire",
-              "typographie",
-              "style",
-              "ponctuation"
-            ],
-            "type": "string",
-            "description": "La catégorie de l'erreur."
-          },
-          "correction": {
-            "type": "string",
-            "description": "La version corrigée."
-          },
-          "explication": {
-            "type": "string",
-            "description": "Une explication courte et pédagogique justifiant la correction."
-          },
-          "texte_original": {
-            "type": "string",
-            "description": "Le mot ou le bout de phrase exact comportant l'erreur, tel qu'il est écrit dans le texte d'origine."
-          }
-        },
-        "additionalProperties": false
-      },
-      "description": "Liste des erreurs trouvées dans le texte."
-    }
-  },
-  "additionalProperties": false
-};
 
 export class MistralAiProService {
   private static client = new Mistral({
@@ -75,16 +34,32 @@ export class MistralAiProService {
 
   static async autoCheckSpellingAndFormat(text: string): Promise<string> {
     try {
-      const response = await this.client.agents.complete({
-        agentId: 'ag_019cc33e0cd5741080d0523a1dfab603', //agent assistant redacteur
-        messages: [{ role: 'user', content: text }],
+      const response = await this.client.chat.complete({
+        model: ASSISTANT_REDACTEUR_MODEL,
+        messages: [
+          { role: 'system', content: ASSISTANT_REDACTEUR_SYSTEM_PROMPT },
+          { role: 'user', content: text },
+        ],
+        responseFormat: {
+          type: 'json_schema',
+          jsonSchema: {
+            name: 'texte_corrige',
+            schemaDefinition: ASSISTANT_REDACTEUR_JSON_SCHEMA,
+            strict: true,
+          },
+        },
       });
 
       const result = response.choices?.[0]?.message?.content;
       if (typeof result !== 'string') {
         throw new Error('Invalid response from Mistral AI');
       }
-      return result.trim();
+
+      const parsed: { texte_corrige?: unknown } = JSON.parse(result);
+      if (typeof parsed.texte_corrige !== 'string') {
+        throw new Error('Missing "texte_corrige" field in Mistral AI response');
+      }
+      return parsed.texte_corrige.trim();
     } catch (error) {
       console.error('Mistral AI Pro Service Error:', error);
       throw new Error('Failed to correct spelling with Mistral API.');
@@ -94,19 +69,23 @@ export class MistralAiProService {
 
   static async checkSpelling(text: string): Promise<CorrectionResponse> {
     try {
-      const response = await this.client.agents.complete({
-        agentId: 'ag_019cc9f46ba17798825ec75aac41c7a8', // agent correcteur
-        messages: [{ role: 'user', content: text }],
-        responseFormat: { type: 'json_object' } // Sécurité : force Mistral à valider le JSON
+      const response = await this.client.chat.complete({
+        model: CORRECTEUR_MODEL,
+        messages: [
+          { role: 'system', content: CORRECTEUR_SYSTEM_PROMPT },
+          { role: 'user', content: text },
+        ],
+        responseFormat: {
+          type: 'json_schema',
+          jsonSchema: {
+            name: 'diagnostic_correction',
+            schemaDefinition: CORRECTEUR_JSON_SCHEMA,
+            strict: true,
+          },
+        },
       });
 
       const result = response.choices?.[0]?.message?.content;
-
-      //  LOG DE DEBUG : INDISPENSABLE POUR VOS TESTS 
-      console.log("\n---  RÉPONSE BRUTE MISTRAL agent spell checker---");
-      console.log('Mistral AI JSON Parsing Result:', result);
-      console.log("--------------------------------\n");
-
       if (typeof result !== 'string') {
         throw new Error('Invalid response from Mistral AI');
       }
