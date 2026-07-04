@@ -15,6 +15,12 @@ import {
   FINAL_CHECK_JSON_SCHEMA,
   type AppliedCorrection,
 } from './prompts/finalCheck.prompt';
+import {
+  buildTraductionPrompt,
+  TRADUCTION_JSON_SCHEMA,
+  type TargetLanguage,
+  type TraductionResponse,
+} from './prompts/traduction.prompt';
 
 /** Modèles Mistral utilisés par le service (prompts versionnés dans services/prompts/). */
 const CORRECTEUR_MODEL = 'mistral-large-latest';
@@ -25,6 +31,11 @@ const ASSISTANT_REDACTEUR_MODEL = 'mistral-small-latest';
  * d'écriture, le surcoût de mistral-medium reste donc borné.
  */
 const FINAL_CHECK_MODEL = 'mistral-medium-latest';
+/**
+ * La traduction couvre des cibles CJK et cyrilliques où les petits modèles
+ * décrochent nettement : mistral-large est requis pour la qualité.
+ */
+const TRADUCTION_MODEL = 'mistral-large-latest';
 
 export interface CorrectionIssue {
   id: string;
@@ -124,6 +135,55 @@ export class MistralAiProService {
     } catch (error) {
       console.error('Mistral AI Final Check Error:', error);
       return text;
+    }
+  }
+
+  /**
+   * Traduction avec détection automatique de la langue source.
+   * Langue source non supportée → { est_supportee: false, traduction: '' }
+   * (l'UI affiche l'erreur « langue non prise en charge »).
+   * Les erreurs API remontent à l'appelant : contrairement au correcteur, il
+   * n'existe pas de repli silencieux acceptable pour une traduction.
+   */
+  static async translate(text: string, targetLanguage: TargetLanguage): Promise<TraductionResponse> {
+    try {
+      const response = await this.client.chat.complete({
+        model: TRADUCTION_MODEL,
+        messages: [
+          { role: 'system', content: buildTraductionPrompt(targetLanguage) },
+          { role: 'user', content: text },
+        ],
+        responseFormat: {
+          type: 'json_schema',
+          jsonSchema: {
+            name: 'traduction',
+            schemaDefinition: TRADUCTION_JSON_SCHEMA,
+            strict: true,
+          },
+        },
+      });
+
+      const result = response.choices?.[0]?.message?.content;
+      if (typeof result !== 'string') {
+        throw new Error('Invalid response from Mistral AI');
+      }
+
+      const parsed: Partial<TraductionResponse> = JSON.parse(result);
+      if (
+        typeof parsed.langue_detectee !== 'string' ||
+        typeof parsed.est_supportee !== 'boolean' ||
+        typeof parsed.traduction !== 'string'
+      ) {
+        throw new Error('Malformed translation response from Mistral AI');
+      }
+      return {
+        langue_detectee: parsed.langue_detectee,
+        est_supportee: parsed.est_supportee,
+        traduction: parsed.traduction,
+      };
+    } catch (error) {
+      console.error('Mistral AI Translation Error:', error);
+      throw new Error('Failed to translate with Mistral API.');
     }
   }
 
