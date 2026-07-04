@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import styles from './Footer.module.css';
 
 export async function Footer() {
@@ -16,6 +17,7 @@ export async function Footer() {
           <span className={styles.separator}>|</span>
           <Link href="/terms" className={styles.link}>{t('terms')}</Link>
         </div>
+        <LanguageSwitcher className={styles.languageSwitcher} />
       </div>
     </footer>
   );

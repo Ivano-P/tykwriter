@@ -1,60 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
-import { setLocaleAction } from '@/actions/locale.action';
-import type { AppLocale } from '@/i18n/locales';
+import { useTranslations } from 'next-intl';
 import styles from './Navbar.module.css';
-
-function LanguageSwitcher({ className = '' }: { className?: string }) {
-  const t = useTranslations('navbar');
-  const locale = useLocale();
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-
-  const switchLocale = (next: AppLocale) => {
-    if (next === locale || isPending) return;
-    startTransition(async () => {
-      await setLocaleAction(next);
-      router.refresh();
-    });
-  };
-
-  const btnClass = (active: boolean) =>
-    `px-2 py-0.5 rounded text-sm font-semibold transition-colors ${
-      active
-        ? 'bg-[#0F52BA] text-white'
-        : 'text-gray-500 hover:text-[#0F52BA]'
-    } ${isPending ? 'opacity-60' : ''}`;
-
-  return (
-    <div className={`flex items-center gap-1 ${className}`} data-testid="language-switcher">
-      <button
-        type="button"
-        className={btnClass(locale === 'fr')}
-        onClick={() => switchLocale('fr')}
-        aria-label={t('switchToFrench')}
-        aria-pressed={locale === 'fr'}
-      >
-        FR
-      </button>
-      <span className="text-gray-300">/</span>
-      <button
-        type="button"
-        className={btnClass(locale === 'en')}
-        onClick={() => switchLocale('en')}
-        aria-label={t('switchToEnglish')}
-        aria-pressed={locale === 'en'}
-      >
-        EN
-      </button>
-    </div>
-  );
-}
 
 export function Navbar() {
   const t = useTranslations('navbar');
@@ -145,8 +97,6 @@ export function Navbar() {
                 </div>
               )}
             </div>
-
-            <LanguageSwitcher />
           </div>
         </div>
       </div>
@@ -166,13 +116,6 @@ export function Navbar() {
           <div className="px-4 py-2 font-bold text-[#0F52BA]">{t('learnMore')}</div>
           <Link href="/about" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('about')}</Link>
           <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('roadmap')}</Link>
-
-          <div className="border-t border-gray-100 my-2"></div>
-
-          <div className="px-4 py-2 flex items-center justify-between">
-            <span className="font-bold text-[#0F52BA]">{t('language')}</span>
-            <LanguageSwitcher className="mr-2" />
-          </div>
         </div>
       )}
     </nav>

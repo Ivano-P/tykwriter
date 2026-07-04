@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
@@ -8,7 +8,13 @@ import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
-import type { EnglishVariant } from '@/services/prompts/englishVariant';
+import {
+  WRITING_LANGUAGES,
+  writingLanguageToVariant,
+  variantToWritingLanguage,
+  sanitizeWritingLanguage,
+  type EnglishVariant,
+} from '@/services/prompts/englishVariant';
 import { useText } from '@/lib/TextContext';
 import layoutStyles from '../layout.module.css';
 
@@ -25,8 +31,21 @@ export default function CorrecteurPage() {
   const { globalText, setGlobalText } = useText();
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
-  // Variante d'anglais exigée (auto/us/uk) : injectée dans le prompt du correcteur
+  // Variante d'anglais exigée (auto/us/uk) : injectée dans le prompt du correcteur.
+  // Exposée dans la barre d'outils comme langue d'écriture (fr / en-US / en-GB).
   const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
+
+  // Options du sélecteur de langue de la barre d'outils, libellées dans la langue de l'UI
+  const languageOptions = useMemo(() => {
+    const names = new Intl.DisplayNames([uiLocale], { type: 'language' });
+    return WRITING_LANGUAGES.map((lang) => {
+      let label: string = lang;
+      try {
+        label = names.of(lang) ?? lang;
+      } catch { /* code inconnu : on garde le code brut */ }
+      return { value: lang, label };
+    });
+  }, [uiLocale]);
   // Nombre de paragraphes en cours de vérification (réactif, miroir de inFlightRef)
   const [inFlightCount, setInFlightCount] = useState(0);
   const isProcessing = inFlightCount > 0;
@@ -287,6 +306,11 @@ export default function CorrecteurPage() {
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
+            languageOptions={languageOptions}
+            languageValue={variantToWritingLanguage(englishVariant)}
+            onLanguageChange={(value) =>
+              setEnglishVariant(writingLanguageToVariant(sanitizeWritingLanguage(value)))
+            }
           />
         </div>
 
@@ -304,8 +328,6 @@ export default function CorrecteurPage() {
           applyCorrection={applyCorrection}
           applyAllCorrections={applyAllCorrections}
           ignoreCorrection={ignoreCorrection}
-          englishVariant={englishVariant}
-          setEnglishVariant={setEnglishVariant}
         />
       </div>
     </>

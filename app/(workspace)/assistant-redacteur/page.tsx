@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
@@ -11,7 +11,13 @@ import { ChunkManager } from '@/services/ChunkManager';
 import { formatEmailText } from '@/lib/utils';
 import { useText } from '@/lib/TextContext';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
-import type { EnglishVariant } from '@/services/prompts/englishVariant';
+import {
+  WRITING_LANGUAGES,
+  writingLanguageToVariant,
+  variantToWritingLanguage,
+  sanitizeWritingLanguage,
+  type EnglishVariant,
+} from '@/services/prompts/englishVariant';
 import { MAX_APPLIED_CORRECTIONS, type AppliedCorrection } from '@/services/prompts/finalCheck.prompt';
 import layoutStyles from '../layout.module.css';
 
@@ -24,6 +30,7 @@ const FINAL_CHECK_RETRY_DELAY = 2000;
 
 export default function AssistantRedacteurPage() {
   const t = useTranslations('banner');
+  const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -36,6 +43,18 @@ export default function AssistantRedacteurPage() {
   const [tone, setTone] = useState<AssistantTone>('auto');
   const [abreviations, setAbreviations] = useState<AssistantAbreviations>('conserver');
   const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
+
+  // Options du sélecteur de langue de la barre d'outils, libellées dans la langue de l'UI
+  const languageOptions = useMemo(() => {
+    const names = new Intl.DisplayNames([uiLocale], { type: 'language' });
+    return WRITING_LANGUAGES.map((lang) => {
+      let label: string = lang;
+      try {
+        label = names.of(lang) ?? lang;
+      } catch { /* code inconnu : on garde le code brut */ }
+      return { value: lang, label };
+    });
+  }, [uiLocale]);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -428,6 +447,11 @@ export default function AssistantRedacteurPage() {
             handleRedo={handleRedo}
             MAX_CHARS={MAX_CHARS}
             isLinkEnabled={isLinkEnabled}
+            languageOptions={languageOptions}
+            languageValue={variantToWritingLanguage(englishVariant)}
+            onLanguageChange={(value) =>
+              setEnglishVariant(writingLanguageToVariant(sanitizeWritingLanguage(value)))
+            }
           />
         </div>
 
@@ -449,8 +473,6 @@ export default function AssistantRedacteurPage() {
           setTone={setTone}
           abreviations={abreviations}
           setAbreviations={setAbreviations}
-          englishVariant={englishVariant}
-          setEnglishVariant={setEnglishVariant}
         />
       </div>
     </>

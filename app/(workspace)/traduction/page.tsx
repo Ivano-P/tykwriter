@@ -8,6 +8,8 @@ import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
 import { translateAction } from '@/actions/traduction.action';
 import {
   DEFAULT_TARGET_LANGUAGE,
+  TARGET_LANGUAGES,
+  sanitizeTargetLanguage,
   type TargetLanguage,
   type TraductionResponse,
 } from '@/services/prompts/traduction.prompt';
@@ -47,6 +49,19 @@ export default function TraductionPage() {
   const languageNames = useMemo(
     () => new Intl.DisplayNames([uiLocale], { type: 'language' }),
     [uiLocale]
+  );
+
+  // Options du sélecteur de langue CIBLE de la barre d'outils
+  const languageOptions = useMemo(
+    () =>
+      TARGET_LANGUAGES.map((lang) => {
+        let label: string = lang;
+        try {
+          label = languageNames.of(lang) ?? lang;
+        } catch { /* code inconnu : on garde le code brut */ }
+        return { value: lang, label };
+      }),
+    [languageNames]
   );
 
   const runTranslation = useCallback(async (text: string, target: TargetLanguage) => {
@@ -188,14 +203,13 @@ export default function TraductionPage() {
             handleRedo={() => {}}
             MAX_CHARS={MAX_CHARS}
             translationPane={translationPane}
+            languageOptions={languageOptions}
+            languageValue={targetLanguage}
+            onLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
           />
         </div>
 
-        <TraductionSidebar
-          targetLanguage={targetLanguage}
-          setTargetLanguage={setTargetLanguage}
-          isTranslating={isTranslating}
-        />
+        <TraductionSidebar isTranslating={isTranslating} />
       </div>
     </>
   );

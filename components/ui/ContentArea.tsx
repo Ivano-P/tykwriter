@@ -27,6 +27,10 @@ interface ContentAreaProps {
   isLinkEnabled?: boolean;
   /** Panneau de sortie affiché à côté de l'éditeur (mode traduction : zone scindée). */
   translationPane?: React.ReactNode;
+  /** Sélecteur de langue du mode (affiché entre Rétablir et le nom du mode). */
+  languageOptions?: { value: string; label: string }[];
+  languageValue?: string;
+  onLanguageChange?: (value: string) => void;
 }
 
 export function ContentArea({
@@ -44,6 +48,9 @@ export function ContentArea({
   ignoreCorrection,
   isLinkEnabled,
   translationPane,
+  languageOptions,
+  languageValue,
+  onLanguageChange,
 }: ContentAreaProps) {
   const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -105,6 +112,22 @@ export function ContentArea({
           >
             <Redo2 size={24} />
           </button>
+
+          {languageOptions && languageOptions.length > 0 && onLanguageChange && (
+            <select
+              className={styles.toolbarSelect}
+              value={languageValue}
+              onChange={(e) => onLanguageChange(e.target.value)}
+              title={t('languageTitle')}
+              aria-label={t('languageTitle')}
+            >
+              {languageOptions.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className={styles.toolbarCenter} ref={dropdownRef}>

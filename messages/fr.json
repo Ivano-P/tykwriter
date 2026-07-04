@@ -37,7 +37,7 @@
     "modeCorrecteur": "Correcteur",
     "modeAssistant": "Assistant Rédacteur",
     "modeTraduction": "Traduction",
-    "traductionComingSoon": "Mode traduction (Bientôt disponible)",
+    "languageTitle": "Langue",
     "charCount": "{current} / {max} char",
     "wordCount": "{count} mots"
   },
@@ -52,11 +52,6 @@
     "checking": "Vérification...",
     "checkNow": "Vérifier maintenant",
     "fixAll": "Tout corriger ({count})",
-    "options": "Options",
-    "english": "Anglais",
-    "englishAuto": "Auto",
-    "englishUs": "Américain (US)",
-    "englishUk": "Britannique (UK)",
     "errorsDetected": "Erreurs détectées",
     "noErrors": "Aucune erreur détectées",
     "ignoreError": "Ignorer cette erreur"
@@ -84,10 +79,6 @@
     "abbreviationsChoiceTitle": "Abréviations : {label}",
     "abbreviationsConserver": "Conserver",
     "abbreviationsDevelopper": "Développer",
-    "english": "Anglais",
-    "englishAuto": "Auto",
-    "englishUs": "Américain (US)",
-    "englishUk": "Britannique (UK)",
     "noErrors": "Aucune erreur détectées",
     "correctionApplied": "Correction appliquée",
     "undoCorrectionTitle": "Annuler la correction",
@@ -95,7 +86,6 @@
   },
   "traductionSidebar": {
     "actions": "Actions",
-    "targetLanguage": "Traduire vers",
     "autoTranslateHint": "Traduction automatique après une pause de saisie.",
     "translating": "Traduction…"
   },

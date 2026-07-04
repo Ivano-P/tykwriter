@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
-import { sanitizeEnglishVariant, type EnglishVariant } from '@/services/prompts/englishVariant';
 import styles from './CorrectionSidebar.module.css';
 
 // Les valeurs restent les identifiants internes envoyés au prompt ;
@@ -20,12 +19,6 @@ const TONE_CHOICES: { value: AssistantTone; labelKey: string }[] = [
 const ABREVIATION_CHOICES: { value: AssistantAbreviations; labelKey: string }[] = [
   { value: 'conserver', labelKey: 'abbreviationsConserver' },
   { value: 'developper', labelKey: 'abbreviationsDevelopper' },
-];
-
-const ENGLISH_VARIANT_CHOICES: { value: EnglishVariant; labelKey: string }[] = [
-  { value: 'auto', labelKey: 'englishAuto' },
-  { value: 'us', labelKey: 'englishUs' },
-  { value: 'uk', labelKey: 'englishUk' },
 ];
 
 interface AssistantRedacteurSidebarProps {
@@ -46,8 +39,6 @@ interface AssistantRedacteurSidebarProps {
   setTone: (val: AssistantTone) => void;
   abreviations: AssistantAbreviations;
   setAbreviations: (val: AssistantAbreviations) => void;
-  englishVariant: EnglishVariant;
-  setEnglishVariant: (val: EnglishVariant) => void;
 }
 
 export function AssistantRedacteurSidebar({
@@ -68,8 +59,6 @@ export function AssistantRedacteurSidebar({
   setTone,
   abreviations,
   setAbreviations,
-  englishVariant,
-  setEnglishVariant,
 }: AssistantRedacteurSidebarProps) {
   const t = useTranslations('assistantSidebar');
 
@@ -186,25 +175,6 @@ export function AssistantRedacteurSidebar({
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className={styles.optionGroup}>
-            <label className={styles.optionLabel} htmlFor="assistant-english-variant">
-              {t('english')}
-            </label>
-            <select
-              id="assistant-english-variant"
-              className={styles.optionSelect}
-              value={englishVariant}
-              onChange={(e) => setEnglishVariant(sanitizeEnglishVariant(e.target.value))}
-              disabled={isProcessing}
-            >
-              {ENGLISH_VARIANT_CHOICES.map(({ value, labelKey }) => (
-                <option key={value} value={value}>
-                  {t(labelKey)}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
       </div>

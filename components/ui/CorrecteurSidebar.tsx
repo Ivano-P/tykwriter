@@ -6,14 +6,6 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
 import { CorrectionIssue } from '@/services/MistralAiProService';
-import { sanitizeEnglishVariant, type EnglishVariant } from '@/services/prompts/englishVariant';
-
-// Valeurs internes envoyées au prompt ; libellés traduits (namespace correcteurSidebar).
-const ENGLISH_VARIANT_CHOICES: { value: EnglishVariant; labelKey: string }[] = [
-  { value: 'auto', labelKey: 'englishAuto' },
-  { value: 'us', labelKey: 'englishUs' },
-  { value: 'uk', labelKey: 'englishUk' },
-];
 
 interface CorrecteurSidebarProps {
   isProcessing: boolean;
@@ -29,8 +21,6 @@ interface CorrecteurSidebarProps {
   applyCorrection: (issue: CorrectionIssue) => void;
   applyAllCorrections: () => void;
   ignoreCorrection: (issue: CorrectionIssue) => void;
-  englishVariant: EnglishVariant;
-  setEnglishVariant: (val: EnglishVariant) => void;
 }
 
 export function CorrecteurSidebar({
@@ -47,8 +37,6 @@ export function CorrecteurSidebar({
   applyCorrection,
   applyAllCorrections,
   ignoreCorrection,
-  englishVariant,
-  setEnglishVariant,
 }: CorrecteurSidebarProps) {
   const t = useTranslations('correcteurSidebar');
 
@@ -90,29 +78,6 @@ export function CorrecteurSidebar({
             {t('fixAll', { count: String(correctionIssues.length) })}
           </Button>
         )}
-
-        <div className={styles.optionsSection}>
-          <h3 className={styles.optionsTitle}>{t('options')}</h3>
-
-          <div className={styles.optionGroup}>
-            <label className={styles.optionLabel} htmlFor="correcteur-english-variant">
-              {t('english')}
-            </label>
-            <select
-              id="correcteur-english-variant"
-              className={styles.optionSelect}
-              value={englishVariant}
-              onChange={(e) => setEnglishVariant(sanitizeEnglishVariant(e.target.value))}
-              disabled={isProcessing}
-            >
-              {ENGLISH_VARIANT_CHOICES.map(({ value, labelKey }) => (
-                <option key={value} value={value}>
-                  {t(labelKey)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
       </div>
 
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2 flex-1 min-h-0">
