@@ -9,13 +9,15 @@ export async function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        <p className={styles.slogan}>{t('slogan')}</p>
-        <div className={styles.links}>
-          <Link href="/legal" className={styles.link}>{t('legal')}</Link>
-          <span className={styles.separator}>|</span>
-          <Link href="/privacy" className={styles.link}>{t('privacy')}</Link>
-          <span className={styles.separator}>|</span>
-          <Link href="/terms" className={styles.link}>{t('terms')}</Link>
+        <div className={styles.row}>
+          <p className={styles.slogan}>{t('slogan')}</p>
+          <div className={styles.links}>
+            <Link href="/legal" className={styles.link}>{t('legal')}</Link>
+            <span className={styles.separator}>|</span>
+            <Link href="/privacy" className={styles.link}>{t('privacy')}</Link>
+            <span className={styles.separator}>|</span>
+            <Link href="/terms" className={styles.link}>{t('terms')}</Link>
+          </div>
         </div>
         <LanguageSwitcher className={styles.languageSwitcher} />
       </div>

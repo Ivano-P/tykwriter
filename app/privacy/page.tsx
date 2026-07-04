@@ -46,6 +46,7 @@ export default function PrivacyPage() {
 
         <h2>6. Responsable du traitement</h2>
         <p>TYKDEV (contact@tykdev.com)</p>
+        <p>47 rue Vivienne – 75002, Paris, France</p>
       </div>
     </div>
   );
