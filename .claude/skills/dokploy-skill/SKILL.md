@@ -16,7 +16,7 @@ description: Prepare and ship the Next.js 16 app to a Dokploy-managed VPS (stand
 
 **Step 3: Multi-Stage Dockerfile Generation**
 - Create a `Dockerfile` using `node:22-alpine` (2026 standard for stability/size).
-- **Stage 1 (Deps):** Install dependencies using `npm ci`.
+- **Stage 1 (Deps):** Install dependencies using `pnpm install --frozen-lockfile` (the project uses pnpm; `pnpm-lock.yaml` is the only lockfile).
 - **Stage 2 (Builder):** Build the app.
 - **Stage 3 (Runner):** Copy only the `.next/standalone` folder and `.next/static`.
     - Set `NODE_ENV` to `production`.
