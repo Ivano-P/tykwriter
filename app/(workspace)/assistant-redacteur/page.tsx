@@ -11,6 +11,7 @@ import { ChunkManager } from '@/services/ChunkManager';
 import { formatEmailText } from '@/lib/utils';
 import { useText } from '@/lib/TextContext';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
+import type { EnglishVariant } from '@/services/prompts/englishVariant';
 import { MAX_APPLIED_CORRECTIONS, type AppliedCorrection } from '@/services/prompts/finalCheck.prompt';
 import layoutStyles from '../layout.module.css';
 
@@ -31,9 +32,10 @@ export default function AssistantRedacteurPage() {
   const [isFinalChecking, setIsFinalChecking] = useState(false);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
-  // Options d'écriture (ton + abréviations) injectées dans le prompt système
-  const [tone, setTone] = useState<AssistantTone>('aucun');
+  // Options d'écriture (ton + abréviations + variante d'anglais) injectées dans le prompt système
+  const [tone, setTone] = useState<AssistantTone>('auto');
   const [abreviations, setAbreviations] = useState<AssistantAbreviations>('conserver');
+  const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -77,7 +79,7 @@ export default function AssistantRedacteurPage() {
     // aux anciennes options : on repart de zéro.
     appliedCorrectionsRef.current = [];
     lastFinalCheckedTextRef.current = '';
-  }, [tone, abreviations]);
+  }, [tone, abreviations, englishVariant]);
 
   const triggerAssistantApi = useCallback(async (originalText: string, isComplete: boolean) => {
     const controller = new AbortController();
@@ -88,7 +90,7 @@ export default function AssistantRedacteurPage() {
       const resp = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: originalText, options: { tone, abreviations } }),
+        body: JSON.stringify({ text: originalText, options: { tone, abreviations, englishVariant } }),
         signal: controller.signal
       });
 
@@ -147,7 +149,7 @@ export default function AssistantRedacteurPage() {
       pendingRequestsRef.current.delete(originalText);
       processingBlocksRef.current.delete(originalText);
     }
-  }, [tone, abreviations]);
+  }, [tone, abreviations, englishVariant]);
 
   // Non-blocking Hybrid Trigger for Assistant Rédacteur
   useEffect(() => {
@@ -231,7 +233,7 @@ export default function AssistantRedacteurPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: sentText,
-          options: { tone, abreviations },
+          options: { tone, abreviations, englishVariant },
           mode: 'final',
           appliedCorrections: appliedCorrectionsRef.current,
         }),
@@ -288,7 +290,7 @@ export default function AssistantRedacteurPage() {
       finalCheckInFlightRef.current = false;
       setIsFinalChecking(false);
     }
-  }, [isFinalCheckEnabled, isAutoCorrectEnabled, tone, abreviations]);
+  }, [isFinalCheckEnabled, isAutoCorrectEnabled, tone, abreviations, englishVariant]);
 
   useEffect(() => {
     runFinalCheckRef.current = runFinalCheck;
@@ -322,7 +324,7 @@ export default function AssistantRedacteurPage() {
 
     setIsProcessing(true);
     try {
-      const result = await spellcheckAction(textToCheck, false, { tone, abreviations });
+      const result = await spellcheckAction(textToCheck, false, { tone, abreviations, englishVariant });
       const processed = AutoCorrect.processCorrections(textToCheck, result);
 
       if (processed.hasChanges) {
@@ -447,6 +449,8 @@ export default function AssistantRedacteurPage() {
           setTone={setTone}
           abreviations={abreviations}
           setAbreviations={setAbreviations}
+          englishVariant={englishVariant}
+          setEnglishVariant={setEnglishVariant}
         />
       </div>
     </>

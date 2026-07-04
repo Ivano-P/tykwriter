@@ -8,6 +8,7 @@ import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
+import type { EnglishVariant } from '@/services/prompts/englishVariant';
 import { useText } from '@/lib/TextContext';
 import layoutStyles from '../layout.module.css';
 
@@ -24,6 +25,8 @@ export default function CorrecteurPage() {
   const { globalText, setGlobalText } = useText();
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
+  // Variante d'anglais exigée (auto/us/uk) : injectée dans le prompt du correcteur
+  const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
   // Nombre de paragraphes en cours de vérification (réactif, miroir de inFlightRef)
   const [inFlightCount, setInFlightCount] = useState(0);
   const isProcessing = inFlightCount > 0;
@@ -101,7 +104,7 @@ export default function CorrecteurPage() {
     inFlightRef.current.add(paragraphText);
     setInFlightCount(inFlightRef.current.size);
     try {
-      const response = await checkSpellingIssuesAction(paragraphText, uiLocale);
+      const response = await checkSpellingIssuesAction(paragraphText, uiLocale, { englishVariant });
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
     } catch (error) {
@@ -111,11 +114,11 @@ export default function CorrecteurPage() {
       setInFlightCount(inFlightRef.current.size);
       mergeIssuesFromCache();
     }
-  }, [mergeIssuesFromCache, uiLocale]);
+  }, [mergeIssuesFromCache, uiLocale, englishVariant]);
 
-  // Changement de langue d'interface : les explications en cache sont dans
-  // l'ancienne langue, on invalide le cache (les nouvelles vérifications
-  // repartiront avec la locale active).
+  // Changement de langue d'interface ou de variante d'anglais : les résultats
+  // en cache reflètent les anciens réglages, on invalide le cache (les
+  // nouvelles vérifications repartiront avec les réglages actifs).
   const localeInitializedRef = useRef(false);
   useEffect(() => {
     if (!localeInitializedRef.current) {
@@ -124,7 +127,7 @@ export default function CorrecteurPage() {
     }
     resultsCacheRef.current.clear();
     setCorrectionIssues([]);
-  }, [uiLocale]);
+  }, [uiLocale, englishVariant]);
 
   /**
    * Cycle de vérification : découpe le texte en paragraphes, sert les
@@ -301,6 +304,8 @@ export default function CorrecteurPage() {
           applyCorrection={applyCorrection}
           applyAllCorrections={applyAllCorrections}
           ignoreCorrection={ignoreCorrection}
+          englishVariant={englishVariant}
+          setEnglishVariant={setEnglishVariant}
         />
       </div>
     </>

@@ -3,6 +3,7 @@ import {
   buildCorrecteurPrompt,
   CORRECTEUR_JSON_SCHEMA,
   type UiLocale,
+  type CorrecteurOptions,
 } from './prompts/correcteur.prompt';
 import {
   buildAssistantRedacteurPrompt,
@@ -130,13 +131,18 @@ export class MistralAiProService {
   /**
    * Diagnostic d'erreurs (correcteur bilingue FR/EN, langue du texte auto-détectée).
    * @param uiLocale Langue de l'interface : langue de rédaction des explications.
+   * @param options  Options du correcteur (variante d'anglais exigée).
    */
-  static async checkSpelling(text: string, uiLocale: UiLocale = 'fr'): Promise<CorrectionResponse> {
+  static async checkSpelling(
+    text: string,
+    uiLocale: UiLocale = 'fr',
+    options?: CorrecteurOptions
+  ): Promise<CorrectionResponse> {
     try {
       const response = await this.client.chat.complete({
         model: CORRECTEUR_MODEL,
         messages: [
-          { role: 'system', content: buildCorrecteurPrompt(uiLocale) },
+          { role: 'system', content: buildCorrecteurPrompt(uiLocale, options ?? {}) },
           { role: 'user', content: text },
         ],
         responseFormat: {

@@ -9,11 +9,18 @@
  * de la langue du texte. Toute autre langue → zéro erreur (comportement
  * historique conservé).
  *
- * Le prompt est construit via buildCorrecteurPrompt(uiLocale) : la langue de
- * l'interface détermine UNIQUEMENT la langue de rédaction des champs
+ * Le prompt est construit via buildCorrecteurPrompt(uiLocale, options) : la
+ * langue de l'interface détermine UNIQUEMENT la langue de rédaction des champs
  * "explication" et "raisonnement_global". Les valeurs de "type" restent les
  * identifiants internes français (l'UI traduit leurs libellés d'affichage).
+ * Les options du correcteur (variante d'anglais) modulent les directives
+ * d'orthographe anglaise (auto : BrE/AmE acceptées ; us/uk : variante imposée).
  */
+
+import {
+  sanitizeEnglishVariant,
+  type EnglishVariant,
+} from './englishVariant';
 
 /** Locale d'interface acceptée par le correcteur. */
 export type UiLocale = 'fr' | 'en';
@@ -21,6 +28,26 @@ export type UiLocale = 'fr' | 'en';
 /** Ramène toute valeur externe à une locale supportée (défaut : 'fr'). */
 export function sanitizeUiLocale(value: unknown): UiLocale {
   return value === 'en' ? 'en' : 'fr';
+}
+
+/** Options du correcteur choisies par l'utilisateur. */
+export interface CorrecteurOptions {
+  englishVariant?: EnglishVariant;
+}
+
+/**
+ * Valide des options du correcteur d'origine externe (Server Action).
+ * Toute valeur inconnue retombe sur les défauts ('auto').
+ */
+export function sanitizeCorrecteurOptions(input: unknown): CorrecteurOptions {
+  const options: CorrecteurOptions = {};
+  if (input && typeof input === 'object') {
+    const { englishVariant } = input as Record<string, unknown>;
+    if (englishVariant !== undefined) {
+      options.englishVariant = sanitizeEnglishVariant(englishVariant);
+    }
+  }
+  return options;
 }
 
 /* ------------------------------------------------------------------ */
@@ -67,11 +94,20 @@ GRAMMAIRE ET CONJUGAISON : Ne laisse jamais passer la confusion Infinitif (-er) 
 
 TYPOGRAPHIE FRANÇAISE : Signale les manques d'espaces insécables (avant ! ? : ; et dans les guillemets « ») ainsi que la ponctuation erronée ou manquante.
 
-DIRECTIVES SPÉCIFIQUES AUX TEXTES ANGLAIS :
+DIRECTIVES SPÉCIFIQUES AUX TEXTES ANGLAIS :`;
 
-ORTHOGRAPHE ANGLAISE : Corrige les fautes d'orthographe et de frappe. Les orthographes britannique et américaine sont TOUTES DEUX correctes ("colour"/"color", "organise"/"organize") : ne signale jamais l'une comme une erreur et ne convertis jamais l'une vers l'autre.
+/**
+ * Directive d'orthographe anglaise selon la variante exigée par l'utilisateur.
+ * Les corrections de variante sont de type "orthographe". Sans effet sur un
+ * texte français.
+ */
+const ENGLISH_SPELLING_BY_VARIANT: Record<EnglishVariant, string> = {
+  auto: `ORTHOGRAPHE ANGLAISE : Corrige les fautes d'orthographe et de frappe. Les orthographes britannique et américaine sont TOUTES DEUX correctes ("colour"/"color", "organise"/"organize", "centre"/"center", "grey"/"gray") : ne signale JAMAIS une différence de variante comme une erreur et ne convertis jamais l'une vers l'autre.`,
+  us: `ORTHOGRAPHE ANGLAISE (CONVENTIONS AMÉRICAINES IMPOSÉES) : Corrige les fautes d'orthographe et de frappe. L'utilisateur exige l'orthographe AMÉRICAINE : signale CHAQUE orthographe britannique comme une erreur de type "orthographe" et propose son équivalent américain (colour → color, organise → organize, centre → center, travelling → traveling, licence (nom) → license, analyse (verbe) → analyze, favourite → favorite, grey → gray). Généralise ce principe à TOUTES les orthographes britanniques du même type. Cette exigence ne s'applique QU'AUX textes en anglais : elle est sans effet sur un texte français.`,
+  uk: `ORTHOGRAPHE ANGLAISE (CONVENTIONS BRITANNIQUES IMPOSÉES) : Corrige les fautes d'orthographe et de frappe. L'utilisateur exige l'orthographe BRITANNIQUE : signale CHAQUE orthographe américaine comme une erreur de type "orthographe" et propose son équivalent britannique (color → colour, organize → organise, center → centre, traveling → travelling, license (nom) → licence, analyze → analyse, favorite → favourite, gray → grey). Généralise ce principe à TOUTES les orthographes américaines du même type. Cette exigence ne s'applique QU'AUX textes en anglais : elle est sans effet sur un texte français.`,
+};
 
-GRAMMAIRE ANGLAISE : Ne laisse jamais passer les confusions d'homophones classiques : its/it's, your/you're, their/they're/there, whose/who's, then/than, to/too. Vérifie scrupuleusement l'accord sujet-verbe (subject-verb agreement), la cohérence des temps (tense consistency), le choix des articles (a/an) et les apostrophes de possession (the user's / the users').
+const CORRECTEUR_ENGLISH_OUTRO = `GRAMMAIRE ANGLAISE : Ne laisse jamais passer les confusions d'homophones classiques : its/it's, your/you're, their/they're/there, whose/who's, then/than, to/too. Vérifie scrupuleusement l'accord sujet-verbe (subject-verb agreement), la cohérence des temps (tense consistency), le choix des articles (a/an) et les apostrophes de possession (the user's / the users').
 
 TYPOGRAPHIE ANGLAISE : En anglais, il n'y a JAMAIS d'espace avant ! ? : ; — ne signale donc jamais l'absence d'espace avant ces ponctuations, mais signale toute espace parasite placée avant. Les guillemets droits ("...") sont corrects : ne les remplace jamais par des guillemets français « » et ne les signale pas. Vérifie la majuscule en début de phrase et sur le pronom "I".`;
 
@@ -110,10 +146,17 @@ STRUCTURE JSON ATTENDUE :
  * @param uiLocale Langue de l'INTERFACE : détermine uniquement la langue des
  *                 champs "explication" / "raisonnement_global" (la langue du
  *                 texte corrigé est auto-détectée par le modèle).
+ * @param options  Options du correcteur (variante d'anglais exigée).
  */
-export function buildCorrecteurPrompt(uiLocale: UiLocale = 'fr'): string {
+export function buildCorrecteurPrompt(
+  uiLocale: UiLocale = 'fr',
+  options: CorrecteurOptions = {}
+): string {
+  const englishVariant: EnglishVariant = options.englishVariant ?? 'auto';
   return [
     CORRECTEUR_INTRO,
+    ENGLISH_SPELLING_BY_VARIANT[englishVariant],
+    CORRECTEUR_ENGLISH_OUTRO,
     EXPLANATION_LANGUAGE_DIRECTIVE[uiLocale],
     CORRECTEUR_JSON_DIRECTIVES,
   ].join('\n\n');

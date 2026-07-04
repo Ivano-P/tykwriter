@@ -5,31 +5,43 @@
  * La sortie est passée du texte brut à un objet JSON { "texte_corrige": string }.
  *
  * Le prompt est désormais construit dynamiquement via buildAssistantRedacteurPrompt()
- * selon les options d'écriture choisies par l'utilisateur (ton, abréviations).
- * Les valeurs par défaut (tone: 'aucun', abreviations: 'conserver') reproduisent
- * le comportement historique de correction invisible.
+ * selon les options d'écriture choisies par l'utilisateur (ton, abréviations,
+ * variante d'anglais). Les valeurs par défaut (tone: 'auto', abreviations:
+ * 'conserver', englishVariant: 'auto') reproduisent le comportement historique
+ * de correction invisible, augmenté de la cohérence du registre dominant.
  */
 
-export type AssistantTone = 'aucun' | 'amical' | 'professionnel' | 'soutenu';
+import {
+  sanitizeEnglishVariant,
+  type EnglishVariant,
+  ENGLISH_VARIANTS,
+} from './englishVariant';
+
+export type AssistantTone = 'auto' | 'amical' | 'professionnel' | 'soutenu';
 export type AssistantAbreviations = 'conserver' | 'developper';
 
 export interface AssistantOptions {
   tone?: AssistantTone;
   abreviations?: AssistantAbreviations;
+  englishVariant?: EnglishVariant;
 }
 
-const ASSISTANT_TONES: readonly AssistantTone[] = ['aucun', 'amical', 'professionnel', 'soutenu'];
+const ASSISTANT_TONES: readonly AssistantTone[] = ['auto', 'amical', 'professionnel', 'soutenu'];
 const ASSISTANT_ABREVIATIONS: readonly AssistantAbreviations[] = ['conserver', 'developper'];
 
 /**
  * Valide des options d'écriture d'origine externe (body JSON, Server Action).
  * Toute valeur inconnue est ignorée : on retombe sur les défauts.
+ * Compatibilité : l'ancienne valeur de ton 'aucun' est acceptée et mappée
+ * sur 'auto' (renommage de l'option, juillet 2026).
  */
 export function sanitizeAssistantOptions(input: unknown): AssistantOptions {
   const options: AssistantOptions = {};
   if (input && typeof input === 'object') {
-    const { tone, abreviations } = input as Record<string, unknown>;
-    if (typeof tone === 'string' && (ASSISTANT_TONES as readonly string[]).includes(tone)) {
+    const { tone, abreviations, englishVariant } = input as Record<string, unknown>;
+    if (tone === 'aucun') {
+      options.tone = 'auto';
+    } else if (typeof tone === 'string' && (ASSISTANT_TONES as readonly string[]).includes(tone)) {
       options.tone = tone as AssistantTone;
     }
     if (
@@ -37,6 +49,12 @@ export function sanitizeAssistantOptions(input: unknown): AssistantOptions {
       (ASSISTANT_ABREVIATIONS as readonly string[]).includes(abreviations)
     ) {
       options.abreviations = abreviations as AssistantAbreviations;
+    }
+    if (
+      typeof englishVariant === 'string' &&
+      (ENGLISH_VARIANTS as readonly string[]).includes(englishVariant)
+    ) {
+      options.englishVariant = sanitizeEnglishVariant(englishVariant);
     }
   }
   return options;
@@ -46,13 +64,13 @@ export function sanitizeAssistantOptions(input: unknown): AssistantOptions {
 /* Segments du prompt système                                          */
 /* ------------------------------------------------------------------ */
 
-const PROMPT_INTRO_AUCUN = `Tu es un expert en correction orthographique, grammaticale et typographique du FRANÇAIS et de l'ANGLAIS. Ton rôle est de corriger le texte de manière invisible : tu dois rendre la langue du texte parfaite (le français pour un texte français, l'anglais pour un texte anglais) tout en conservant EXACTEMENT le style, le ton et le registre de l'auteur.`;
+const PROMPT_INTRO_AUTO = `Tu es un expert en correction orthographique, grammaticale et typographique du FRANÇAIS et de l'ANGLAIS. Ton rôle est de corriger le texte de manière invisible : tu dois rendre la langue du texte parfaite (le français pour un texte français, l'anglais pour un texte anglais) tout en conservant EXACTEMENT le style, le ton et le registre DOMINANTS de l'auteur.`;
 
 const PROMPT_INTRO_TONE = `Tu es un expert en correction orthographique, grammaticale et typographique du FRANÇAIS et de l'ANGLAIS, ainsi qu'en réécriture stylistique. Ton rôle est de rendre la langue du texte parfaite (le français pour un texte français, l'anglais pour un texte anglais) ET d'ajuster le registre du texte selon la directive de ton ci-dessous, tout en préservant le SENS du texte et l'intention de l'auteur.`;
 
-const RULE_1_AUCUN = `	1. AUCUNE MODIFICATION DE STYLE : Ne change JAMAIS le registre de langue. Ne transforme jamais le tutoiement en vouvoiement (et inversement). Ne reformule pas les phrases pour les rendre "plus jolies".`;
+const RULE_1_AUTO = `	1. TON AUTO — PRÉSERVATION ET COHÉRENCE DU REGISTRE : DÉTECTE le ton et le registre DOMINANTS de l'auteur (tutoiement ou vouvoiement, familier ou soutenu) et PRÉSERVE-les. Ne change JAMAIS le ton d'ensemble du texte et n'impose JAMAIS un registre différent. Ne reformule pas les phrases pour les rendre "plus jolies". EN REVANCHE, VEILLE À LA COHÉRENCE du registre dominant : si un passage isolé s'en écarte accidentellement (ex: un "vous" glissé dans un e-mail entièrement rédigé en "tu", ou une phrase formelle isolée dans un message familier), aligne ce passage sur le registre dominant du texte. Cet alignement des écarts isolés est la SEULE modification de style autorisée.`;
 
-const RULE_1_BY_TONE: Record<Exclude<AssistantTone, 'aucun'>, string> = {
+const RULE_1_BY_TONE: Record<Exclude<AssistantTone, 'auto'>, string> = {
   amical: `	1. TON IMPOSÉ — AMICAL (MODE RÉÉCRITURE EXPLICITE) : Contrairement à une simple correction, tu dois ici ADAPTER le registre du texte vers un ton amical et chaleureux : formulations détendues et naturelles, tournures conviviales, tutoiement acceptable s'il est déjà présent dans le texte. Tu préserves IMPÉRATIVEMENT le SENS du texte et l'intention de l'auteur : n'ajoute AUCUN contenu ni AUCUNE idée nouvelle.`,
   professionnel: `	1. TON IMPOSÉ — PROFESSIONNEL (MODE RÉÉCRITURE EXPLICITE) : Contrairement à une simple correction, tu dois ici ADAPTER le registre du texte vers un français professionnel des affaires : vouvoiement systématique, formules courtoises, aucune expression familière. Tu préserves IMPÉRATIVEMENT le SENS du texte et l'intention de l'auteur : n'ajoute AUCUN contenu ni AUCUNE idée nouvelle.`,
   soutenu: `	1. TON IMPOSÉ — SOUTENU (MODE RÉÉCRITURE EXPLICITE) : Contrairement à une simple correction, tu dois ici ADAPTER le registre du texte vers un registre soutenu et élégant : vocabulaire riche et précis, syntaxe irréprochable, tournures châtiées. Tu préserves IMPÉRATIVEMENT le SENS du texte et l'intention de l'auteur : n'ajoute AUCUN contenu ni AUCUNE idée nouvelle.`,
@@ -63,7 +81,7 @@ const TONE_LANGUAGE_NOTE = `	1bis. TON ET LANGUE DU TEXTE : La directive de ton 
 
 const RULES_2_TO_9 = `	2. LANGUE DU TEXTE (FRANÇAIS ET ANGLAIS CORRIGÉS, AUTO-DÉTECTION) : Détermine la langue DOMINANTE du texte saisi.
 	- Texte majoritairement en FRANÇAIS → corrige-le selon les règles du français (règles 5 à 7 ci-dessous).
-	- Texte majoritairement en ANGLAIS → corrige-le selon les règles de l'anglais : orthographe et fautes de frappe ; homophones classiques (its/it's, your/you're, their/they're/there, then/than, to/too) ; accord sujet-verbe ; cohérence des temps ; articles (a/an) ; majuscules (début de phrase, pronom "I"). Typographie anglaise : AUCUNE espace avant ! ? : ; (supprime toute espace parasite avant ces ponctuations) ; les guillemets droits ("...") sont corrects, ne les remplace jamais par « ». Les orthographes britannique et américaine sont toutes deux correctes : ne convertis jamais l'une vers l'autre.
+	- Texte majoritairement en ANGLAIS → corrige-le selon les règles de l'anglais : orthographe et fautes de frappe ; homophones classiques (its/it's, your/you're, their/they're/there, then/than, to/too) ; accord sujet-verbe ; cohérence des temps ; articles (a/an) ; majuscules (début de phrase, pronom "I"). Typographie anglaise : AUCUNE espace avant ! ? : ; (supprime toute espace parasite avant ces ponctuations) ; les guillemets droits ("...") sont corrects, ne les remplace jamais par « ». Pour les orthographes britannique et américaine, applique STRICTEMENT la règle 11 (VARIANTE D'ANGLAIS) ci-dessous.
 	- Texte majoritairement dans TOUTE AUTRE langue (ex: espagnol, allemand) → retourne le texte EXACTEMENT tel quel, SANS le traduire et SANS le corriger.
 	- Ne traduis JAMAIS un texte d'une langue vers une autre.
 	- Exception : Dans un texte en français, corrige les anglicismes ou faux-amis évidents (ex: "connection" devient "connexion").
@@ -99,6 +117,16 @@ const ABREVIATIONS_RULES: Record<AssistantAbreviations, string> = {
 	- En français : "rdv" devient "rendez-vous", "stp" devient "s'il te plaît", "svp" devient "s'il vous plaît", "càd" ou "c-à-d" devient "c'est-à-dire", "ajd" devient "aujourd'hui", "bcp" devient "beaucoup", "qqn" devient "quelqu'un", "qqch" devient "quelque chose".
 	- En anglais : "asap" devient "as soon as possible", "btw" devient "by the way", "fyi" devient "for your information", "imo" devient "in my opinion", "thx" devient "thanks", "pls" ou "plz" devient "please".
 	Généralise ce principe aux autres abréviations courantes du même type. Ne touche pas aux sigles et acronymes (ex: "PDF", "SNCF", "NASA").`,
+};
+
+/**
+ * Règle 11 : variante d'anglais exigée. Ne concerne QUE les textes en anglais ;
+ * elle est sans effet sur un texte français.
+ */
+const ENGLISH_VARIANT_RULES: Record<EnglishVariant, string> = {
+  auto: `	11. VARIANTE D'ANGLAIS (AUTO) : Pour un texte en ANGLAIS, les orthographes britannique et américaine sont TOUTES DEUX correctes ("colour"/"color", "organise"/"organize", "centre"/"center", "travelling"/"traveling") : ne convertis JAMAIS l'une vers l'autre et conserve la variante saisie par l'auteur. Cette règle est sans effet sur un texte français.`,
+  us: `	11. VARIANTE D'ANGLAIS (AMÉRICAIN IMPOSÉ) : Si le texte soumis est en ANGLAIS, applique STRICTEMENT les conventions orthographiques AMÉRICAINES : convertis toute orthographe britannique vers son équivalent américain (colour → color, organise → organize, centre → center, travelling → traveling, licence (nom) → license, analyse (verbe) → analyze, favourite → favorite, grey → gray). Généralise ce principe à TOUTES les orthographes britanniques du même type. Cette règle est sans effet sur un texte français.`,
+  uk: `	11. VARIANTE D'ANGLAIS (BRITANNIQUE IMPOSÉ) : Si le texte soumis est en ANGLAIS, applique STRICTEMENT les conventions orthographiques BRITANNIQUES : convertis toute orthographe américaine vers son équivalent britannique (color → colour, organize → organise, center → centre, traveling → travelling, license (nom) → licence, analyze → analyse, favorite → favourite, gray → grey). Généralise ce principe à TOUTES les orthographes américaines du même type. Cette règle est sans effet sur un texte français.`,
 };
 
 const EXAMPLES_NOTE_TONE = `NOTE SUR LES EXEMPLES : Les exemples ci-dessous illustrent la QUALITÉ de correction attendue ; le registre de leurs réponses correspond au mode par défaut. Dans ta réponse, applique le registre exigé par la directive de ton (règle 1) ci-dessus.`;
@@ -181,25 +209,27 @@ Cordialement,`;
  * uniquement de la directive explicite de conservation des abréviations.
  */
 export function buildAssistantRedacteurPrompt(options: AssistantOptions = {}): string {
-  const tone: AssistantTone = options.tone ?? 'aucun';
+  const tone: AssistantTone = options.tone ?? 'auto';
   const abreviations: AssistantAbreviations = options.abreviations ?? 'conserver';
+  const englishVariant: EnglishVariant = options.englishVariant ?? 'auto';
 
   const parts: string[] = [
-    tone === 'aucun' ? PROMPT_INTRO_AUCUN : PROMPT_INTRO_TONE,
+    tone === 'auto' ? PROMPT_INTRO_AUTO : PROMPT_INTRO_TONE,
     'DIRECTIVES ABSOLUES :',
-    tone === 'aucun' ? RULE_1_AUCUN : RULE_1_BY_TONE[tone],
+    tone === 'auto' ? RULE_1_AUTO : RULE_1_BY_TONE[tone],
   ];
 
-  if (tone !== 'aucun') {
+  if (tone !== 'auto') {
     parts.push(TONE_LANGUAGE_NOTE);
   }
 
   parts.push(
     RULES_2_TO_9,
     ABREVIATIONS_RULES[abreviations],
+    ENGLISH_VARIANT_RULES[englishVariant],
   );
 
-  if (tone !== 'aucun') {
+  if (tone !== 'auto') {
     parts.push(EXAMPLES_NOTE_TONE);
   }
 
