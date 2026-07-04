@@ -9,6 +9,15 @@ const DASH_VARIANTS = /[-–—‑]/g; // - – — ‑
 /** Nombre de mots au-delà duquel on tente de réduire une correction "phrase entière". */
 const TRIM_WORD_THRESHOLD = 3;
 
+/** Séparateur de paragraphes : ligne vide = 2 sauts de ligne consécutifs ou plus. */
+const PARAGRAPH_SEPARATOR = /(?:\r?\n){2,}/g;
+
+/** Un paragraphe du texte complet, avec son décalage exact en caractères. */
+export interface TextParagraph {
+  text: string;
+  offset: number;
+}
+
 interface ChangedSpan {
   start: number;
   end: number;
@@ -39,6 +48,77 @@ export class SpellcheckService {
       this.normalizeTypography(issue.texte_original) ===
       this.normalizeTypography(issue.correction)
     );
+  }
+
+  /**
+   * Découpe le texte en paragraphes sur les lignes vides (2+ sauts de ligne
+   * consécutifs, `\r\n` inclus), en conservant le décalage exact de chaque
+   * paragraphe dans le texte complet.
+   * Invariant de réassemblage : paragraphes + séparateurs reconstituent
+   * exactement le texte d'origine (`text.slice(offset, offset + p.text.length) === p.text`).
+   */
+  static splitIntoParagraphs(text: string): TextParagraph[] {
+    if (!text) return [];
+
+    const paragraphs: TextParagraph[] = [];
+    const separator = new RegExp(PARAGRAPH_SEPARATOR.source, 'g');
+    let start = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = separator.exec(text)) !== null) {
+      paragraphs.push({ text: text.slice(start, match.index), offset: start });
+      start = match.index + match[0].length;
+    }
+    paragraphs.push({ text: text.slice(start), offset: start });
+
+    return paragraphs;
+  }
+
+  /**
+   * Convertit les occurrences LOCALES (calculées par processResponse sur un
+   * paragraphe isolé) en occurrences GLOBALES dans le texte complet :
+   * position de l'erreur dans le paragraphe + décalage du paragraphe, puis
+   * index de cette position parmi toutes les occurrences de texte_original
+   * dans le texte complet.
+   * Pré-requis : le paragraphe existe tel quel à `paragraphOffset` dans
+   * `fullText`. Les erreurs introuvables dans le paragraphe sont écartées.
+   * Le résultat est trié par position dans le texte.
+   */
+  static rebaseOccurrences(
+    issues: CorrectionIssue[],
+    paragraphText: string,
+    paragraphOffset: number,
+    fullText: string,
+  ): CorrectionIssue[] {
+    const rebased: { issue: CorrectionIssue; localPos: number }[] = [];
+
+    for (const issue of issues) {
+      const localPositions = this.findOccurrenceIndexes(paragraphText, issue.texte_original);
+      if (localPositions.length === 0) continue;
+
+      const nth = issue.occurrence ?? 0;
+      const localPos =
+        nth >= 0 && nth < localPositions.length ? localPositions[nth] : localPositions[0];
+      const globalPos = paragraphOffset + localPos;
+
+      const globalPositions = this.findOccurrenceIndexes(fullText, issue.texte_original);
+      if (globalPositions.length === 0) continue;
+
+      let occurrence = globalPositions.indexOf(globalPos);
+      if (occurrence === -1) {
+        // Repli (balayage non chevauchant désaligné) : nombre d'occurrences
+        // strictement avant la position globale, borné à la dernière.
+        occurrence = Math.min(
+          globalPositions.filter(pos => pos < globalPos).length,
+          globalPositions.length - 1,
+        );
+      }
+
+      rebased.push({ issue: { ...issue, occurrence }, localPos });
+    }
+
+    rebased.sort((a, b) => a.localPos - b.localPos);
+    return rebased.map(entry => entry.issue);
   }
 
   /** Renvoie les index (non chevauchants) de chaque occurrence de `search` dans `text`. */

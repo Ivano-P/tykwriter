@@ -1,39 +1,137 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
-import { spellcheckAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
-import { AutoCorrect } from '@/services/AutoCorrect';
 import { useText } from '@/lib/TextContext';
 import layoutStyles from '../layout.module.css';
 
 const CORRECTEUR_AUTO_DELAY = 3000;
 const MAX_CHARS = 2000;
+/** Taille maximale du cache de résultats par paragraphe (les plus anciens sont évincés). */
+const MAX_CACHE_ENTRIES = 50;
 
 export default function CorrecteurPage() {
   const { globalText, setGlobalText } = useText();
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
-  const [lastCheckedText, setLastCheckedText] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
+  // Nombre de paragraphes en cours de vérification (réactif, miroir de inFlightRef)
+  const [inFlightCount, setInFlightCount] = useState(0);
+  const isProcessing = inFlightCount > 0;
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [diffParts, setDiffParts] = useState<Diff.Change[] | null>(null);
 
   const skipDebounceRef = useRef(false);
-  // Refs to avoid stale-state issues inside the debounce timer / async handler
-  const lastCheckedTextRef = useRef('');
-  const isProcessingRef = useRef(false);
+  // Refs to avoid stale-state issues inside the debounce timer / async handlers
   const globalTextRef = useRef(globalText);
   globalTextRef.current = globalText;
-  // Bumped when text changed while a check was in flight, to re-arm the debounce
-  const [recheckToken, setRecheckToken] = useState(0);
+  // Cache des résultats par paragraphe : texte du paragraphe → erreurs LOCALES
+  // (occurrence relative au paragraphe). Rebasé vers le texte complet au merge.
+  const resultsCacheRef = useRef<Map<string, CorrectionIssue[]>>(new Map());
+  // Paragraphes dont la vérification est en vol (évite les appels en double)
+  const inFlightRef = useRef<Set<string>>(new Set());
+
+  /**
+   * Reconstruit correctionIssues depuis le cache, rebasé sur le texte ACTUEL :
+   * seuls les paragraphes présents tels quels dans le texte courant sont
+   * fusionnés (un paragraphe modifié pendant un appel est ignoré, son résultat
+   * reste en cache pour le jour où il réapparaît). Ordre stable par position.
+   */
+  const mergeIssuesFromCache = useCallback(() => {
+    const fullText = globalTextRef.current;
+    if (!fullText.trim()) {
+      setCorrectionIssues([]);
+      return;
+    }
+
+    const paragraphs = SpellcheckService.splitIntoParagraphs(fullText);
+    const seenParagraphs = new Set<string>();
+    const merged: CorrectionIssue[] = [];
+
+    for (const paragraph of paragraphs) {
+      if (!paragraph.text.trim()) continue;
+      const cachedIssues = resultsCacheRef.current.get(paragraph.text);
+      if (!cachedIssues || cachedIssues.length === 0) continue;
+
+      const rebased = SpellcheckService.rebaseOccurrences(
+        cachedIssues,
+        paragraph.text,
+        paragraph.offset,
+        fullText,
+      );
+
+      if (seenParagraphs.has(paragraph.text)) {
+        // Paragraphe dupliqué : ids dérivés pour que apply/ignore ne visent
+        // qu'une seule instance dans la liste affichée.
+        merged.push(...rebased.map(issue => ({ ...issue, id: `${issue.id}::${paragraph.offset}` })));
+      } else {
+        seenParagraphs.add(paragraph.text);
+        merged.push(...rebased);
+      }
+    }
+
+    setCorrectionIssues(merged);
+  }, []);
+
+  /** Insère un résultat dans le cache avec éviction des entrées les plus anciennes. */
+  const cacheParagraphResult = (paragraphText: string, issues: CorrectionIssue[]) => {
+    const cache = resultsCacheRef.current;
+    if (cache.has(paragraphText)) cache.delete(paragraphText);
+    cache.set(paragraphText, issues);
+    while (cache.size > MAX_CACHE_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey === undefined) break;
+      cache.delete(oldestKey);
+    }
+  };
+
+  /** Vérifie UN paragraphe (appel API indépendant) et met le cache à jour. */
+  const checkParagraph = useCallback(async (paragraphText: string) => {
+    inFlightRef.current.add(paragraphText);
+    setInFlightCount(inFlightRef.current.size);
+    try {
+      const response = await checkSpellingIssuesAction(paragraphText);
+      const localIssues = SpellcheckService.processResponse(response, paragraphText);
+      cacheParagraphResult(paragraphText, localIssues);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      inFlightRef.current.delete(paragraphText);
+      setInFlightCount(inFlightRef.current.size);
+      mergeIssuesFromCache();
+    }
+  }, [mergeIssuesFromCache]);
+
+  /**
+   * Cycle de vérification : découpe le texte en paragraphes, sert les
+   * paragraphes inchangés depuis le cache et lance EN PARALLÈLE un appel
+   * par paragraphe nouveau/modifié.
+   */
+  const runCheckCycle = useCallback((textToCheck: string, forceRecheck = false) => {
+    if (!textToCheck.trim() || textToCheck.length > MAX_CHARS) return;
+    if (forceRecheck) resultsCacheRef.current.clear();
+
+    const paragraphs = SpellcheckService.splitIntoParagraphs(textToCheck);
+    const textsToCheck = new Set<string>();
+    paragraphs.forEach(paragraph => {
+      if (!paragraph.text.trim()) return;
+      if (resultsCacheRef.current.has(paragraph.text)) return;
+      if (inFlightRef.current.has(paragraph.text)) return;
+      textsToCheck.add(paragraph.text);
+    });
+
+    // Affiche immédiatement les erreurs des paragraphes déjà en cache
+    mergeIssuesFromCache();
+    textsToCheck.forEach(text => {
+      void checkParagraph(text);
+    });
+  }, [checkParagraph, mergeIssuesFromCache]);
 
   // Auto spellcheck effect with debounce
   useEffect(() => {
@@ -46,47 +144,15 @@ export default function CorrecteurPage() {
       return;
     }
 
-    if (globalText === lastCheckedTextRef.current) {
-      return;
-    }
-
     const timer = setTimeout(() => {
-      handleAutoSpellcheckIssues(globalText);
+      runCheckCycle(globalTextRef.current);
     }, CORRECTEUR_AUTO_DELAY);
     return () => clearTimeout(timer);
-  }, [globalText, isAutoCorrectEnabled, recheckToken]);
+  }, [globalText, isAutoCorrectEnabled, runCheckCycle]);
 
-  const handleAutoSpellcheckIssues = async (textToCheck: string) => {
-    if (!textToCheck.trim() || isProcessingRef.current) return;
-
-    if (textToCheck === lastCheckedTextRef.current) {
-      return;
-    }
-
-    isProcessingRef.current = true;
-    setIsProcessing(true);
-    setCorrectionIssues([]);
-    try {
-      const response = await checkSpellingIssuesAction(textToCheck);
-      const processedIssues = SpellcheckService.processResponse(response, textToCheck);
-      setCorrectionIssues(processedIssues);
-      lastCheckedTextRef.current = textToCheck;
-      setLastCheckedText(textToCheck);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isProcessingRef.current = false;
-      setIsProcessing(false);
-      // Text changed while the check was in flight → re-arm the debounce
-      if (globalTextRef.current !== textToCheck) {
-        setRecheckToken(token => token + 1);
-      }
-    }
-  };
-
+  /** Soumission manuelle : force la re-vérification de TOUS les paragraphes. */
   const handleManualSubmit = () => {
-    skipDebounceRef.current = true;
-    handleAutoSpellcheckIssues(globalText);
+    runCheckCycle(globalTextRef.current, true);
   };
 
   const applyCorrection = (issueToApply: CorrectionIssue, source: 'sidebar' | 'editor' = 'sidebar') => {
@@ -100,6 +166,13 @@ export default function CorrecteurPage() {
 
   const ignoreCorrection = (issueToIgnore: CorrectionIssue) => {
     skipDebounceRef.current = true;
+    // Retire aussi l'erreur du cache pour qu'un merge ultérieur ne la ressuscite pas
+    const baseId = issueToIgnore.id.split('::')[0];
+    resultsCacheRef.current.forEach((issues, key) => {
+      if (issues.some(issue => issue.id === baseId)) {
+        resultsCacheRef.current.set(key, issues.filter(issue => issue.id !== baseId));
+      }
+    });
     setCorrectionIssues(prev => prev.filter(issue => issue.id !== issueToIgnore.id));
   };
 
@@ -122,6 +195,7 @@ export default function CorrecteurPage() {
       setDiffParts(null);
 
       if (val.trim() === '') {
+        resultsCacheRef.current.clear();
         setCorrectionIssues([]);
       } else {
         setCorrectionIssues(prev =>
@@ -154,6 +228,17 @@ export default function CorrecteurPage() {
     setGlobalText(nextText);
     setDiffParts(null);
   };
+
+  // Soumission désactivée quand chaque paragraphe est déjà en cache ou en vol
+  // (équivalent par paragraphe de l'ancien garde globalText === lastCheckedText).
+  const allParagraphsHandled = SpellcheckService.splitIntoParagraphs(globalText).every(
+    paragraph =>
+      !paragraph.text.trim() ||
+      resultsCacheRef.current.has(paragraph.text) ||
+      inFlightRef.current.has(paragraph.text)
+  );
+  const isSubmitDisabled =
+    !globalText.trim() || globalText.length > MAX_CHARS || allParagraphsHandled;
 
   return (
     <>
@@ -189,7 +274,7 @@ export default function CorrecteurPage() {
           diffParts={diffParts}
           handleUndo={handleUndo}
           handleManualSubmit={handleManualSubmit}
-          isSubmitDisabled={isProcessing || !globalText.trim() || globalText.length > MAX_CHARS || globalText === lastCheckedText}
+          isSubmitDisabled={isSubmitDisabled}
           isAutoCorrectEnabled={isAutoCorrectEnabled}
           setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           globalText={globalText}
