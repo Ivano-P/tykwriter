@@ -29,26 +29,33 @@ export const metadata: Metadata = {
 import { Navbar } from '@/components/ui/Navbar';
 import { Footer } from '@/components/ui/Footer';
 import { Suspense } from 'react';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale } from 'next-intl/server';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Locale active (cookie NEXT_LOCALE, défaut 'fr') — voir i18n/request.ts.
+  const locale = await getLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}
       >
-        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-100"></div>}>
-          <Navbar />
-        </Suspense>
-        <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
-          <div className="flex-1">
-            {children}
-          </div>
-          <Footer />
-        </main>
+        <NextIntlClientProvider>
+          <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-100"></div>}>
+            <Navbar />
+          </Suspense>
+          <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+            <div className="flex-1">
+              {children}
+            </div>
+            <Footer />
+          </main>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

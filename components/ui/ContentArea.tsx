@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Copy, Undo2, Redo2, ChevronDown, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 import { CorrectionIssue } from '@/services/MistralAiProService';
@@ -10,7 +13,6 @@ type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
 interface ContentAreaProps {
   currentMode: Mode;
-  setCurrentMode: (mode: Mode) => void;
   text: string;
   onChange: (val: string) => void;
   isProcessing: boolean;
@@ -22,12 +24,22 @@ interface ContentAreaProps {
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
   ignoreCorrection?: (issue: CorrectionIssue) => void;
-  isSnLinkEnabled?: boolean;
+  isLinkEnabled?: boolean;
+  /** Panneau de sortie affiché à côté de l'éditeur (mode traduction : zone scindée). */
+  translationPane?: React.ReactNode;
+  /** Sélecteur de langue du mode (affiché entre Rétablir et le nom du mode). */
+  languageOptions?: { value: string; label: string }[];
+  languageValue?: string;
+  onLanguageChange?: (value: string) => void;
+  /** Sélecteur de langue CIBLE (traduction) : entre le nom du mode et Supprimer. */
+  targetLanguageOptions?: { value: string; label: string }[];
+  targetLanguageValue?: string;
+  onTargetLanguageChange?: (value: string) => void;
+  targetLanguageTitle?: string;
 }
 
 export function ContentArea({
   currentMode,
-  setCurrentMode,
   text,
   onChange,
   isProcessing,
@@ -39,10 +51,20 @@ export function ContentArea({
   correctionIssues,
   applyCorrection,
   ignoreCorrection,
-  isSnLinkEnabled,
+  isLinkEnabled,
+  translationPane,
+  languageOptions,
+  languageValue,
+  onLanguageChange,
+  targetLanguageOptions,
+  targetLanguageValue,
+  onTargetLanguageChange,
+  targetLanguageTitle,
 }: ContentAreaProps) {
+  const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,7 +83,6 @@ export function ContentArea({
 
   const handleCopy = async () => {
     try {
-      // Dispatch event so TiptapEditor can handle SN link transformation
       window.dispatchEvent(new CustomEvent('tyk:copyAll'));
     } catch (err) {
       console.error('Failed to copy text', err);
@@ -69,16 +90,16 @@ export function ContentArea({
   };
 
   const handleDelete = () => {
-    if (confirm('Voulez-vous vraiment supprimer tout le texte ?')) {
+    if (confirm(t('confirmDelete'))) {
       onChange('');
     }
   };
 
   const modeTitle = currentMode === "correcteur"
-    ? "Correcteur"
+    ? t('modeCorrecteur')
     : currentMode === "assistant-redacteur"
-      ? "Assistant Rédacteur"
-      : "Traduction";
+      ? t('modeAssistant')
+      : t('modeTraduction');
 
   return (
     <div className={styles.contentContainer}>
@@ -88,7 +109,7 @@ export function ContentArea({
             className={styles.toolbarButton}
             onClick={handleUndo}
             disabled={undoStackLength === 0 || isProcessing || currentMode === 'traduction'}
-            title="Annuler (Undo)"
+            title={t('undoTitle')}
           >
             <Undo2 size={24} />
           </button>
@@ -96,10 +117,26 @@ export function ContentArea({
             className={styles.toolbarButton}
             onClick={handleRedo}
             disabled={redoStackLength === 0 || isProcessing || currentMode === 'traduction'}
-            title="Rétablir (Redo)"
+            title={t('redoTitle')}
           >
             <Redo2 size={24} />
           </button>
+
+          {languageOptions && languageOptions.length > 0 && onLanguageChange && (
+            <select
+              className={styles.toolbarSelect}
+              value={languageValue}
+              onChange={(e) => onLanguageChange(e.target.value)}
+              title={t('languageTitle')}
+              aria-label={t('languageTitle')}
+            >
+              {languageOptions.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className={styles.toolbarCenter} ref={dropdownRef}>
@@ -116,57 +153,86 @@ export function ContentArea({
 
             {isDropdownOpen && (
               <div className={styles.modeDropdownMenu}>
-                <button
-                  className={`${styles.modeDropdownItem} ${currentMode === 'correcteur' ? styles.modeDropdownItemActive : ''}`}
-                  onClick={() => { setCurrentMode('correcteur'); setIsDropdownOpen(false); }}
+                <Link
+                  href="/correcteur"
+                  className={`${styles.modeDropdownItem} ${pathname === '/correcteur' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => setIsDropdownOpen(false)}
                 >
-                  Correcteur
-                </button>
-                <button
-                  className={`${styles.modeDropdownItem} ${currentMode === 'assistant-redacteur' ? styles.modeDropdownItemActive : ''}`}
-                  onClick={() => { setCurrentMode('assistant-redacteur'); setIsDropdownOpen(false); }}
+                  {t('modeCorrecteur')}
+                </Link>
+                <Link
+                  href="/assistant-redacteur"
+                  className={`${styles.modeDropdownItem} ${pathname === '/assistant-redacteur' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => setIsDropdownOpen(false)}
                 >
-                  Assistant Rédacteur
-                </button>
-                {/* <button
-                  className={`${styles.modeDropdownItem} ${currentMode === 'traduction' ? styles.modeDropdownItemActive : ''}`}
-                  onClick={() => { setCurrentMode('traduction'); setIsDropdownOpen(false); }}
+                  {t('modeAssistant')}
+                </Link>
+                <Link
+                  href="/traduction"
+                  className={`${styles.modeDropdownItem} ${pathname === '/traduction' ? styles.modeDropdownItemActive : ''}`}
+                  onClick={() => setIsDropdownOpen(false)}
                 >
-                  Traduction
-                </button> */}
+                  {t('modeTraduction')}
+                </Link>
               </div>
             )}
           </div>
         </div>
 
         <div className={styles.toolbarRight}>
+          {targetLanguageOptions && targetLanguageOptions.length > 0 && onTargetLanguageChange && (
+            <select
+              className={styles.toolbarSelect}
+              value={targetLanguageValue}
+              onChange={(e) => onTargetLanguageChange(e.target.value)}
+              title={targetLanguageTitle ?? t('languageTitle')}
+              aria-label={targetLanguageTitle ?? t('languageTitle')}
+            >
+              {targetLanguageOptions.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             className={styles.toolbarButton}
             onClick={handleDelete}
-            disabled={text.length === 0 || currentMode === 'traduction'}
-            title="Supprimer tout le texte"
+            disabled={text.length === 0}
+            title={t('deleteTitle')}
           >
             <Trash2 size={18} />
-            <span className={styles.toolbarButtonText}>Supprimer</span>
+            <span className={styles.toolbarButtonText}>{t('delete')}</span>
           </button>
           <button
             className={styles.toolbarButton}
             onClick={handleCopy}
-            disabled={text.length === 0 || currentMode === 'traduction'}
-            title="Copier le texte"
+            disabled={text.length === 0}
+            title={t('copyTitle')}
           >
             <Copy size={18} />
-            <span className={styles.toolbarButtonText}>Copier</span>
+            <span className={styles.toolbarButtonText}>{t('copy')}</span>
           </button>
         </div>
       </div>
 
-      {currentMode === 'traduction' ? (
-        <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[400px] text-lg font-medium">
-          Mode traduction (Bientôt disponible)
+      {currentMode === 'traduction' && translationPane ? (
+        <div className={styles.splitContainer}>
+          <div className={styles.splitPane}>
+            <TiptapEditor
+              globalText={text}
+              setGlobalText={onChange}
+              isProcessing={false}
+              maxLength={MAX_CHARS}
+              className={styles.textArea}
+            />
+          </div>
+          <div className={`${styles.splitPane} ${styles.splitPaneOutput}`}>
+            {translationPane}
+          </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col min-h-[400px]">
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
           <TiptapEditor
             globalText={text}
             setGlobalText={onChange}
@@ -176,7 +242,7 @@ export function ContentArea({
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
-            isSnLinkEnabled={isSnLinkEnabled}
+            isLinkEnabled={isLinkEnabled}
           />
         </div>
       )}
@@ -184,10 +250,11 @@ export function ContentArea({
       <div className={styles.submitContainer}>
         <div className={styles.footerStats}>
           <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
-            {text.length} / {MAX_CHARS} char
+            {/* Valeurs passées en chaînes pour éviter le groupement ICU des milliers (2 000). */}
+            {t('charCount', { current: String(text.length), max: String(MAX_CHARS) })}
           </div>
           <div className={styles.wordCount}>
-            {text.trim() === '' ? 0 : text.trim().split(/\s+/).length} mots
+            {t('wordCount', { count: String(text.trim() === '' ? 0 : text.trim().split(/\s+/).length) })}
           </div>
         </div>
       </div>

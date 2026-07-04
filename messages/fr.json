@@ -1,0 +1,112 @@
+{
+  "navbar": {
+    "toggleMenu": "Ouvrir ou fermer le menu",
+    "learnMore": "En savoir plus",
+    "about": "À propos de nous",
+    "roadmap": "Feuille de route",
+    "mode": "Mode",
+    "modeMobile": "Mode:",
+    "correcteur": "Correcteur",
+    "assistantExperimental": "Assistant rédacteur (Expérimentale)",
+    "assistant": "Assistant rédacteur",
+    "traduction": "Traduction",
+    "language": "Langue",
+    "switchToFrench": "Passer l'interface en français",
+    "switchToEnglish": "Passer l'interface en anglais"
+  },
+  "footer": {
+    "slogan": "Le complice de votre génie, le gardien de vos textes.",
+    "legal": "Mentions légales",
+    "privacy": "Confidentialité",
+    "terms": "CGU"
+  },
+  "banner": {
+    "title": "Votre Assistant de Rédaction et Correcteur de Précision.",
+    "correcteurSubtitle": "Éliminez les fautes d'orthographe, de grammaire et de syntaxe, tout en préservant votre style et votre voix unique.",
+    "assistantSubtitle": "Saisissez librement, et votre Assistant Rédacteur Tykwriter s'occupe des détails (orthographe, mise en forme et fluidité).",
+    "traductionSubtitle": "Traduisez vos textes avec une précision absolue et un ton naturel grâce à une compréhension profonde de votre contexte."
+  },
+  "contentArea": {
+    "undoTitle": "Annuler (Undo)",
+    "redoTitle": "Rétablir (Redo)",
+    "delete": "Supprimer",
+    "deleteTitle": "Supprimer tout le texte",
+    "confirmDelete": "Voulez-vous vraiment supprimer tout le texte ?",
+    "copy": "Copier",
+    "copyTitle": "Copier le texte",
+    "modeCorrecteur": "Correcteur",
+    "modeAssistant": "Assistant Rédacteur",
+    "modeTraduction": "Traduction",
+    "languageTitle": "Langue",
+    "charCount": "{current} / {max} char",
+    "wordCount": "{count} mots"
+  },
+  "editor": {
+    "linkUrlPlaceholder": "URL du lien...",
+    "apply": "Appliquer",
+    "ignore": "Ignorer"
+  },
+  "correcteurSidebar": {
+    "actions": "Actions",
+    "autoCheck": "Vérification automatique",
+    "checking": "Vérification...",
+    "checkNow": "Vérifier maintenant",
+    "fixAll": "Tout corriger ({count})",
+    "errorsDetected": "Erreurs détectées",
+    "noErrors": "Aucune erreur détectées",
+    "ignoreError": "Ignorer cette erreur"
+  },
+  "assistantSidebar": {
+    "actions": "Actions",
+    "autoCorrect": "Correction automatique",
+    "finalCheck": "Vérification finale",
+    "finalCheckHint": "Relecture globale automatique après une pause d'écriture.",
+    "finalChecking": "Vérification finale…",
+    "checking": "Vérification...",
+    "checkNow": "Vérifier maintenant",
+    "emailPoliteness": "Politesse email",
+    "emailPolitenessTitle": "Ajouter les formules de politesse",
+    "link": "Lien",
+    "linkToggleTitle": "Activer/Désactiver Lien",
+    "writingOptions": "Options d'écriture",
+    "tone": "Ton",
+    "toneChoiceTitle": "Ton : {label}",
+    "toneAuto": "Auto",
+    "toneAmical": "Amical",
+    "toneProfessionnel": "Professionnel",
+    "toneSoutenu": "Soutenu",
+    "abbreviations": "Abréviations",
+    "abbreviationsChoiceTitle": "Abréviations : {label}",
+    "abbreviationsConserver": "Conserver",
+    "abbreviationsDevelopper": "Développer",
+    "noErrors": "Aucune erreur détectées",
+    "correctionApplied": "Correction appliquée",
+    "undoCorrectionTitle": "Annuler la correction",
+    "undo": "Annuler"
+  },
+  "traductionSidebar": {
+    "actions": "Actions",
+    "autoTranslateHint": "Traduction automatique après une pause de saisie.",
+    "translating": "Traduction…"
+  },
+  "traductionPage": {
+    "sourceAuto": "Détection auto",
+    "sourceAutoDetected": "Auto : {language}",
+    "targetLanguage": "Traduire vers",
+    "translating": "Traduction…",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "copyTranslation": "Copier la traduction",
+    "placeholder": "La traduction apparaîtra ici.",
+    "unsupported": "Langue non prise en charge.",
+    "unsupportedWithLanguage": "Langue non prise en charge ({language}).",
+    "failed": "La traduction a échoué. Réessayez dans un instant."
+  },
+  "errorTypes": {
+    "orthographe": "Orthographe",
+    "grammaire": "Grammaire",
+    "typographie": "Typographie",
+    "style": "Style",
+    "ponctuation": "Ponctuation"
+  }
+}

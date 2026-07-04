@@ -1,18 +1,23 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import styles from './Footer.module.css';
 
-export function Footer() {
+export async function Footer() {
+  const t = await getTranslations('footer');
+
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        <p className={styles.slogan}>Le complice de votre génie, le gardien de vos textes.</p>
+        <p className={styles.slogan}>{t('slogan')}</p>
         <div className={styles.links}>
-          <Link href="/legal" className={styles.link}>Mentions légales</Link>
+          <Link href="/legal" className={styles.link}>{t('legal')}</Link>
           <span className={styles.separator}>|</span>
-          <Link href="/privacy" className={styles.link}>Confidentialité</Link>
+          <Link href="/privacy" className={styles.link}>{t('privacy')}</Link>
           <span className={styles.separator}>|</span>
-          <Link href="/terms" className={styles.link}>CGU</Link>
+          <Link href="/terms" className={styles.link}>{t('terms')}</Link>
         </div>
+        <LanguageSwitcher className={styles.languageSwitcher} />
       </div>
     </footer>
   );

@@ -1,11 +1,27 @@
 import { NextResponse } from 'next/server';
-import { OllamaService } from '@/services/OllamaService';
+import { MistralAiProService } from '@/services/MistralAiProService';
+import { sanitizeTargetLanguage } from '@/services/prompts/traduction.prompt';
 
-export async function GET() {
+/**
+ * Route de test dev :
+ * POST { "text": "..." }                            → correcteur
+ * POST { "text": "...", "mode": "traduction", "targetLanguage": "en-US" } → traducteur
+ */
+export async function POST(request: Request) {
   try {
-    const result = await OllamaService.checkSpelling("je tes en local. putain c'est vraimment un gro conard.");
+    const body = await request.json();
+    const { text } = body;
+    if (!text || typeof text !== 'string') {
+      return NextResponse.json({ error: 'Invalid text provided.' }, { status: 400 });
+    }
+    if (body.mode === 'traduction') {
+      const result = await MistralAiProService.translate(text, sanitizeTargetLanguage(body.targetLanguage));
+      return NextResponse.json({ result });
+    }
+    const result = await MistralAiProService.checkSpelling(text);
     return NextResponse.json({ result });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

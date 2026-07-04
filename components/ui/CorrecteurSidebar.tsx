@@ -1,6 +1,7 @@
 'use client';
 
 import * as Diff from 'diff';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
@@ -37,16 +38,17 @@ export function CorrecteurSidebar({
   applyAllCorrections,
   ignoreCorrection,
 }: CorrecteurSidebarProps) {
+  const t = useTranslations('correcteurSidebar');
 
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Actions</h2>
+      <h2 className={styles.title}>{t('actions')}</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Vérification automatique</span>
+            <span className={styles.toggleText}>{t('autoCheck')}</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
@@ -65,7 +67,7 @@ export function CorrecteurSidebar({
           disabled={isSubmitDisabled}
           className={styles.submitButton}
         >
-          {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
+          {isProcessing ? t('checking') : t('checkNow')}
         </Button>
         {correctionIssues.length > 0 && (
           <Button
@@ -73,7 +75,7 @@ export function CorrecteurSidebar({
             variant="outline"
             className="w-full mt-2 border-[var(--tyk-sapphire)] text-[var(--tyk-sapphire)] hover:bg-[var(--tyk-sapphire)] hover:text-white transition-colors"
           >
-            Tout corriger ({correctionIssues.length})
+            {t('fixAll', { count: String(correctionIssues.length) })}
           </Button>
         )}
       </div>
@@ -81,13 +83,13 @@ export function CorrecteurSidebar({
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2 flex-1 min-h-0">
         {correctionIssues.length > 0 && !isProcessing && (
         <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Erreurs détectées</span>
+            <span className={styles.diffTitle}>{t('errorsDetected')}</span>
           </div>
         )}
 
         {correctionIssues.length === 0 && !isProcessing && (
           <div className="p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
-            Aucune erreur détectées
+            {t('noErrors')}
           </div>
         )}
         {correctionIssues.map((issue, index) => (
@@ -105,7 +107,7 @@ export function CorrecteurSidebar({
             <button 
               onClick={(e) => { e.stopPropagation(); ignoreCorrection(issue); }}
               className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-              title="Ignorer cette erreur"
+              title={t('ignoreError')}
             >
               ×
             </button>

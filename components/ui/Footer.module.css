@@ -48,3 +48,8 @@
   color: var(--tyk-dust-brown, #A08C73);
   opacity: 0.5;
 }
+
+.languageSwitcher {
+  margin-top: 0.25rem;
+  justify-content: center;
+}

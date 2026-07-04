@@ -1,0 +1,112 @@
+{
+  "navbar": {
+    "toggleMenu": "Toggle menu",
+    "learnMore": "Learn more",
+    "about": "About us",
+    "roadmap": "Roadmap",
+    "mode": "Mode",
+    "modeMobile": "Mode:",
+    "correcteur": "Proofreader",
+    "assistantExperimental": "Writing assistant (Experimental)",
+    "assistant": "Writing assistant",
+    "traduction": "Translation",
+    "language": "Language",
+    "switchToFrench": "Switch the interface to French",
+    "switchToEnglish": "Switch the interface to English"
+  },
+  "footer": {
+    "slogan": "The ally of your genius, the guardian of your words.",
+    "legal": "Legal notice",
+    "privacy": "Privacy",
+    "terms": "Terms of use"
+  },
+  "banner": {
+    "title": "Your Writing Assistant and Precision Proofreader.",
+    "correcteurSubtitle": "Eliminate spelling, grammar and syntax mistakes while preserving your unique style and voice.",
+    "assistantSubtitle": "Write freely — your Tykwriter Writing Assistant takes care of the details (spelling, formatting and flow).",
+    "traductionSubtitle": "Translate your texts with absolute precision and a natural tone, thanks to a deep understanding of your context."
+  },
+  "contentArea": {
+    "undoTitle": "Undo",
+    "redoTitle": "Redo",
+    "delete": "Delete",
+    "deleteTitle": "Delete all text",
+    "confirmDelete": "Do you really want to delete all the text?",
+    "copy": "Copy",
+    "copyTitle": "Copy the text",
+    "modeCorrecteur": "Proofreader",
+    "modeAssistant": "Writing Assistant",
+    "modeTraduction": "Translation",
+    "languageTitle": "Language",
+    "charCount": "{current} / {max} char",
+    "wordCount": "{count} words"
+  },
+  "editor": {
+    "linkUrlPlaceholder": "Link URL...",
+    "apply": "Apply",
+    "ignore": "Ignore"
+  },
+  "correcteurSidebar": {
+    "actions": "Actions",
+    "autoCheck": "Automatic checking",
+    "checking": "Checking...",
+    "checkNow": "Check now",
+    "fixAll": "Fix all ({count})",
+    "errorsDetected": "Detected errors",
+    "noErrors": "No errors detected",
+    "ignoreError": "Ignore this error"
+  },
+  "assistantSidebar": {
+    "actions": "Actions",
+    "autoCorrect": "Automatic correction",
+    "finalCheck": "Final check",
+    "finalCheckHint": "Automatic full-text review after a writing pause.",
+    "finalChecking": "Final check…",
+    "checking": "Checking...",
+    "checkNow": "Check now",
+    "emailPoliteness": "Email courtesy",
+    "emailPolitenessTitle": "Add greeting and sign-off phrases",
+    "link": "Link",
+    "linkToggleTitle": "Enable/Disable links",
+    "writingOptions": "Writing options",
+    "tone": "Tone",
+    "toneChoiceTitle": "Tone: {label}",
+    "toneAuto": "Auto",
+    "toneAmical": "Friendly",
+    "toneProfessionnel": "Professional",
+    "toneSoutenu": "Formal",
+    "abbreviations": "Abbreviations",
+    "abbreviationsChoiceTitle": "Abbreviations: {label}",
+    "abbreviationsConserver": "Keep",
+    "abbreviationsDevelopper": "Expand",
+    "noErrors": "No errors detected",
+    "correctionApplied": "Correction applied",
+    "undoCorrectionTitle": "Undo the correction",
+    "undo": "Undo"
+  },
+  "traductionSidebar": {
+    "actions": "Actions",
+    "autoTranslateHint": "Translates automatically after a typing pause.",
+    "translating": "Translating…"
+  },
+  "traductionPage": {
+    "sourceAuto": "Auto detect",
+    "sourceAutoDetected": "Auto: {language}",
+    "targetLanguage": "Translate to",
+    "translating": "Translating…",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copyTranslation": "Copy the translation",
+    "placeholder": "The translation will appear here.",
+    "unsupported": "Unsupported language.",
+    "unsupportedWithLanguage": "Unsupported language ({language}).",
+    "failed": "Translation failed. Please try again in a moment."
+  },
+  "errorTypes": {
+    "orthographe": "Spelling",
+    "grammaire": "Grammar",
+    "typographie": "Typography",
+    "style": "Style",
+    "ponctuation": "Punctuation"
+  }
+}

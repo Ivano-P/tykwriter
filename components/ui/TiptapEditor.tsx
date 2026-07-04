@@ -6,29 +6,51 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { DOMSerializer } from '@tiptap/pm/model';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import * as Diff from 'diff';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import styles from './TiptapEditor.module.css';
 
-// ─── SnLink: custom Link extension that preserves data-sn ───────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SnLink = (Link as any).extend({
-  addAttributes() {
-    return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...(this as any).parent?.(),
-      'data-sn': {
-        default: null,
-        parseHTML: (el: HTMLElement) => el.getAttribute('data-sn'),
-        renderHTML: (attrs: Record<string, unknown>) => {
-          if (!attrs['data-sn']) return {};
-          return { 'data-sn': attrs['data-sn'] as string };
-        },
-      },
-    };
-  },
-});
+// ─── Region diff helper ─────────────────────────────────────────────
+// Computes the changed regions between oldText and newText using a
+// word-level diff (diffWordsWithSpace: parts concatenate exactly).
+// Each region covers [start, end) in oldText and carries the replacement
+// text (empty string = pure deletion). Untouched regions are never
+// rewritten, so their ProseMirror marks (links, …) survive corrections.
+export interface ReplaceRegion {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export function computeReplaceRegions(oldText: string, newText: string): ReplaceRegion[] {
+  const parts = Diff.diffWordsWithSpace(oldText, newText);
+  const regions: ReplaceRegion[] = [];
+  let oldPos = 0;
+  let i = 0;
+
+  while (i < parts.length) {
+    const part = parts[i];
+    if (!part.added && !part.removed) {
+      oldPos += part.value.length;
+      i++;
+      continue;
+    }
+    // Group consecutive removed/added parts into a single region
+    let removedLen = 0;
+    let addedText = '';
+    while (i < parts.length && (parts[i].added || parts[i].removed)) {
+      if (parts[i].removed) removedLen += parts[i].value.length;
+      else addedText += parts[i].value;
+      i++;
+    }
+    regions.push({ start: oldPos, end: oldPos + removedLen, text: addedText });
+    oldPos += removedLen;
+  }
+
+  return regions;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface TiptapEditorProps {
@@ -40,7 +62,7 @@ interface TiptapEditorProps {
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
   ignoreCorrection?: (issue: CorrectionIssue) => void;
-  isSnLinkEnabled?: boolean;
+  isLinkEnabled?: boolean;
 }
 
 interface PopupState {
@@ -60,14 +82,15 @@ export function TiptapEditor({
   correctionIssues = [],
   applyCorrection,
   ignoreCorrection,
-  isSnLinkEnabled = false,
+  isLinkEnabled = false,
 }: TiptapEditorProps) {
+  const t = useTranslations('editor');
   const issuesRef = useRef(correctionIssues);
   const applyCorrectionRef = useRef(applyCorrection);
   const ignoreCorrectionRef = useRef(ignoreCorrection);
   const isExternalUpdate = useRef(false);
   const latestGlobalTextRef = useRef(globalText);
-  const isSnLinkEnabledRef = useRef(isSnLinkEnabled);
+  const isLinkEnabledRef = useRef(isLinkEnabled);
   const [popup, setPopup] = useState<PopupState | null>(null);
 
   // BubbleMenu state for editing an existing link
@@ -76,11 +99,11 @@ export function TiptapEditor({
   // BubbleMenu state for creating a new link
   const [newLinkUrl, setNewLinkUrl] = useState('');
 
-  const prevSnLinkRef = useRef(isSnLinkEnabled);
+  const prevLinkEnabledRef = useRef(isLinkEnabled);
 
   useEffect(() => {
-    isSnLinkEnabledRef.current = isSnLinkEnabled;
-  }, [isSnLinkEnabled]);
+    isLinkEnabledRef.current = isLinkEnabled;
+  }, [isLinkEnabled]);
 
   useEffect(() => {
     issuesRef.current = correctionIssues;
@@ -114,33 +137,75 @@ export function TiptapEditor({
                 return DecorationSet.empty;
               }
 
+              // Build the full document text EXACTLY like editor.getText()
+              // (block separator "\n\n", hardBreak → "\n"), keeping a map of
+              // text segments back to ProseMirror positions. This lets us
+              // count occurrences globally, matching the indexes computed by
+              // SpellcheckService on globalText.
+              let fullText = '';
+              const segments: { textStart: number; textEnd: number; pos: number }[] = [];
+
+              doc.nodesBetween(0, doc.content.size, (node, pos) => {
+                if (node.isBlock && pos > 0) {
+                  fullText += '\n\n';
+                }
+                if (node.type.name === 'hardBreak') {
+                  segments.push({ textStart: fullText.length, textEnd: fullText.length + 1, pos });
+                  fullText += '\n';
+                  return false;
+                }
+                if (node.isText && node.text) {
+                  segments.push({ textStart: fullText.length, textEnd: fullText.length + node.text.length, pos });
+                  fullText += node.text;
+                }
+                return true;
+              });
+
+              // Map a text index back to a doc position. Start indexes must fall
+              // strictly inside a segment; end indexes may sit on its right edge.
+              const mapStart = (index: number): number | null => {
+                const seg = segments.find(s => index >= s.textStart && index < s.textEnd);
+                return seg ? seg.pos + (index - seg.textStart) : null;
+              };
+              const mapEnd = (index: number): number | null => {
+                const seg = segments.find(s => index > s.textStart && index <= s.textEnd);
+                return seg ? seg.pos + (index - seg.textStart) : null;
+              };
+
               const decorations: Decoration[] = [];
 
-              doc.descendants((node, pos) => {
-                if (node.isText && node.text) {
-                  issues.forEach((issue) => {
-                    const textToFind = issue.texte_original;
-                    if (!textToFind) return;
+              issues.forEach((issue) => {
+                const textToFind = issue.texte_original;
+                if (!textToFind) return;
 
-                    let startIndex = 0;
-                    let matchIndex;
-                    while ((matchIndex = node.text!.indexOf(textToFind, startIndex)) > -1) {
-                      const from = pos + matchIndex;
-                      const to = from + textToFind.length;
-
-                      decorations.push(
-                        Decoration.inline(from, to, {
-                          class: 'border-b-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)] cursor-pointer',
-                          'data-correction-id': issue.id
-                        }, {
-                          'data-correction-id': issue.id
-                        })
-                      );
-
-                      startIndex = matchIndex + textToFind.length;
-                    }
-                  });
+                // Collect every (non-overlapping) occurrence in the full text
+                const matchIndexes: number[] = [];
+                let matchIndex = fullText.indexOf(textToFind);
+                while (matchIndex > -1) {
+                  matchIndexes.push(matchIndex);
+                  matchIndex = fullText.indexOf(textToFind, matchIndex + textToFind.length);
                 }
+                if (matchIndexes.length === 0) return;
+
+                // Decorate ONLY the issue's nth occurrence; fall back to the
+                // first match when occurrence is undefined or out of range.
+                const nth = issue.occurrence;
+                const target = nth !== undefined && nth >= 0 && nth < matchIndexes.length
+                  ? matchIndexes[nth]
+                  : matchIndexes[0];
+
+                const from = mapStart(target);
+                const to = mapEnd(target + textToFind.length);
+                if (from === null || to === null) return;
+
+                decorations.push(
+                  Decoration.inline(from, to, {
+                    class: 'border-b-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)] cursor-pointer',
+                    'data-correction-id': issue.id
+                  }, {
+                    'data-correction-id': issue.id
+                  })
+                );
               });
               return DecorationSet.create(doc, decorations);
             }
@@ -153,7 +218,7 @@ export function TiptapEditor({
               const target = event.target as Node;
               const element = (target.nodeType === 3 ? target.parentElement : target) as HTMLElement;
               const decoElement = element?.closest ? element.closest('[data-correction-id]') : null;
-              
+
               if (decoElement) {
                 const idStr = decoElement.getAttribute('data-correction-id');
                 if (idStr) {
@@ -170,7 +235,7 @@ export function TiptapEditor({
                       const rect = decoElement.getBoundingClientRect();
                       const wrapper = document.querySelector('.tiptap-wrapper');
                       const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : { top: 0, left: 0 };
-                      
+
                       setPopup({
                         issue,
                         coords: {
@@ -194,77 +259,14 @@ export function TiptapEditor({
     }
   });
 
-  // ── Helper: transform HTML with SN links into [code]...[/code] text ─
-  const processSnLinksFromHtml = useCallback(
-    (html: string, plainText: string): { processed: boolean; text: string } => {
-      // Guard: if the raw text already contains [code]<a href=, skip transformation
-      if (plainText.includes('[code]<a href=')) {
-        return { processed: false, text: plainText };
-      }
-
-      const tempDoc = document.implementation.createHTMLDocument();
-      tempDoc.body.innerHTML = html;
-
-      const snAnchors = tempDoc.body.querySelectorAll('a[data-sn="true"]');
-      if (snAnchors.length === 0) {
-        return { processed: false, text: plainText };
-      }
-
-      // Clone to manipulate
-      const workingDiv = document.createElement('div');
-      workingDiv.innerHTML = html;
-
-      workingDiv.querySelectorAll('a[data-sn="true"]').forEach((anchor) => {
-        const href = anchor.getAttribute('href') || '';
-        const text = anchor.textContent || '';
-        const replacement = document.createTextNode(`[code]<a href="${href}">${text}</a>[/code]`);
-        anchor.parentNode?.replaceChild(replacement, anchor);
-      });
-
-      return { processed: true, text: workingDiv.textContent || '' };
-    },
-    []
-  );
-
-  // ── Copy interceptor (Ctrl+C) ─────────────────────────────────────
-  const handleCopyEvent = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (view: any, event: Event): boolean => {
-      const clipEvent = event as ClipboardEvent;
-      const { state } = view;
-      const { from, to } = state.selection;
-      if (from === to) return false; // nothing selected
-
-      // Serialize the selected fragment to HTML
-      const slice = state.doc.slice(from, to);
-      const serializer = DOMSerializer.fromSchema(state.schema);
-      const serDoc = document.implementation.createHTMLDocument();
-      const fragment = serializer.serializeFragment(slice.content, { document: serDoc });
-      serDoc.body.appendChild(fragment);
-      const html = serDoc.body.innerHTML;
-
-      const plainText: string = state.doc.textBetween(from, to, '\n');
-      const result = processSnLinksFromHtml(html, plainText);
-
-      if (!result.processed) return false;
-
-      if (clipEvent.clipboardData) {
-        clipEvent.clipboardData.setData('text/plain', result.text);
-        clipEvent.clipboardData.setData('text/html', html);
-        clipEvent.preventDefault();
-      }
-
-      return true;
-    },
-    [processSnLinksFromHtml]
-  );
-
   // ── Editor instance ───────────────────────────────────────────────
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      // StarterKit ships its own `link` extension since TipTap 3 — disable it
+      // so our configured Link below is the only one (avoids duplicate names).
+      StarterKit.configure({ link: false }),
       CorrectionHighlighter,
-      SnLink.configure({
+      Link.configure({
         openOnClick: false,
         HTMLAttributes: {
           class: 'text-[var(--tyk-sapphire)] underline cursor-pointer',
@@ -278,53 +280,49 @@ export function TiptapEditor({
       attributes: {
         class: `focus:outline-none overflow-y-auto flex-1 h-full w-full ${className}`,
       },
-      handleDOMEvents: {
-        copy: handleCopyEvent,
-      },
     },
     onUpdate: ({ editor: ed, transaction }) => {
       if (!transaction.docChanged) return;
-      
+
       if (isExternalUpdate.current) {
         isExternalUpdate.current = false;
         return;
       }
-      
+
       setPopup(null);
-      
+
       let text = ed.getText();
       if (maxLength && text.length > maxLength) {
         text = text.substring(0, maxLength);
       }
-      
+
       if (text === latestGlobalTextRef.current) {
         return;
       }
-      
+
       setGlobalText(text);
     },
   });
 
-  // ── Strip SN links when toggle is turned OFF ──────────────────────
+  // ── Strip links when toggle is turned OFF ─────────────────────────
   useEffect(() => {
     if (!editor) return;
 
-    // When toggled OFF → strip all SN links back to plain text
-    if (prevSnLinkRef.current && !isSnLinkEnabled) {
+    // When toggled OFF → strip all link marks back to plain text
+    if (prevLinkEnabledRef.current && !isLinkEnabled) {
       const { tr } = editor.state;
       const linkType = editor.schema.marks.link;
       let modified = false;
 
-      editor.state.doc.descendants((node, pos) => {
-        if (!node.isText) return;
-        const linkMark = linkType ? node.marks.find(
-          (m) => m.type === linkType && m.attrs['data-sn'] === 'true'
-        ) : null;
-        if (linkMark) {
-          tr.removeMark(pos, pos + node.nodeSize, linkType);
-          modified = true;
-        }
-      });
+      if (linkType) {
+        editor.state.doc.descendants((node, pos) => {
+          if (!node.isText) return;
+          if (node.marks.some((m) => m.type === linkType)) {
+            tr.removeMark(pos, pos + node.nodeSize, linkType);
+            modified = true;
+          }
+        });
+      }
 
       if (modified) {
         isExternalUpdate.current = true;
@@ -332,14 +330,14 @@ export function TiptapEditor({
       }
     }
 
-    prevSnLinkRef.current = isSnLinkEnabled;
-  }, [isSnLinkEnabled, editor]);
+    prevLinkEnabledRef.current = isLinkEnabled;
+  }, [isLinkEnabled, editor]);
 
   // ── Sync external changes into editor ─────────────────────────────
   useEffect(() => {
     if (editor && globalText !== editor.getText() && !isExternalUpdate.current) {
       isExternalUpdate.current = true;
-      
+
       const escapeHtml = (unsafe: string) => unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -357,27 +355,62 @@ export function TiptapEditor({
   }, [globalText, editor]);
 
   // ── Listen for tyk:replaceText events ─────────────────────────────
+  // Mark-preserving replacement: instead of rewriting the whole matched
+  // range (or worse, the whole document), only the regions that actually
+  // changed are touched, so link marks on unchanged words survive.
   useEffect(() => {
     if (!editor) return;
 
     const handleReplaceText = (e: Event) => {
       const customEvent = e as CustomEvent<{ oldText: string, newText: string }>;
       const { oldText, newText } = customEvent.detail;
-      
+
       const trimmedOld = oldText.trim();
       const trimmedNew = newText.trim();
       if (!trimmedOld) return;
-      
-      let from = -1;
-      let to = -1;
-      
+
+      // Resolve every changed region against the CURRENT doc, then apply
+      // them right-to-left in ONE transaction so earlier positions stay
+      // valid. Returns false when a region cannot be mapped.
+      const applyRegions = (mapIndexToPos: (index: number, isEnd: boolean) => number | null): boolean => {
+        const regions = computeReplaceRegions(trimmedOld, trimmedNew);
+        if (regions.length === 0) return true; // nothing to change
+
+        const mapped: { from: number; to: number; text: string }[] = [];
+        for (const region of regions) {
+          const from = region.start === region.end
+            ? (mapIndexToPos(region.start, false) ?? mapIndexToPos(region.start, true))
+            : mapIndexToPos(region.start, false);
+          const to = region.start === region.end ? from : mapIndexToPos(region.end, true);
+          if (from === null || to === null || from === undefined || to === undefined) return false;
+          mapped.push({ from, to, text: region.text });
+        }
+
+        const { tr } = editor.state;
+        for (let i = mapped.length - 1; i >= 0; i--) {
+          const { from, to, text } = mapped[i];
+          if (text) {
+            tr.insertText(text, from, to);
+          } else {
+            tr.delete(from, to);
+          }
+        }
+        // No isExternalUpdate flag here: onUpdate must run for this
+        // transaction so setGlobalText keeps page state in sync.
+        editor.view.dispatch(tr);
+        return true;
+      };
+
+      // ── Primary path: find the old text inside a single block ──────
+      let blockFrom = -1;
+
       editor.state.doc.descendants((node, pos) => {
-        if (from !== -1) return false;
-        
+        if (blockFrom !== -1) return false;
+
         if (node.isBlock) {
           let blockText = '';
           const childPositions: { pos: number, textIndex: number }[] = [];
-          
+
           node.descendants((child, childPos) => {
             if (child.isText && child.text) {
               childPositions.push({ pos: childPos, textIndex: blockText.length });
@@ -387,7 +420,7 @@ export function TiptapEditor({
               blockText += '\n';
             }
           });
-          
+
           const index = blockText.lastIndexOf(trimmedOld);
           if (index !== -1) {
             let mappedPos = -1;
@@ -397,39 +430,60 @@ export function TiptapEditor({
                 break;
               }
             }
-            
+
             if (mappedPos !== -1) {
-              from = pos + 1 + mappedPos;
-              to = from + trimmedOld.length;
+              blockFrom = pos + 1 + mappedPos;
             }
           }
         }
       });
-      
-      if (from !== -1 && to !== -1) {
-        isExternalUpdate.current = true;
-        editor.view.dispatch(editor.state.tr.insertText(trimmedNew, from, to));
-      } else {
-        isExternalUpdate.current = true;
-        const { from: selFrom, to: selTo } = editor.state.selection;
-        const newTextFull = editor.getText().replace(oldText, newText);
-        
-        const escapeHtml = (unsafe: string) => unsafe
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-          
-        const htmlContent = newTextFull
-          .split('\n\n')
-          .map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
-          .join('');
-          
-        editor.commands.setContent(htmlContent);
-        try {
-           editor.commands.setTextSelection({ from: selFrom, to: selTo });
-        } catch { /* ignore selection errors */ }
+
+      if (blockFrom !== -1) {
+        // Inside a single block, text offsets and doc positions advance in
+        // lockstep (1 text char = 1 position, hardBreak = 1 char = 1 pos).
+        const base = blockFrom;
+        if (applyRegions((index) => base + index)) return;
+      }
+
+      // ── Fallback: search across block boundaries using the same
+      // getText-parity mapping as the CorrectionHighlighter plugin
+      // ("\n\n" between blocks, hardBreak = "\n"). ──────────────────
+      const { doc } = editor.state;
+      let fullText = '';
+      const segments: { textStart: number; textEnd: number; pos: number }[] = [];
+
+      doc.nodesBetween(0, doc.content.size, (node, pos) => {
+        if (node.isBlock && pos > 0) {
+          fullText += '\n\n';
+        }
+        if (node.type.name === 'hardBreak') {
+          segments.push({ textStart: fullText.length, textEnd: fullText.length + 1, pos });
+          fullText += '\n';
+          return false;
+        }
+        if (node.isText && node.text) {
+          segments.push({ textStart: fullText.length, textEnd: fullText.length + node.text.length, pos });
+          fullText += node.text;
+        }
+        return true;
+      });
+
+      const matchIndex = fullText.indexOf(trimmedOld);
+      if (matchIndex === -1) {
+        console.warn('[TiptapEditor] tyk:replaceText — old text not found in document, correction skipped.');
+        return;
+      }
+
+      const mapIndexToPos = (index: number, isEnd: boolean): number | null => {
+        const absolute = matchIndex + index;
+        const seg = isEnd
+          ? segments.find(s => absolute > s.textStart && absolute <= s.textEnd)
+          : segments.find(s => absolute >= s.textStart && absolute < s.textEnd);
+        return seg ? seg.pos + (absolute - seg.textStart) : null;
+      };
+
+      if (!applyRegions(mapIndexToPos)) {
+        console.warn('[TiptapEditor] tyk:replaceText — could not map correction to document positions, correction skipped.');
       }
     };
 
@@ -438,32 +492,31 @@ export function TiptapEditor({
   }, [editor]);
 
   // ── Listen for tyk:copyAll events (toolbar "Copier" button) ────────
+  // Standard clipboard behavior: rich text (text/html) keeps the links,
+  // plain text is just the document text.
   useEffect(() => {
     if (!editor) return;
 
     const handleCopyAll = () => {
-      const { state } = editor;
       const fullText = editor.getText();
+      const html = editor.getHTML();
 
-      // Serialize the entire document to HTML
-      const serializer = DOMSerializer.fromSchema(state.schema);
-      const serDoc = document.implementation.createHTMLDocument();
-      const fragment = serializer.serializeFragment(state.doc.content, { document: serDoc });
-      serDoc.body.appendChild(fragment);
-      const html = serDoc.body.innerHTML;
-
-      const result = processSnLinksFromHtml(html, fullText);
-
-      if (result.processed) {
-        navigator.clipboard.writeText(result.text).catch(console.error);
-      } else {
+      try {
+        const item = new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([fullText], { type: 'text/plain' }),
+        });
+        navigator.clipboard.write([item]).catch(() => {
+          navigator.clipboard.writeText(fullText).catch(console.error);
+        });
+      } catch {
         navigator.clipboard.writeText(fullText).catch(console.error);
       }
     };
 
     window.addEventListener('tyk:copyAll', handleCopyAll);
     return () => window.removeEventListener('tyk:copyAll', handleCopyAll);
-  }, [editor, processSnLinksFromHtml]);
+  }, [editor]);
 
   // ── Sync disabled state ───────────────────────────────────────────
   useEffect(() => {
@@ -494,8 +547,7 @@ export function TiptapEditor({
       .chain()
       .focus()
       .extendMarkRange('link')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .setLink({ href: editLinkHref, 'data-sn': isSnLinkEnabledRef.current ? 'true' : null } as any)
+      .setLink({ href: editLinkHref })
       .run();
   };
 
@@ -510,8 +562,7 @@ export function TiptapEditor({
     editor
       .chain()
       .focus()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .setLink({ href: newLinkUrl.trim(), 'data-sn': 'true' } as any)
+      .setLink({ href: newLinkUrl.trim() })
       .run();
     setNewLinkUrl('');
   };
@@ -523,7 +574,7 @@ export function TiptapEditor({
   return (
     <div className={`tiptap-wrapper relative w-full h-full flex flex-col overflow-hidden min-h-0 ${className}`}>
       <EditorContent editor={editor} className="w-full flex-1 flex flex-col overflow-hidden min-h-0 outline-none prose prose-sm max-w-none" />
-      
+
       {/* ── BubbleMenu: Edit an existing link ── */}
       <BubbleMenu
         editor={editor}
@@ -549,12 +600,12 @@ export function TiptapEditor({
         </div>
       </BubbleMenu>
 
-      {/* ── BubbleMenu: Create a new SN link (only when isSnLinkEnabled + text selected + no existing link) ── */}
+      {/* ── BubbleMenu: Create a new link (only when isLinkEnabled + text selected + no existing link) ── */}
       <BubbleMenu
         editor={editor}
         options={{ placement: 'bottom-start' }}
         shouldShow={({ editor: e }) => {
-          if (!isSnLinkEnabledRef.current) return false;
+          if (!isLinkEnabledRef.current) return false;
           if (e.isActive('link')) return false;
           if (e.state.selection.empty) return false;
           return true;
@@ -567,21 +618,21 @@ export function TiptapEditor({
             value={newLinkUrl}
             onChange={(e) => setNewLinkUrl(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyNewLink(); } }}
-            placeholder="URL du lien SN..."
+            placeholder={t('linkUrlPlaceholder')}
           />
           <button
             className={`${styles.bubbleBtn} ${styles.bubbleBtnApply}`}
             onClick={handleApplyNewLink}
             disabled={!newLinkUrl.trim()}
           >
-            Appliquer
+            {t('apply')}
           </button>
         </div>
       </BubbleMenu>
 
       {/* ── Correction popup ── */}
       {popup && (
-        <div 
+        <div
           className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 flex flex-col gap-2 w-72 animate-in fade-in zoom-in-95 duration-200"
           style={{ top: popup.coords.top, left: popup.coords.left }}
         >
@@ -612,7 +663,7 @@ export function TiptapEditor({
                 setPopup(null);
               }}
             >
-              Ignorer
+              {t('ignore')}
             </button>
           </div>
         </div>
