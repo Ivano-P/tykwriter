@@ -115,13 +115,21 @@ export default function AssistantRedacteurPage() {
           detail: { oldText: originalText, newText: correctedText }
         }));
 
-        // The editor republishes the corrected text as globalText (onUpdate);
-        // pre-cache it so the corrected block is not immediately re-sent to the API.
-        const trimmedCorrected = correctedText.trim();
-        processedCacheRef.current.set(correctedText, { correctedText, isPartial: false, hasChanges: false });
-        if (trimmedCorrected !== correctedText) {
-          processedCacheRef.current.set(trimmedCorrected, { correctedText: trimmedCorrected, isPartial: false, hasChanges: false });
-        }
+        // The editor republishes the corrected text as globalText (onUpdate) and
+        // the trigger effect re-splits it into blocks. The correction may add new
+        // paragraph boundaries, so pre-cache every re-split chunk (and trimmed
+        // variants), not just the whole string, so the corrected text is not
+        // immediately re-sent to the API.
+        const markProcessed = (text: string) => {
+          if (!text.trim()) return;
+          processedCacheRef.current.set(text, { correctedText: text, isPartial: false, hasChanges: false });
+          const trimmed = text.trim();
+          if (trimmed !== text) {
+            processedCacheRef.current.set(trimmed, { correctedText: trimmed, isPartial: false, hasChanges: false });
+          }
+        };
+        markProcessed(correctedText);
+        ChunkManager.splitIntoBlocks(correctedText).forEach(chunk => markProcessed(chunk.originalText));
 
         setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
         setRedoStack([]);
