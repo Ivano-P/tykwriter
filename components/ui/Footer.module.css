@@ -2,29 +2,33 @@
   width: 100%;
   padding: 0.75rem 1.5rem;
   background-color: transparent;
-  color: var(--tyk-sapphire, #0F52BA);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   margin-top: auto;
 }
 
+/* Mobile-first base styles */
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  text-align: center;
+  gap: 0.5rem;
   width: 100%;
+  text-align: center;
 }
 
-.row {
+.logoWrapper {
+  display: none;
+}
+
+.logo {
+  object-fit: contain;
+  opacity: 0.75;
+}
+
+.center {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: 100%;
-  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .slogan {
@@ -60,28 +64,43 @@
   opacity: 0.5;
 }
 
+.langWrapper {
+  display: flex;
+  justify-content: center;
+}
+
 .languageSwitcher {
-  margin-left: auto;
+  justify-content: center;
 }
 
 /************** Larger screens adjustments *****************************/
 @media (min-width: 768px) {
   .container {
     flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    text-align: left;
     gap: 0;
+    text-align: center;
   }
 
-  .row {
-    width: auto;
-    flex-wrap: nowrap;
+  .logoWrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
     justify-content: flex-start;
-    gap: 1.25rem;
+  }
+
+  .center {
+    flex: 1;
+    align-items: center;
+  }
+
+  .langWrapper {
+    flex: 1;
+    justify-content: flex-end;
   }
 
   .languageSwitcher {
-    margin-left: 0;
-    flex-shrink: 0;
+    justify-content: flex-end;
   }
 }
