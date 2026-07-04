@@ -19,6 +19,7 @@ import {
   buildTraductionPrompt,
   TRADUCTION_JSON_SCHEMA,
   type TargetLanguage,
+  type SourceLanguage,
   type TraductionResponse,
 } from './prompts/traduction.prompt';
 
@@ -145,12 +146,16 @@ export class MistralAiProService {
    * Les erreurs API remontent à l'appelant : contrairement au correcteur, il
    * n'existe pas de repli silencieux acceptable pour une traduction.
    */
-  static async translate(text: string, targetLanguage: TargetLanguage): Promise<TraductionResponse> {
+  static async translate(
+    text: string,
+    targetLanguage: TargetLanguage,
+    sourceLanguage: SourceLanguage = 'auto'
+  ): Promise<TraductionResponse> {
     try {
       const response = await this.client.chat.complete({
         model: TRADUCTION_MODEL,
         messages: [
-          { role: 'system', content: buildTraductionPrompt(targetLanguage) },
+          { role: 'system', content: buildTraductionPrompt(targetLanguage, sourceLanguage) },
           { role: 'user', content: text },
         ],
         responseFormat: {

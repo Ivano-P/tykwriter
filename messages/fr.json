@@ -90,7 +90,9 @@
     "translating": "Traduction…"
   },
   "traductionPage": {
-    "detected": "Langue détectée : {language}",
+    "sourceAuto": "Détection auto",
+    "sourceAutoDetected": "Auto : {language}",
+    "targetLanguage": "Traduire vers",
     "translating": "Traduction…",
     "copy": "Copier",
     "copied": "Copié !",

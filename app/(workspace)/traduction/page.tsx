@@ -7,10 +7,12 @@ import { ContentArea } from '@/components/ui/ContentArea';
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
 import { translateAction } from '@/actions/traduction.action';
 import {
-  DEFAULT_TARGET_LANGUAGE,
   TARGET_LANGUAGES,
+  SOURCE_LANGUAGES,
   sanitizeTargetLanguage,
+  sanitizeSourceLanguage,
   type TargetLanguage,
+  type SourceLanguage,
   type TraductionResponse,
 } from '@/services/prompts/traduction.prompt';
 import { useText } from '@/lib/TextContext';
@@ -20,7 +22,7 @@ import styles from './traduction.module.css';
 /** Pause de saisie avant le déclenchement automatique de la traduction. */
 const TRADUCTION_AUTO_DELAY = 2000;
 const MAX_CHARS = 2000;
-/** Taille maximale du cache de traductions (clé : cible + texte source). */
+/** Taille maximale du cache de traductions (clé : source + cible + texte). */
 const MAX_CACHE_ENTRIES = 30;
 
 type TranslationError = 'failed' | null;
@@ -31,9 +33,13 @@ export default function TraductionPage() {
   const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
-  // Cible par défaut : vers l'anglais pour une UI française, vers le français sinon.
+  // Défauts pilotés par la langue de l'UI : source = langue de l'app,
+  // cible = l'autre langue principale (FR <-> EN).
+  const [sourceLanguage, setSourceLanguage] = useState<SourceLanguage>(
+    uiLocale === 'fr' ? 'fr' : 'en'
+  );
   const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(
-    uiLocale === 'fr' ? DEFAULT_TARGET_LANGUAGE : 'fr'
+    uiLocale === 'fr' ? 'en-US' : 'fr'
   );
   const [result, setResult] = useState<TraductionResponse | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -50,54 +56,76 @@ export default function TraductionPage() {
     () => new Intl.DisplayNames([uiLocale], { type: 'language' }),
     [uiLocale]
   );
-
-  // Options du sélecteur de langue CIBLE de la barre d'outils
-  const languageOptions = useMemo(
-    () =>
-      TARGET_LANGUAGES.map((lang) => {
-        let label: string = lang;
-        try {
-          label = languageNames.of(lang) ?? lang;
-        } catch { /* code inconnu : on garde le code brut */ }
-        return { value: lang, label };
-      }),
+  const labelOf = useCallback(
+    (code: string): string => {
+      try {
+        return languageNames.of(code) ?? code;
+      } catch {
+        return code;
+      }
+    },
     [languageNames]
   );
 
-  const runTranslation = useCallback(async (text: string, target: TargetLanguage) => {
-    const cacheKey = `${target}::${text}`;
-    const cached = cacheRef.current.get(cacheKey);
-    if (cached) {
-      setResult(cached);
-      setError(null);
-      return;
-    }
+  // Langue détectée par le service (affichée côté ENTRÉE quand source = auto)
+  const detectedLabel =
+    result && result.langue_detectee && result.langue_detectee !== 'und'
+      ? labelOf(result.langue_detectee)
+      : null;
 
-    setIsTranslating(true);
-    setError(null);
-    try {
-      const response = await translateAction(text, target);
-      const cache = cacheRef.current;
-      if (cache.has(cacheKey)) cache.delete(cacheKey);
-      cache.set(cacheKey, response);
-      while (cache.size > MAX_CACHE_ENTRIES) {
-        const oldestKey = cache.keys().next().value;
-        if (oldestKey === undefined) break;
-        cache.delete(oldestKey);
+  // Sélecteur de langue SOURCE (barre d'outils, côté saisie).
+  // L'option "auto" affiche la langue détectée dès qu'elle est connue.
+  const sourceOptions = useMemo(
+    () =>
+      SOURCE_LANGUAGES.map((lang) => ({
+        value: lang,
+        label:
+          lang === 'auto'
+            ? detectedLabel
+              ? tp('sourceAutoDetected', { language: detectedLabel })
+              : tp('sourceAuto')
+            : labelOf(lang),
+      })),
+    [detectedLabel, labelOf, tp]
+  );
+
+  const runTranslation = useCallback(
+    async (text: string, target: TargetLanguage, source: SourceLanguage) => {
+      const cacheKey = `${source}::${target}::${text}`;
+      const cached = cacheRef.current.get(cacheKey);
+      if (cached) {
+        setResult(cached);
+        setError(null);
+        return;
       }
-      // Résultat périmé (texte modifié pendant l'appel) : on le met en cache
-      // mais on ne l'affiche pas, le debounce actif relancera la bonne paire.
-      if (globalTextRef.current !== text) return;
-      setResult(response);
-    } catch (err) {
-      console.error(err);
-      if (globalTextRef.current === text) setError('failed');
-    } finally {
-      setIsTranslating(false);
-    }
-  }, []);
 
-  // Traduction automatique après une pause de saisie (ou un changement de cible)
+      setIsTranslating(true);
+      setError(null);
+      try {
+        const response = await translateAction(text, target, source);
+        const cache = cacheRef.current;
+        if (cache.has(cacheKey)) cache.delete(cacheKey);
+        cache.set(cacheKey, response);
+        while (cache.size > MAX_CACHE_ENTRIES) {
+          const oldestKey = cache.keys().next().value;
+          if (oldestKey === undefined) break;
+          cache.delete(oldestKey);
+        }
+        // Résultat périmé (texte modifié pendant l'appel) : on le met en cache
+        // mais on ne l'affiche pas, le debounce actif relancera la bonne paire.
+        if (globalTextRef.current !== text) return;
+        setResult(response);
+      } catch (err) {
+        console.error(err);
+        if (globalTextRef.current === text) setError('failed');
+      } finally {
+        setIsTranslating(false);
+      }
+    },
+    []
+  );
+
+  // Traduction automatique après une pause de saisie (ou un changement de langue)
   useEffect(() => {
     if (globalText.trim() === '' || globalText.length > MAX_CHARS) {
       setResult(null);
@@ -106,10 +134,10 @@ export default function TraductionPage() {
     }
 
     const timer = setTimeout(() => {
-      runTranslation(globalTextRef.current, targetLanguage);
+      runTranslation(globalTextRef.current, targetLanguage, sourceLanguage);
     }, TRADUCTION_AUTO_DELAY);
     return () => clearTimeout(timer);
-  }, [globalText, targetLanguage, runTranslation]);
+  }, [globalText, targetLanguage, sourceLanguage, runTranslation]);
 
   const handleChange = (val: string) => {
     if (val.length <= MAX_CHARS) {
@@ -125,30 +153,27 @@ export default function TraductionPage() {
     }).catch(console.error);
   };
 
-  const detectedLabel =
-    result && result.langue_detectee && result.langue_detectee !== 'und'
-      ? (() => {
-          try {
-            return languageNames.of(result.langue_detectee) ?? result.langue_detectee;
-          } catch {
-            return result.langue_detectee;
-          }
-        })()
-      : null;
-
   const showUnsupported = result !== null && !result.est_supportee;
   const translationText = result && result.est_supportee ? result.traduction : '';
 
   const translationPane = (
     <div className={styles.outputPane}>
       <div className={styles.outputHeader}>
-        {detectedLabel ? (
-          <span className={styles.detectedLanguage}>
-            {tp('detected', { language: detectedLabel })}
-          </span>
-        ) : (
-          <span />
-        )}
+        {/* Langue CIBLE : choisie ici, côté sortie */}
+        <select
+          className={styles.targetSelect}
+          value={targetLanguage}
+          onChange={(e) => setTargetLanguage(sanitizeTargetLanguage(e.target.value))}
+          title={tp('targetLanguage')}
+          aria-label={tp('targetLanguage')}
+        >
+          {TARGET_LANGUAGES.map((lang) => (
+            <option key={lang} value={lang}>
+              {labelOf(lang)}
+            </option>
+          ))}
+        </select>
+
         {isTranslating ? (
           <span className={styles.translating}>{tp('translating')}</span>
         ) : (
@@ -203,9 +228,9 @@ export default function TraductionPage() {
             handleRedo={() => {}}
             MAX_CHARS={MAX_CHARS}
             translationPane={translationPane}
-            languageOptions={languageOptions}
-            languageValue={targetLanguage}
-            onLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
+            languageOptions={sourceOptions}
+            languageValue={sourceLanguage}
+            onLanguageChange={(value) => setSourceLanguage(sanitizeSourceLanguage(value))}
           />
         </div>
 

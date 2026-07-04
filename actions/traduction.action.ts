@@ -3,6 +3,7 @@
 import { MistralAiProService } from '@/services/MistralAiProService';
 import {
   sanitizeTargetLanguage,
+  sanitizeSourceLanguage,
   type TraductionResponse,
 } from '@/services/prompts/traduction.prompt';
 
@@ -15,7 +16,8 @@ const MAX_CHARS = 2000;
  */
 export async function translateAction(
   text: string,
-  targetLanguage?: string
+  targetLanguage?: string,
+  sourceLanguage?: string
 ): Promise<TraductionResponse> {
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid text provided for translation.');
@@ -23,5 +25,9 @@ export async function translateAction(
   if (text.length > MAX_CHARS) {
     throw new Error(`Text exceeds ${MAX_CHARS} characters.`);
   }
-  return await MistralAiProService.translate(text, sanitizeTargetLanguage(targetLanguage));
+  return await MistralAiProService.translate(
+    text,
+    sanitizeTargetLanguage(targetLanguage),
+    sanitizeSourceLanguage(sourceLanguage)
+  );
 }

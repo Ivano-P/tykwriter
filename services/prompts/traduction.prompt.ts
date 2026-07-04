@@ -65,6 +65,47 @@ export const SUPPORTED_SOURCE_CODES: readonly string[] = [
   'sv',
 ];
 
+/**
+ * Langue SOURCE déclarée par l'utilisateur dans le sélecteur d'entrée.
+ * 'auto' = détection automatique (comportement historique).
+ */
+export type SourceLanguage = 'auto' | 'en' | 'fr' | 'es' | 'it' | 'ru' | 'ja' | 'ko' | 'zh' | 'no' | 'sv';
+
+export const SOURCE_LANGUAGES: readonly SourceLanguage[] = [
+  'auto',
+  'en',
+  'fr',
+  'es',
+  'it',
+  'ru',
+  'ja',
+  'ko',
+  'zh',
+  'no',
+  'sv',
+];
+
+/** Ramène toute valeur externe à une langue source supportée (défaut : 'auto'). */
+export function sanitizeSourceLanguage(value: unknown): SourceLanguage {
+  return typeof value === 'string' && (SOURCE_LANGUAGES as readonly string[]).includes(value)
+    ? (value as SourceLanguage)
+    : 'auto';
+}
+
+/** Libellés des langues sources déclarées dans le prompt. */
+const SOURCE_LABELS: Record<Exclude<SourceLanguage, 'auto'>, string> = {
+  en: "l'anglais",
+  fr: 'le français',
+  es: "l'espagnol",
+  it: "l'italien",
+  ru: 'le russe',
+  ja: 'le japonais',
+  ko: 'le coréen',
+  zh: 'le chinois mandarin',
+  no: 'le norvégien',
+  sv: 'le suédois',
+};
+
 /** Libellés des langues cibles dans le prompt (le modèle traduit VERS ce libellé). */
 const TARGET_LABELS: Record<TargetLanguage, string> = {
   'en-US': "l'anglais AMÉRICAIN (orthographe et usages des États-Unis : color, organize, center)",
@@ -84,14 +125,27 @@ const SOURCE_LIST_DIRECTIVE = `LANGUES SOURCES SUPPORTÉES (codes à utiliser da
 
 /**
  * Construit le prompt système du traducteur pour une langue cible donnée.
+ * @param sourceLanguage Langue source déclarée par l'utilisateur ('auto' =
+ *                       détection automatique). Une déclaration explicite guide
+ *                       le modèle sur les textes courts ou ambigus, mais la
+ *                       détection reste prioritaire si le texte est
+ *                       manifestement dans une autre langue.
  */
-export function buildTraductionPrompt(targetLanguage: TargetLanguage): string {
+export function buildTraductionPrompt(
+  targetLanguage: TargetLanguage,
+  sourceLanguage: SourceLanguage = 'auto'
+): string {
+  const declaredSourceDirective =
+    sourceLanguage === 'auto'
+      ? ''
+      : `\n- L'utilisateur déclare que le texte source est en ${SOURCE_LABELS[sourceLanguage]} : en cas d'ambiguïté (texte court, mots communs à plusieurs langues), retiens cette langue. Si le texte est MANIFESTEMENT dans une autre langue, fais confiance à ta propre détection.`;
+
   return `Tu es un traducteur professionnel expert. Ta tâche se déroule en DEUX étapes obligatoires.
 
 ÉTAPE 1 — DÉTECTION DE LA LANGUE SOURCE :
 Détermine la langue DOMINANTE du texte soumis.
 
-${SOURCE_LIST_DIRECTIVE}
+${SOURCE_LIST_DIRECTIVE}${declaredSourceDirective}
 
 - Si la langue dominante fait partie des langues supportées : renseigne son code dans "langue_detectee", mets "est_supportee" à true, et passe à l'ÉTAPE 2.
 - Si la langue dominante n'est PAS supportée (ex: allemand, arabe, portugais) ou n'est pas identifiable : renseigne le code ISO 639-1 de la langue détectée si possible (sinon "und"), mets "est_supportee" à false, et mets "traduction" à une chaîne vide "". NE TRADUIS PAS.
