@@ -8,6 +8,7 @@ export default function LegalPage() {
       <div className={styles.content}>
         <h2>1. Éditeur du site</h2>
         <p>Le site Tykwriter est édité par TYKDEV.</p>
+        <p>Adresse : <strong>47 rue Vivienne – 75002, Paris, France</strong></p>
         <p>Email de contact : <strong>contact@tykdev.com</strong></p>
 
         <h2>2. Hébergement & Nom de domaine</h2>
