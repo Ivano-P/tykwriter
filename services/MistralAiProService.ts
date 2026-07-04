@@ -1,7 +1,8 @@
 import { Mistral } from '@mistralai/mistralai';
 import {
-  CORRECTEUR_SYSTEM_PROMPT,
+  buildCorrecteurPrompt,
   CORRECTEUR_JSON_SCHEMA,
+  type UiLocale,
 } from './prompts/correcteur.prompt';
 import {
   buildAssistantRedacteurPrompt,
@@ -126,12 +127,16 @@ export class MistralAiProService {
   }
 
 
-  static async checkSpelling(text: string): Promise<CorrectionResponse> {
+  /**
+   * Diagnostic d'erreurs (correcteur bilingue FR/EN, langue du texte auto-détectée).
+   * @param uiLocale Langue de l'interface : langue de rédaction des explications.
+   */
+  static async checkSpelling(text: string, uiLocale: UiLocale = 'fr'): Promise<CorrectionResponse> {
     try {
       const response = await this.client.chat.complete({
         model: CORRECTEUR_MODEL,
         messages: [
-          { role: 'system', content: CORRECTEUR_SYSTEM_PROMPT },
+          { role: 'system', content: buildCorrecteurPrompt(uiLocale) },
           { role: 'user', content: text },
         ],
         responseFormat: {

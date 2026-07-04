@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
@@ -21,6 +22,7 @@ const FINAL_CHECK_IDLE_DELAY = 12000;
 const FINAL_CHECK_RETRY_DELAY = 2000;
 
 export default function AssistantRedacteurPage() {
+  const t = useTranslations('banner');
   const { globalText, setGlobalText } = useText();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -404,10 +406,10 @@ export default function AssistantRedacteurPage() {
     <>
       <div className={layoutStyles.headerBanner}>
         <h1 className={layoutStyles.headerTitle}>
-          Votre Assistant de Rédaction et Correcteur de Précision.
+          {t('title')}
         </h1>
         <p className={layoutStyles.headerSubtitle}>
-          Saisissez librement, et votre Assistant Rédacteur Tykwriter s&apos;occupe des détails (orthographe, mise en forme et fluidité).
+          {t('assistantSubtitle')}
         </p>
       </div>
 

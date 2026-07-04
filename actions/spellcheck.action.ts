@@ -26,11 +26,17 @@ export async function spellcheckAction(
 }
 
 import { CorrectionResponse } from '@/services/MistralAiProService';
+import { sanitizeUiLocale } from '@/services/prompts/correcteur.prompt';
 
-export async function checkSpellingIssuesAction(text: string): Promise<CorrectionResponse> {
+export async function checkSpellingIssuesAction(
+  text: string,
+  uiLocale?: string
+): Promise<CorrectionResponse> {
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid text provided for spellcheck.');
   }
-  return await MistralAiProService.checkSpelling(text);
+  // Locale d'interface (langue des explications) : seules 'fr'|'en' sont
+  // acceptées, toute autre valeur retombe sur 'fr'.
+  return await MistralAiProService.checkSpelling(text, sanitizeUiLocale(uiLocale));
 }
 

@@ -1,21 +1,24 @@
 'use client';
 
 import * as Diff from 'diff';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
 import styles from './CorrectionSidebar.module.css';
 
-const TONE_CHOICES: { value: AssistantTone; label: string }[] = [
-  { value: 'aucun', label: 'Aucun' },
-  { value: 'amical', label: 'Amical' },
-  { value: 'professionnel', label: 'Professionnel' },
-  { value: 'soutenu', label: 'Soutenu' },
+// Les valeurs restent les identifiants internes envoyés au prompt ;
+// seuls les libellés affichés sont traduits (clés du namespace assistantSidebar).
+const TONE_CHOICES: { value: AssistantTone; labelKey: string }[] = [
+  { value: 'aucun', labelKey: 'toneAucun' },
+  { value: 'amical', labelKey: 'toneAmical' },
+  { value: 'professionnel', labelKey: 'toneProfessionnel' },
+  { value: 'soutenu', labelKey: 'toneSoutenu' },
 ];
 
-const ABREVIATION_CHOICES: { value: AssistantAbreviations; label: string }[] = [
-  { value: 'conserver', label: 'Conserver' },
-  { value: 'developper', label: 'Développer' },
+const ABREVIATION_CHOICES: { value: AssistantAbreviations; labelKey: string }[] = [
+  { value: 'conserver', labelKey: 'abbreviationsConserver' },
+  { value: 'developper', labelKey: 'abbreviationsDevelopper' },
 ];
 
 interface AssistantRedacteurSidebarProps {
@@ -57,17 +60,18 @@ export function AssistantRedacteurSidebar({
   abreviations,
   setAbreviations,
 }: AssistantRedacteurSidebarProps) {
+  const t = useTranslations('assistantSidebar');
 
   return (
     <aside className={styles.sidebarContainer}>
-      <h2 className={styles.title}>Actions</h2>
+      <h2 className={styles.title}>{t('actions')}</h2>
       <div className={styles.separator} />
 
       <div className={styles.actionSection}>
 
         <div className={styles.toggleContainer}>
           <label className={styles.toggleLabel}>
-            <span className={styles.toggleText}>Correction automatique</span>
+            <span className={styles.toggleText}>{t('autoCorrect')}</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
@@ -82,8 +86,8 @@ export function AssistantRedacteurSidebar({
         </div>
 
         <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel} title="Relecture globale automatique après une pause d'écriture.">
-            <span className={styles.toggleText}>Vérification finale</span>
+          <label className={styles.toggleLabel} title={t('finalCheckHint')}>
+            <span className={styles.toggleText}>{t('finalCheck')}</span>
             <div className={styles.toggleWrapper}>
               <input
                 type="checkbox"
@@ -97,12 +101,12 @@ export function AssistantRedacteurSidebar({
           </label>
         </div>
         <p className={styles.toggleHint}>
-          Relecture globale automatique après une pause d&apos;écriture.
+          {t('finalCheckHint')}
         </p>
 
         {isFinalChecking && (
           <div className={styles.processingIndicator}>
-            Vérification finale…
+            {t('finalChecking')}
           </div>
         )}
 
@@ -111,7 +115,7 @@ export function AssistantRedacteurSidebar({
           disabled={isSubmitDisabled}
           className={styles.submitButton}
         >
-          {isProcessing ? 'Vérification...' : "Vérifier maintenant"}
+          {isProcessing ? t('checking') : t('checkNow')}
         </Button>
 
         <div className={styles.secondaryActionsGrid}>
@@ -119,55 +123,55 @@ export function AssistantRedacteurSidebar({
             onClick={handleFormatEmail}
             disabled={isProcessing || isSubmitDisabled}
             className={styles.secondaryActionBtn}
-            title="Ajouter les formules de politesse"
+            title={t('emailPolitenessTitle')}
           >
             <Mail size={16} />
-            <span>Politesse email</span>
+            <span>{t('emailPoliteness')}</span>
           </button>
 
           <button
             onClick={() => setIsLinkEnabled(!isLinkEnabled)}
             disabled={isProcessing}
             className={`${styles.secondaryActionBtn} ${isLinkEnabled ? styles.secondaryActionBtnActive : ''}`}
-            title="Activer/Désactiver Lien"
+            title={t('linkToggleTitle')}
           >
             <LinkIcon size={16} />
-            <span>Lien</span>
+            <span>{t('link')}</span>
           </button>
         </div>
 
         <div className={styles.optionsSection}>
-          <h3 className={styles.optionsTitle}>Options d&apos;écriture</h3>
+          <h3 className={styles.optionsTitle}>{t('writingOptions')}</h3>
 
           <div className={styles.optionGroup}>
-            <span className={styles.optionLabel}>Ton</span>
+            <span className={styles.optionLabel}>{t('tone')}</span>
             <div className={styles.segmentedControl}>
-              {TONE_CHOICES.map(({ value, label }) => (
+              {TONE_CHOICES.map(({ value, labelKey }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setTone(value)}
                   className={`${styles.segmentBtn} ${tone === value ? styles.segmentBtnActive : ''}`}
-                  title={`Ton : ${label}`}
+                  title={t('toneChoiceTitle', { label: t(labelKey) })}
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
           </div>
 
           <div className={styles.optionGroup}>
-            <span className={styles.optionLabel}>Abréviations</span>
+            <span className={styles.optionLabel}>{t('abbreviations')}</span>
             <div className={styles.segmentedControl}>
-              {ABREVIATION_CHOICES.map(({ value, label }) => (
+              {ABREVIATION_CHOICES.map(({ value, labelKey }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setAbreviations(value)}
                   className={`${styles.segmentBtn} ${abreviations === value ? styles.segmentBtnActive : ''}`}
-                  title={`Abréviations : ${label}`}
+                  title={t('abbreviationsChoiceTitle', { label: t(labelKey) })}
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -177,17 +181,17 @@ export function AssistantRedacteurSidebar({
 
       {diffParts && diffParts.length === 0 && !isProcessing && (
         <div className="mt-4 p-3 text-center text-[var(--tyk-sapphire)] font-medium text-sm">
-          Aucune erreur détectées
+          {t('noErrors')}
         </div>
       )}
 
       {diffParts && diffParts.length > 0 && !isProcessing && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>Correction appliquée</span>
-            <button className={styles.undoButton} onClick={handleUndo} title="Annuler la correction">
+            <span className={styles.diffTitle}>{t('correctionApplied')}</span>
+            <button className={styles.undoButton} onClick={handleUndo} title={t('undoCorrectionTitle')}>
               <RotateCcw size={16} />
-              <span>Annuler</span>
+              <span>{t('undo')}</span>
             </button>
           </div>
           <div className={styles.diffContent}>

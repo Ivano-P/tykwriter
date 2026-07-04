@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
@@ -16,6 +17,10 @@ const MAX_CHARS = 2000;
 const MAX_CACHE_ENTRIES = 50;
 
 export default function CorrecteurPage() {
+  const t = useTranslations('banner');
+  // Locale d'interface active : transmise au correcteur pour que les
+  // explications d'erreurs soient rédigées dans la langue de l'UI.
+  const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
@@ -96,7 +101,7 @@ export default function CorrecteurPage() {
     inFlightRef.current.add(paragraphText);
     setInFlightCount(inFlightRef.current.size);
     try {
-      const response = await checkSpellingIssuesAction(paragraphText);
+      const response = await checkSpellingIssuesAction(paragraphText, uiLocale);
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
     } catch (error) {
@@ -106,7 +111,20 @@ export default function CorrecteurPage() {
       setInFlightCount(inFlightRef.current.size);
       mergeIssuesFromCache();
     }
-  }, [mergeIssuesFromCache]);
+  }, [mergeIssuesFromCache, uiLocale]);
+
+  // Changement de langue d'interface : les explications en cache sont dans
+  // l'ancienne langue, on invalide le cache (les nouvelles vérifications
+  // repartiront avec la locale active).
+  const localeInitializedRef = useRef(false);
+  useEffect(() => {
+    if (!localeInitializedRef.current) {
+      localeInitializedRef.current = true;
+      return;
+    }
+    resultsCacheRef.current.clear();
+    setCorrectionIssues([]);
+  }, [uiLocale]);
 
   /**
    * Cycle de vérification : découpe le texte en paragraphes, sert les
@@ -244,10 +262,10 @@ export default function CorrecteurPage() {
     <>
       <div className={layoutStyles.headerBanner}>
         <h1 className={layoutStyles.headerTitle}>
-          Votre Assistant de Rédaction et Correcteur de Précision.
+          {t('title')}
         </h1>
         <p className={layoutStyles.headerSubtitle}>
-          Éliminez les fautes d&apos;orthographe, de grammaire et de syntaxe, tout en préservant votre style et votre voix unique.
+          {t('correcteurSubtitle')}
         </p>
       </div>
 

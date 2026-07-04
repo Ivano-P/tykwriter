@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { CorrectionIssue } from '@/services/MistralAiProService';
 import styles from './TiptapEditor.module.css';
@@ -83,6 +84,7 @@ export function TiptapEditor({
   ignoreCorrection,
   isLinkEnabled = false,
 }: TiptapEditorProps) {
+  const t = useTranslations('editor');
   const issuesRef = useRef(correctionIssues);
   const applyCorrectionRef = useRef(applyCorrection);
   const ignoreCorrectionRef = useRef(ignoreCorrection);
@@ -616,14 +618,14 @@ export function TiptapEditor({
             value={newLinkUrl}
             onChange={(e) => setNewLinkUrl(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyNewLink(); } }}
-            placeholder="URL du lien..."
+            placeholder={t('linkUrlPlaceholder')}
           />
           <button
             className={`${styles.bubbleBtn} ${styles.bubbleBtnApply}`}
             onClick={handleApplyNewLink}
             disabled={!newLinkUrl.trim()}
           >
-            Appliquer
+            {t('apply')}
           </button>
         </div>
       </BubbleMenu>
@@ -661,7 +663,7 @@ export function TiptapEditor({
                 setPopup(null);
               }}
             >
-              Ignorer
+              {t('ignore')}
             </button>
           </div>
         </div>

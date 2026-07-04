@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Copy, Undo2, Redo2, ChevronDown, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 import { CorrectionIssue } from '@/services/MistralAiProService';
@@ -41,6 +42,7 @@ export function ContentArea({
   ignoreCorrection,
   isLinkEnabled,
 }: ContentAreaProps) {
+  const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -69,16 +71,16 @@ export function ContentArea({
   };
 
   const handleDelete = () => {
-    if (confirm('Voulez-vous vraiment supprimer tout le texte ?')) {
+    if (confirm(t('confirmDelete'))) {
       onChange('');
     }
   };
 
   const modeTitle = currentMode === "correcteur"
-    ? "Correcteur"
+    ? t('modeCorrecteur')
     : currentMode === "assistant-redacteur"
-      ? "Assistant Rédacteur"
-      : "Traduction";
+      ? t('modeAssistant')
+      : t('modeTraduction');
 
   return (
     <div className={styles.contentContainer}>
@@ -88,7 +90,7 @@ export function ContentArea({
             className={styles.toolbarButton}
             onClick={handleUndo}
             disabled={undoStackLength === 0 || isProcessing || currentMode === 'traduction'}
-            title="Annuler (Undo)"
+            title={t('undoTitle')}
           >
             <Undo2 size={24} />
           </button>
@@ -96,7 +98,7 @@ export function ContentArea({
             className={styles.toolbarButton}
             onClick={handleRedo}
             disabled={redoStackLength === 0 || isProcessing || currentMode === 'traduction'}
-            title="Rétablir (Redo)"
+            title={t('redoTitle')}
           >
             <Redo2 size={24} />
           </button>
@@ -121,14 +123,14 @@ export function ContentArea({
                   className={`${styles.modeDropdownItem} ${pathname === '/correcteur' ? styles.modeDropdownItemActive : ''}`}
                   onClick={() => setIsDropdownOpen(false)}
                 >
-                  Correcteur
+                  {t('modeCorrecteur')}
                 </Link>
                 <Link
                   href="/assistant-redacteur"
                   className={`${styles.modeDropdownItem} ${pathname === '/assistant-redacteur' ? styles.modeDropdownItemActive : ''}`}
                   onClick={() => setIsDropdownOpen(false)}
                 >
-                  Assistant Rédacteur
+                  {t('modeAssistant')}
                 </Link>
                 {/* <Link
                   href="/traduction"
@@ -147,26 +149,26 @@ export function ContentArea({
             className={styles.toolbarButton}
             onClick={handleDelete}
             disabled={text.length === 0 || currentMode === 'traduction'}
-            title="Supprimer tout le texte"
+            title={t('deleteTitle')}
           >
             <Trash2 size={18} />
-            <span className={styles.toolbarButtonText}>Supprimer</span>
+            <span className={styles.toolbarButtonText}>{t('delete')}</span>
           </button>
           <button
             className={styles.toolbarButton}
             onClick={handleCopy}
             disabled={text.length === 0 || currentMode === 'traduction'}
-            title="Copier le texte"
+            title={t('copyTitle')}
           >
             <Copy size={18} />
-            <span className={styles.toolbarButtonText}>Copier</span>
+            <span className={styles.toolbarButtonText}>{t('copy')}</span>
           </button>
         </div>
       </div>
 
       {currentMode === 'traduction' ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', minHeight: '400px', fontSize: '1.125rem', fontWeight: 500 }}>
-          Mode traduction (Bientôt disponible)
+          {t('traductionComingSoon')}
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
@@ -187,10 +189,11 @@ export function ContentArea({
       <div className={styles.submitContainer}>
         <div className={styles.footerStats}>
           <div className={`${styles.charCount} ${text.length >= MAX_CHARS ? styles.charCountWarning : ''}`}>
-            {text.length} / {MAX_CHARS} char
+            {/* Valeurs passées en chaînes pour éviter le groupement ICU des milliers (2 000). */}
+            {t('charCount', { current: String(text.length), max: String(MAX_CHARS) })}
           </div>
           <div className={styles.wordCount}>
-            {text.trim() === '' ? 0 : text.trim().split(/\s+/).length} mots
+            {t('wordCount', { count: String(text.trim() === '' ? 0 : text.trim().split(/\s+/).length) })}
           </div>
         </div>
       </div>
