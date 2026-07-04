@@ -23,7 +23,7 @@ interface ContentAreaProps {
   correctionIssues?: CorrectionIssue[];
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
   ignoreCorrection?: (issue: CorrectionIssue) => void;
-  isSnLinkEnabled?: boolean;
+  isLinkEnabled?: boolean;
 }
 
 export function ContentArea({
@@ -39,7 +39,7 @@ export function ContentArea({
   correctionIssues,
   applyCorrection,
   ignoreCorrection,
-  isSnLinkEnabled,
+  isLinkEnabled,
 }: ContentAreaProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -179,7 +179,7 @@ export function ContentArea({
             correctionIssues={correctionIssues}
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
-            isSnLinkEnabled={isSnLinkEnabled}
+            isLinkEnabled={isLinkEnabled}
           />
         </div>
       )}

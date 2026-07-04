@@ -14,8 +14,8 @@ interface AssistantRedacteurSidebarProps {
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
   handleFormatEmail: () => void;
-  isSnLinkEnabled: boolean;
-  setIsSnLinkEnabled: (val: boolean) => void;
+  isLinkEnabled: boolean;
+  setIsLinkEnabled: (val: boolean) => void;
 }
 
 export function AssistantRedacteurSidebar({
@@ -27,8 +27,8 @@ export function AssistantRedacteurSidebar({
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
   handleFormatEmail,
-  isSnLinkEnabled,
-  setIsSnLinkEnabled,
+  isLinkEnabled,
+  setIsLinkEnabled,
 }: AssistantRedacteurSidebarProps) {
 
   return (
@@ -74,13 +74,13 @@ export function AssistantRedacteurSidebar({
           </button>
 
           <button
-            onClick={() => setIsSnLinkEnabled(!isSnLinkEnabled)}
+            onClick={() => setIsLinkEnabled(!isLinkEnabled)}
             disabled={isProcessing}
-            className={`${styles.secondaryActionBtn} ${isSnLinkEnabled ? styles.secondaryActionBtnActive : ''}`}
-            title="Activer/Désactiver Lien SN"
+            className={`${styles.secondaryActionBtn} ${isLinkEnabled ? styles.secondaryActionBtnActive : ''}`}
+            title="Activer/Désactiver Lien"
           >
             <LinkIcon size={16} />
-            <span>Lien SN</span>
+            <span>Lien</span>
           </button>
         </div>
       </div>

@@ -19,7 +19,7 @@ export default function AssistantRedacteurPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
-  const [isSnLinkEnabled, setIsSnLinkEnabled] = useState(false);
+  const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -118,6 +118,14 @@ export default function AssistantRedacteurPage() {
         window.dispatchEvent(new CustomEvent('tyk:replaceText', {
           detail: { oldText: originalText, newText: correctedText }
         }));
+
+        // The editor republishes the corrected text as globalText (onUpdate);
+        // pre-cache it so the corrected block is not immediately re-sent to the API.
+        const trimmedCorrected = correctedText.trim();
+        processedCacheRef.current.set(correctedText, { correctedText, isPartial: false, hasChanges: false });
+        if (trimmedCorrected !== correctedText) {
+          processedCacheRef.current.set(trimmedCorrected, { correctedText: trimmedCorrected, isPartial: false, hasChanges: false });
+        }
 
         setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
         setRedoStack([]);
@@ -240,7 +248,7 @@ export default function AssistantRedacteurPage() {
             handleUndo={handleUndo}
             handleRedo={handleRedo}
             MAX_CHARS={MAX_CHARS}
-            isSnLinkEnabled={isSnLinkEnabled}
+            isLinkEnabled={isLinkEnabled}
           />
         </div>
 
@@ -253,8 +261,8 @@ export default function AssistantRedacteurPage() {
           isAutoCorrectEnabled={isAutoCorrectEnabled}
           setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
           handleFormatEmail={handleFormatEmail}
-          isSnLinkEnabled={isSnLinkEnabled}
-          setIsSnLinkEnabled={setIsSnLinkEnabled}
+          isLinkEnabled={isLinkEnabled}
+          setIsLinkEnabled={setIsLinkEnabled}
         />
       </div>
     </>
