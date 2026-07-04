@@ -156,24 +156,16 @@ export default function TraductionPage() {
   const showUnsupported = result !== null && !result.est_supportee;
   const translationText = result && result.est_supportee ? result.traduction : '';
 
+  // Options du sélecteur de langue CIBLE (barre d'outils, côté sortie/droite)
+  const targetOptions = useMemo(
+    () => TARGET_LANGUAGES.map((lang) => ({ value: lang, label: labelOf(lang) })),
+    [labelOf]
+  );
+
   const translationPane = (
     <div className={styles.outputPane}>
       <div className={styles.outputHeader}>
-        {/* Langue CIBLE : choisie ici, côté sortie */}
-        <select
-          className={styles.targetSelect}
-          value={targetLanguage}
-          onChange={(e) => setTargetLanguage(sanitizeTargetLanguage(e.target.value))}
-          title={tp('targetLanguage')}
-          aria-label={tp('targetLanguage')}
-        >
-          {TARGET_LANGUAGES.map((lang) => (
-            <option key={lang} value={lang}>
-              {labelOf(lang)}
-            </option>
-          ))}
-        </select>
-
+        <span />
         {isTranslating ? (
           <span className={styles.translating}>{tp('translating')}</span>
         ) : (
@@ -231,6 +223,10 @@ export default function TraductionPage() {
             languageOptions={sourceOptions}
             languageValue={sourceLanguage}
             onLanguageChange={(value) => setSourceLanguage(sanitizeSourceLanguage(value))}
+            targetLanguageOptions={targetOptions}
+            targetLanguageValue={targetLanguage}
+            onTargetLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
+            targetLanguageTitle={tp('targetLanguage')}
           />
         </div>
 

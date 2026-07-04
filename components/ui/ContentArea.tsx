@@ -31,6 +31,11 @@ interface ContentAreaProps {
   languageOptions?: { value: string; label: string }[];
   languageValue?: string;
   onLanguageChange?: (value: string) => void;
+  /** Sélecteur de langue CIBLE (traduction) : entre le nom du mode et Supprimer. */
+  targetLanguageOptions?: { value: string; label: string }[];
+  targetLanguageValue?: string;
+  onTargetLanguageChange?: (value: string) => void;
+  targetLanguageTitle?: string;
 }
 
 export function ContentArea({
@@ -51,6 +56,10 @@ export function ContentArea({
   languageOptions,
   languageValue,
   onLanguageChange,
+  targetLanguageOptions,
+  targetLanguageValue,
+  onTargetLanguageChange,
+  targetLanguageTitle,
 }: ContentAreaProps) {
   const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -171,6 +180,21 @@ export function ContentArea({
         </div>
 
         <div className={styles.toolbarRight}>
+          {targetLanguageOptions && targetLanguageOptions.length > 0 && onTargetLanguageChange && (
+            <select
+              className={styles.toolbarSelect}
+              value={targetLanguageValue}
+              onChange={(e) => onTargetLanguageChange(e.target.value)}
+              title={targetLanguageTitle ?? t('languageTitle')}
+              aria-label={targetLanguageTitle ?? t('languageTitle')}
+            >
+              {targetLanguageOptions.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             className={styles.toolbarButton}
             onClick={handleDelete}
