@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -9,7 +10,22 @@ export async function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
-        <div className={styles.row}>
+
+        {/* Left: Logo */}
+        <div className={styles.logoWrapper}>
+          <Link href="/">
+            <Image
+              src="/images/tykwriter_logo.png"
+              alt="Tykwriter Logo"
+              width={110}
+              height={30}
+              className={styles.logo}
+            />
+          </Link>
+        </div>
+
+        {/* Center: Slogan + Legal links */}
+        <div className={styles.center}>
           <p className={styles.slogan}>{t('slogan')}</p>
           <div className={styles.links}>
             <Link href="/legal" className={styles.link}>{t('legal')}</Link>
@@ -19,7 +35,12 @@ export async function Footer() {
             <Link href="/terms" className={styles.link}>{t('terms')}</Link>
           </div>
         </div>
-        <LanguageSwitcher className={styles.languageSwitcher} />
+
+        {/* Right: Language switcher */}
+        <div className={styles.langWrapper}>
+          <LanguageSwitcher className={styles.languageSwitcher} />
+        </div>
+
       </div>
     </footer>
   );
