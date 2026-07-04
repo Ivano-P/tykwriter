@@ -9,7 +9,7 @@
     "correcteur": "Proofreader",
     "assistantExperimental": "Writing assistant (Experimental)",
     "assistant": "Writing assistant",
-    "traductionSoon": "Translation (Coming soon)",
+    "traduction": "Translation",
     "language": "Language",
     "switchToFrench": "Switch the interface to French",
     "switchToEnglish": "Switch the interface to English"
@@ -95,10 +95,20 @@
   },
   "traductionSidebar": {
     "actions": "Actions",
-    "comingSoon": "Coming soon"
+    "targetLanguage": "Translate to",
+    "autoTranslateHint": "Translates automatically after a typing pause.",
+    "translating": "Translating…"
   },
   "traductionPage": {
-    "comingSoon": "Translation mode (Coming soon)"
+    "detected": "Detected language: {language}",
+    "translating": "Translating…",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copyTranslation": "Copy the translation",
+    "placeholder": "The translation will appear here.",
+    "unsupported": "Unsupported language.",
+    "unsupportedWithLanguage": "Unsupported language ({language}).",
+    "failed": "Translation failed. Please try again in a moment."
   },
   "errorTypes": {
     "orthographe": "Spelling",

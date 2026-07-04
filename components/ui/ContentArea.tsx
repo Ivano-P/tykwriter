@@ -25,6 +25,8 @@ interface ContentAreaProps {
   applyCorrection?: (issue: CorrectionIssue, source: 'sidebar' | 'editor') => void;
   ignoreCorrection?: (issue: CorrectionIssue) => void;
   isLinkEnabled?: boolean;
+  /** Panneau de sortie affiché à côté de l'éditeur (mode traduction : zone scindée). */
+  translationPane?: React.ReactNode;
 }
 
 export function ContentArea({
@@ -41,6 +43,7 @@ export function ContentArea({
   applyCorrection,
   ignoreCorrection,
   isLinkEnabled,
+  translationPane,
 }: ContentAreaProps) {
   const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -132,13 +135,13 @@ export function ContentArea({
                 >
                   {t('modeAssistant')}
                 </Link>
-                {/* <Link
+                <Link
                   href="/traduction"
                   className={`${styles.modeDropdownItem} ${pathname === '/traduction' ? styles.modeDropdownItemActive : ''}`}
                   onClick={() => setIsDropdownOpen(false)}
                 >
-                  Traduction
-                </Link> */}
+                  {t('modeTraduction')}
+                </Link>
               </div>
             )}
           </div>
@@ -148,7 +151,7 @@ export function ContentArea({
           <button
             className={styles.toolbarButton}
             onClick={handleDelete}
-            disabled={text.length === 0 || currentMode === 'traduction'}
+            disabled={text.length === 0}
             title={t('deleteTitle')}
           >
             <Trash2 size={18} />
@@ -157,7 +160,7 @@ export function ContentArea({
           <button
             className={styles.toolbarButton}
             onClick={handleCopy}
-            disabled={text.length === 0 || currentMode === 'traduction'}
+            disabled={text.length === 0}
             title={t('copyTitle')}
           >
             <Copy size={18} />
@@ -166,9 +169,20 @@ export function ContentArea({
         </div>
       </div>
 
-      {currentMode === 'traduction' ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', minHeight: '400px', fontSize: '1.125rem', fontWeight: 500 }}>
-          {t('traductionComingSoon')}
+      {currentMode === 'traduction' && translationPane ? (
+        <div className={styles.splitContainer}>
+          <div className={styles.splitPane}>
+            <TiptapEditor
+              globalText={text}
+              setGlobalText={onChange}
+              isProcessing={false}
+              maxLength={MAX_CHARS}
+              className={styles.textArea}
+            />
+          </div>
+          <div className={`${styles.splitPane} ${styles.splitPaneOutput}`}>
+            {translationPane}
+          </div>
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>

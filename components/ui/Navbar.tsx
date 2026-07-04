@@ -141,7 +141,7 @@ export function Navbar() {
                 <div className={styles.dropdownMenuRight}>
                   <Link href="/correcteur" className={styles.dropdownItem}>{t('correcteur')}</Link>
                   <Link href="/assistant-redacteur" className={styles.dropdownItem}>{t('assistantExperimental')}</Link>
-                  <button disabled className={styles.dropdownItemDisabled}>{t('traductionSoon')}</button>
+                  <Link href="/traduction" className={styles.dropdownItem}>{t('traduction')}</Link>
                 </div>
               )}
             </div>
@@ -158,7 +158,7 @@ export function Navbar() {
             <span className="font-bold text-[#0F52BA] text-base">{t('modeMobile')}</span>
           </div>
           <Link href="/correcteur" className={`px-6 py-2 ${pathname === '/correcteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('correcteur')}</Link>
-          <div className="px-6 py-2 text-gray-400">{t('traductionSoon')}</div>
+          <Link href="/traduction" className={`px-6 py-2 ${pathname === '/traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('traduction')}</Link>
           <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('assistant')}</Link>
 
           <div className="border-t border-gray-100 my-2"></div>

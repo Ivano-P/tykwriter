@@ -9,7 +9,7 @@
     "correcteur": "Correcteur",
     "assistantExperimental": "Assistant rédacteur (Expérimentale)",
     "assistant": "Assistant rédacteur",
-    "traductionSoon": "Traduction (Arrive bientôt)",
+    "traduction": "Traduction",
     "language": "Langue",
     "switchToFrench": "Passer l'interface en français",
     "switchToEnglish": "Passer l'interface en anglais"
@@ -95,10 +95,20 @@
   },
   "traductionSidebar": {
     "actions": "Actions",
-    "comingSoon": "Bientôt disponible"
+    "targetLanguage": "Traduire vers",
+    "autoTranslateHint": "Traduction automatique après une pause de saisie.",
+    "translating": "Traduction…"
   },
   "traductionPage": {
-    "comingSoon": "Mode traduction (Bientôt disponible)"
+    "detected": "Langue détectée : {language}",
+    "translating": "Traduction…",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "copyTranslation": "Copier la traduction",
+    "placeholder": "La traduction apparaîtra ici.",
+    "unsupported": "Langue non prise en charge.",
+    "unsupportedWithLanguage": "Langue non prise en charge ({language}).",
+    "failed": "La traduction a échoué. Réessayez dans un instant."
   },
   "errorTypes": {
     "orthographe": "Orthographe",
