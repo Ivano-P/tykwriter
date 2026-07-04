@@ -18,6 +18,8 @@ export interface CorrectionIssue {
   correction: string;
   type: "orthographe" | "grammaire" | "typographie" | "style" | "ponctuation";
   explication: string;
+  /** Index (base 0) de l'occurrence fautive de texte_original dans le texte vérifié. */
+  occurrence?: number;
 }
 
 export interface CorrectionResponse {

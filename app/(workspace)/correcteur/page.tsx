@@ -27,6 +27,13 @@ export default function CorrecteurPage() {
   const [diffParts, setDiffParts] = useState<Diff.Change[] | null>(null);
 
   const skipDebounceRef = useRef(false);
+  // Refs to avoid stale-state issues inside the debounce timer / async handler
+  const lastCheckedTextRef = useRef('');
+  const isProcessingRef = useRef(false);
+  const globalTextRef = useRef(globalText);
+  globalTextRef.current = globalText;
+  // Bumped when text changed while a check was in flight, to re-arm the debounce
+  const [recheckToken, setRecheckToken] = useState(0);
 
   // Auto spellcheck effect with debounce
   useEffect(() => {
@@ -35,7 +42,11 @@ export default function CorrecteurPage() {
       return;
     }
 
-    if (globalText.trim() === '' || isProcessing || globalText.length > MAX_CHARS || !isAutoCorrectEnabled) {
+    if (globalText.trim() === '' || globalText.length > MAX_CHARS || !isAutoCorrectEnabled) {
+      return;
+    }
+
+    if (globalText === lastCheckedTextRef.current) {
       return;
     }
 
@@ -43,26 +54,33 @@ export default function CorrecteurPage() {
       handleAutoSpellcheckIssues(globalText);
     }, CORRECTEUR_AUTO_DELAY);
     return () => clearTimeout(timer);
-  }, [globalText, isAutoCorrectEnabled, isProcessing]);
+  }, [globalText, isAutoCorrectEnabled, recheckToken]);
 
   const handleAutoSpellcheckIssues = async (textToCheck: string) => {
-    if (!textToCheck.trim() || isProcessing) return;
+    if (!textToCheck.trim() || isProcessingRef.current) return;
 
-    if (textToCheck === lastCheckedText) {
+    if (textToCheck === lastCheckedTextRef.current) {
       return;
     }
 
+    isProcessingRef.current = true;
     setIsProcessing(true);
     setCorrectionIssues([]);
     try {
       const response = await checkSpellingIssuesAction(textToCheck);
-      const processedIssues = SpellcheckService.processResponse(response);
+      const processedIssues = SpellcheckService.processResponse(response, textToCheck);
       setCorrectionIssues(processedIssues);
+      lastCheckedTextRef.current = textToCheck;
       setLastCheckedText(textToCheck);
     } catch (error) {
       console.error(error);
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
+      // Text changed while the check was in flight → re-arm the debounce
+      if (globalTextRef.current !== textToCheck) {
+        setRecheckToken(token => token + 1);
+      }
     }
   };
 
@@ -107,7 +125,7 @@ export default function CorrecteurPage() {
         setCorrectionIssues([]);
       } else {
         setCorrectionIssues(prev =>
-          prev.filter(issue => val.includes(issue.texte_original))
+          SpellcheckService.reconcileIssuesAfterEdit(val, prev)
         );
       }
     }

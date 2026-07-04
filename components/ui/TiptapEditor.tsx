@@ -114,33 +114,75 @@ export function TiptapEditor({
                 return DecorationSet.empty;
               }
 
+              // Build the full document text EXACTLY like editor.getText()
+              // (block separator "\n\n", hardBreak → "\n"), keeping a map of
+              // text segments back to ProseMirror positions. This lets us
+              // count occurrences globally, matching the indexes computed by
+              // SpellcheckService on globalText.
+              let fullText = '';
+              const segments: { textStart: number; textEnd: number; pos: number }[] = [];
+
+              doc.nodesBetween(0, doc.content.size, (node, pos) => {
+                if (node.isBlock && pos > 0) {
+                  fullText += '\n\n';
+                }
+                if (node.type.name === 'hardBreak') {
+                  segments.push({ textStart: fullText.length, textEnd: fullText.length + 1, pos });
+                  fullText += '\n';
+                  return false;
+                }
+                if (node.isText && node.text) {
+                  segments.push({ textStart: fullText.length, textEnd: fullText.length + node.text.length, pos });
+                  fullText += node.text;
+                }
+                return true;
+              });
+
+              // Map a text index back to a doc position. Start indexes must fall
+              // strictly inside a segment; end indexes may sit on its right edge.
+              const mapStart = (index: number): number | null => {
+                const seg = segments.find(s => index >= s.textStart && index < s.textEnd);
+                return seg ? seg.pos + (index - seg.textStart) : null;
+              };
+              const mapEnd = (index: number): number | null => {
+                const seg = segments.find(s => index > s.textStart && index <= s.textEnd);
+                return seg ? seg.pos + (index - seg.textStart) : null;
+              };
+
               const decorations: Decoration[] = [];
 
-              doc.descendants((node, pos) => {
-                if (node.isText && node.text) {
-                  issues.forEach((issue) => {
-                    const textToFind = issue.texte_original;
-                    if (!textToFind) return;
+              issues.forEach((issue) => {
+                const textToFind = issue.texte_original;
+                if (!textToFind) return;
 
-                    let startIndex = 0;
-                    let matchIndex;
-                    while ((matchIndex = node.text!.indexOf(textToFind, startIndex)) > -1) {
-                      const from = pos + matchIndex;
-                      const to = from + textToFind.length;
-
-                      decorations.push(
-                        Decoration.inline(from, to, {
-                          class: 'border-b-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)] cursor-pointer',
-                          'data-correction-id': issue.id
-                        }, {
-                          'data-correction-id': issue.id
-                        })
-                      );
-
-                      startIndex = matchIndex + textToFind.length;
-                    }
-                  });
+                // Collect every (non-overlapping) occurrence in the full text
+                const matchIndexes: number[] = [];
+                let matchIndex = fullText.indexOf(textToFind);
+                while (matchIndex > -1) {
+                  matchIndexes.push(matchIndex);
+                  matchIndex = fullText.indexOf(textToFind, matchIndex + textToFind.length);
                 }
+                if (matchIndexes.length === 0) return;
+
+                // Decorate ONLY the issue's nth occurrence; fall back to the
+                // first match when occurrence is undefined or out of range.
+                const nth = issue.occurrence;
+                const target = nth !== undefined && nth >= 0 && nth < matchIndexes.length
+                  ? matchIndexes[nth]
+                  : matchIndexes[0];
+
+                const from = mapStart(target);
+                const to = mapEnd(target + textToFind.length);
+                if (from === null || to === null) return;
+
+                decorations.push(
+                  Decoration.inline(from, to, {
+                    class: 'border-b-2 border-[var(--destructive)] bg-[var(--destructive)]/10 text-[var(--destructive)] cursor-pointer',
+                    'data-correction-id': issue.id
+                  }, {
+                    'data-correction-id': issue.id
+                  })
+                );
               });
               return DecorationSet.create(doc, decorations);
             }
