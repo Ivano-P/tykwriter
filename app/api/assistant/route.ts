@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MistralAiProService } from '@/services/MistralAiProService';
+import { sanitizeAssistantOptions } from '@/services/prompts/assistantRedacteur.prompt';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid text provided.' }, { status: 400 });
     }
 
-    const correctedText = await MistralAiProService.autoCheckSpellingAndFormat(text);
+    // Options d'écriture facultatives (ton, abréviations) ; valeurs invalides ignorées.
+    const options = sanitizeAssistantOptions(body.options);
+
+    const correctedText = await MistralAiProService.autoCheckSpellingAndFormat(text, options);
     return NextResponse.json({ correctedText });
   } catch (error: any) {
     if (error.name === 'AbortError') {

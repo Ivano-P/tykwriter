@@ -4,8 +4,9 @@ import {
   CORRECTEUR_JSON_SCHEMA,
 } from './prompts/correcteur.prompt';
 import {
-  ASSISTANT_REDACTEUR_SYSTEM_PROMPT,
+  buildAssistantRedacteurPrompt,
   ASSISTANT_REDACTEUR_JSON_SCHEMA,
+  type AssistantOptions,
 } from './prompts/assistantRedacteur.prompt';
 
 /** Modèles Mistral utilisés par le service (prompts versionnés dans services/prompts/). */
@@ -34,12 +35,12 @@ export class MistralAiProService {
   });
 
 
-  static async autoCheckSpellingAndFormat(text: string): Promise<string> {
+  static async autoCheckSpellingAndFormat(text: string, options?: AssistantOptions): Promise<string> {
     try {
       const response = await this.client.chat.complete({
         model: ASSISTANT_REDACTEUR_MODEL,
         messages: [
-          { role: 'system', content: ASSISTANT_REDACTEUR_SYSTEM_PROMPT },
+          { role: 'system', content: buildAssistantRedacteurPrompt(options ?? {}) },
           { role: 'user', content: text },
         ],
         responseFormat: {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
@@ -9,6 +9,7 @@ import { AutoCorrect } from '@/services/AutoCorrect';
 import { ChunkManager } from '@/services/ChunkManager';
 import { formatEmailText } from '@/lib/utils';
 import { useText } from '@/lib/TextContext';
+import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
 import layoutStyles from '../layout.module.css';
 
 const ASSISTANT_REDACTEUR_DELAY = 5000;
@@ -20,6 +21,10 @@ export default function AssistantRedacteurPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
+
+  // Options d'écriture (ton + abréviations) injectées dans le prompt système
+  const [tone, setTone] = useState<AssistantTone>('aucun');
+  const [abreviations, setAbreviations] = useState<AssistantAbreviations>('conserver');
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -34,6 +39,77 @@ export default function AssistantRedacteurPage() {
   useEffect(() => {
     latestGlobalTextRef.current = globalText;
   }, [globalText]);
+
+  // When a writing option changes, invalidate everything so the existing text
+  // is re-processed with the new options. Declared BEFORE the hybrid trigger
+  // effect so the cache is already cleared when it re-runs on the same render.
+  const optionsInitializedRef = useRef(false);
+  useEffect(() => {
+    if (!optionsInitializedRef.current) {
+      optionsInitializedRef.current = true;
+      return;
+    }
+    pendingRequestsRef.current.forEach(c => c.abort());
+    pendingRequestsRef.current.clear();
+    processingBlocksRef.current.clear();
+    processedCacheRef.current.clear();
+  }, [tone, abreviations]);
+
+  const triggerAssistantApi = useCallback(async (originalText: string, isComplete: boolean) => {
+    const controller = new AbortController();
+    pendingRequestsRef.current.set(originalText, controller);
+    processingBlocksRef.current.add(originalText);
+
+    try {
+      const resp = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: originalText, options: { tone, abreviations } }),
+        signal: controller.signal
+      });
+
+      if (!resp.ok) {
+        throw new Error('API Request failed');
+      }
+
+      const data = await resp.json();
+      const correctedText = data.correctedText;
+      const processed = AutoCorrect.processCorrections(originalText, correctedText);
+
+      processedCacheRef.current.set(originalText, {
+        correctedText,
+        isPartial: !isComplete,
+        hasChanges: processed.hasChanges
+      });
+
+      if (processed.hasChanges) {
+        window.dispatchEvent(new CustomEvent('tyk:replaceText', {
+          detail: { oldText: originalText, newText: correctedText }
+        }));
+
+        // The editor republishes the corrected text as globalText (onUpdate);
+        // pre-cache it so the corrected block is not immediately re-sent to the API.
+        const trimmedCorrected = correctedText.trim();
+        processedCacheRef.current.set(correctedText, { correctedText, isPartial: false, hasChanges: false });
+        if (trimmedCorrected !== correctedText) {
+          processedCacheRef.current.set(trimmedCorrected, { correctedText: trimmedCorrected, isPartial: false, hasChanges: false });
+        }
+
+        setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
+        setRedoStack([]);
+        setDiffParts(processed.diffParts);
+        skipDebounceRef.current = true;
+      }
+
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('API Error:', err);
+      }
+    } finally {
+      pendingRequestsRef.current.delete(originalText);
+      processingBlocksRef.current.delete(originalText);
+    }
+  }, [tone, abreviations]);
 
   // Non-blocking Hybrid Trigger for Assistant Rédacteur
   useEffect(() => {
@@ -85,63 +161,7 @@ export default function AssistantRedacteurPage() {
       }, ASSISTANT_REDACTEUR_DELAY);
       return () => clearTimeout(timeoutId);
     }
-  }, [globalText, isAutoCorrectEnabled]);
-
-  const triggerAssistantApi = async (originalText: string, isComplete: boolean) => {
-    const controller = new AbortController();
-    pendingRequestsRef.current.set(originalText, controller);
-    processingBlocksRef.current.add(originalText);
-
-    try {
-      const resp = await fetch('/api/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: originalText }),
-        signal: controller.signal
-      });
-
-      if (!resp.ok) {
-        throw new Error('API Request failed');
-      }
-
-      const data = await resp.json();
-      const correctedText = data.correctedText;
-      const processed = AutoCorrect.processCorrections(originalText, correctedText);
-
-      processedCacheRef.current.set(originalText, {
-        correctedText,
-        isPartial: !isComplete,
-        hasChanges: processed.hasChanges
-      });
-
-      if (processed.hasChanges) {
-        window.dispatchEvent(new CustomEvent('tyk:replaceText', {
-          detail: { oldText: originalText, newText: correctedText }
-        }));
-
-        // The editor republishes the corrected text as globalText (onUpdate);
-        // pre-cache it so the corrected block is not immediately re-sent to the API.
-        const trimmedCorrected = correctedText.trim();
-        processedCacheRef.current.set(correctedText, { correctedText, isPartial: false, hasChanges: false });
-        if (trimmedCorrected !== correctedText) {
-          processedCacheRef.current.set(trimmedCorrected, { correctedText: trimmedCorrected, isPartial: false, hasChanges: false });
-        }
-
-        setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
-        setRedoStack([]);
-        setDiffParts(processed.diffParts);
-        skipDebounceRef.current = true;
-      }
-
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.error('API Error:', err);
-      }
-    } finally {
-      pendingRequestsRef.current.delete(originalText);
-      processingBlocksRef.current.delete(originalText);
-    }
-  };
+  }, [globalText, isAutoCorrectEnabled, triggerAssistantApi]);
 
   // Legacy manual check fallback
   const handleSpellCheck = async (textToCheck: string) => {
@@ -149,7 +169,7 @@ export default function AssistantRedacteurPage() {
 
     setIsProcessing(true);
     try {
-      const result = await spellcheckAction(textToCheck);
+      const result = await spellcheckAction(textToCheck, false, { tone, abreviations });
       const processed = AutoCorrect.processCorrections(textToCheck, result);
 
       if (processed.hasChanges) {
@@ -263,6 +283,10 @@ export default function AssistantRedacteurPage() {
           handleFormatEmail={handleFormatEmail}
           isLinkEnabled={isLinkEnabled}
           setIsLinkEnabled={setIsLinkEnabled}
+          tone={tone}
+          setTone={setTone}
+          abreviations={abreviations}
+          setAbreviations={setAbreviations}
         />
       </div>
     </>

@@ -3,7 +3,20 @@
 import * as Diff from 'diff';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
+import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
 import styles from './CorrectionSidebar.module.css';
+
+const TONE_CHOICES: { value: AssistantTone; label: string }[] = [
+  { value: 'aucun', label: 'Aucun' },
+  { value: 'amical', label: 'Amical' },
+  { value: 'professionnel', label: 'Professionnel' },
+  { value: 'soutenu', label: 'Soutenu' },
+];
+
+const ABREVIATION_CHOICES: { value: AssistantAbreviations; label: string }[] = [
+  { value: 'conserver', label: 'Conserver' },
+  { value: 'developper', label: 'Développer' },
+];
 
 interface AssistantRedacteurSidebarProps {
   isProcessing: boolean;
@@ -16,6 +29,10 @@ interface AssistantRedacteurSidebarProps {
   handleFormatEmail: () => void;
   isLinkEnabled: boolean;
   setIsLinkEnabled: (val: boolean) => void;
+  tone: AssistantTone;
+  setTone: (val: AssistantTone) => void;
+  abreviations: AssistantAbreviations;
+  setAbreviations: (val: AssistantAbreviations) => void;
 }
 
 export function AssistantRedacteurSidebar({
@@ -29,6 +46,10 @@ export function AssistantRedacteurSidebar({
   handleFormatEmail,
   isLinkEnabled,
   setIsLinkEnabled,
+  tone,
+  setTone,
+  abreviations,
+  setAbreviations,
 }: AssistantRedacteurSidebarProps) {
 
   return (
@@ -82,6 +103,44 @@ export function AssistantRedacteurSidebar({
             <LinkIcon size={16} />
             <span>Lien</span>
           </button>
+        </div>
+
+        <div className={styles.optionsSection}>
+          <h3 className={styles.optionsTitle}>Options d&apos;écriture</h3>
+
+          <div className={styles.optionGroup}>
+            <span className={styles.optionLabel}>Ton</span>
+            <div className={styles.segmentedControl}>
+              {TONE_CHOICES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTone(value)}
+                  className={`${styles.segmentBtn} ${tone === value ? styles.segmentBtnActive : ''}`}
+                  title={`Ton : ${label}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.optionGroup}>
+            <span className={styles.optionLabel}>Abréviations</span>
+            <div className={styles.segmentedControl}>
+              {ABREVIATION_CHOICES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setAbreviations(value)}
+                  className={`${styles.segmentBtn} ${abreviations === value ? styles.segmentBtnActive : ''}`}
+                  title={`Abréviations : ${label}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
