@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 # The project uses pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.31.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN pnpm install --frozen-lockfile
 
@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.31.0
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
