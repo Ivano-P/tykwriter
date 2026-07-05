@@ -97,6 +97,7 @@
     "copy": "Copy",
     "copied": "Copied!",
     "copyTranslation": "Copy the translation",
+    "copySource": "Copy the source text",
     "placeholder": "The translation will appear here.",
     "unsupported": "Unsupported language.",
     "unsupportedWithLanguage": "Unsupported language ({language}).",

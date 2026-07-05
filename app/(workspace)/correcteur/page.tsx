@@ -246,7 +246,7 @@ export default function CorrecteurPage() {
   };
 
   const handleUndo = () => {
-    if (undoStack.length === 0 || isProcessing) return;
+    if (undoStack.length === 0) return;
     const lastText = undoStack[undoStack.length - 1];
 
     setRedoStack((prev: string[]) => [...prev, globalText]);
@@ -258,7 +258,7 @@ export default function CorrecteurPage() {
   };
 
   const handleRedo = () => {
-    if (redoStack.length === 0 || isProcessing) return;
+    if (redoStack.length === 0) return;
     const nextText = redoStack[redoStack.length - 1];
 
     setUndoStack((prev: string[]) => [...prev, globalText]);
@@ -297,7 +297,11 @@ export default function CorrecteurPage() {
             currentMode="correcteur"
             text={globalText}
             onChange={handleChange}
-            isProcessing={isProcessing}
+            // Jamais verrouillé pendant une vérification : la saisie continue,
+            // les résultats des paragraphes modifiés entre-temps sont simplement
+            // ignorés (le merge n'applique que les paragraphes encore présents)
+            // et le debounce relance la vérification à la prochaine pause.
+            isProcessing={false}
             undoStackLength={undoStack.length}
             redoStackLength={redoStack.length}
             handleUndo={handleUndo}

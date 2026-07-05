@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -13,6 +13,30 @@ export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
   const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false);
+
+  // Fermeture au clic EXTÉRIEUR (même mécanisme que le sélecteur de mode de
+  // ContentArea) : un clic dans le menu ne le démonte jamais avant que la
+  // navigation du lien ne s'exécute — contrairement à l'ancien onBlur temporisé
+  // qui fermait le menu au bout de 200 ms, avant le mouseup des clics lents.
+  const modesDropdownRef = useRef<HTMLDivElement>(null);
+  const moreDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isModesDropdownOpen && !isMoreDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (modesDropdownRef.current && !modesDropdownRef.current.contains(target)) {
+        setIsModesDropdownOpen(false);
+      }
+      if (moreDropdownRef.current && !moreDropdownRef.current.contains(target)) {
+        setIsMoreDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isModesDropdownOpen, isMoreDropdownOpen]);
 
   const pathname = usePathname();
 
@@ -62,29 +86,27 @@ export function Navbar() {
 
           {/* Right: "En savoir plus" and Mode selector */}
           <div className="flex items-center gap-6">
-            <div className="relative">
+            <div className="relative" ref={moreDropdownRef}>
               <button
                 className={styles.dropdownToggle}
                 onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
-                onBlur={() => setTimeout(() => setIsMoreDropdownOpen(false), 200)}
               >
                 {t('learnMore')} <ChevronDown size={16} />
               </button>
               {isMoreDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
-                  <Link href="/about" className={styles.dropdownItem}>{t('about')}</Link>
-                  <Link href="/feuille-de-route" className={styles.dropdownItem}>{t('roadmap')}</Link>
+                  <Link href="/about" className={styles.dropdownItem} onClick={() => setIsMoreDropdownOpen(false)}>{t('about')}</Link>
+                  <Link href="/feuille-de-route" className={styles.dropdownItem} onClick={() => setIsMoreDropdownOpen(false)}>{t('roadmap')}</Link>
                   {/* Lien propre à la branche test-deploy : retour vers la prod */}
-                  <Link href="https://tykwriter.tykdev.com/" className={styles.dropdownItem}>Retourner à la version production</Link>
+                  <Link href="https://tykwriter.tykdev.com/" className={styles.dropdownItem} onClick={() => setIsMoreDropdownOpen(false)}>Retourner à la version production</Link>
                 </div>
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={modesDropdownRef}>
               <button
                 className={styles.dropdownToggle}
                 onClick={() => setIsModesDropdownOpen(!isModesDropdownOpen)}
-                onBlur={() => setTimeout(() => setIsModesDropdownOpen(false), 200)}
               >
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-base">{t('mode')}</span>
@@ -93,9 +115,9 @@ export function Navbar() {
               </button>
               {isModesDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
-                  <Link href="/correcteur" className={styles.dropdownItem}>{t('correcteur')}</Link>
-                  <Link href="/assistant-redacteur" className={styles.dropdownItem}>{t('assistantExperimental')}</Link>
-                  <Link href="/traduction" className={styles.dropdownItem}>{t('traduction')}</Link>
+                  <Link href="/correcteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('correcteur')}</Link>
+                  <Link href="/assistant-redacteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('assistantExperimental')}</Link>
+                  <Link href="/traduction" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('traduction')}</Link>
                 </div>
               )}
             </div>

@@ -27,6 +27,8 @@ interface ContentAreaProps {
   isLinkEnabled?: boolean;
   /** Panneau de sortie affiché à côté de l'éditeur (mode traduction : zone scindée). */
   translationPane?: React.ReactNode;
+  /** En-tête du panneau SOURCE (mode traduction : bouton Copier symétrique). */
+  sourcePaneHeader?: React.ReactNode;
   /** Sélecteur de langue du mode (affiché entre Rétablir et le nom du mode). */
   languageOptions?: { value: string; label: string }[];
   languageValue?: string;
@@ -53,6 +55,7 @@ export function ContentArea({
   ignoreCorrection,
   isLinkEnabled,
   translationPane,
+  sourcePaneHeader,
   languageOptions,
   languageValue,
   onLanguageChange,
@@ -204,21 +207,25 @@ export function ContentArea({
             <Trash2 size={18} />
             <span className={styles.toolbarButtonText}>{t('delete')}</span>
           </button>
-          <button
-            className={styles.toolbarButton}
-            onClick={handleCopy}
-            disabled={text.length === 0}
-            title={t('copyTitle')}
-          >
-            <Copy size={18} />
-            <span className={styles.toolbarButtonText}>{t('copy')}</span>
-          </button>
+          {/* En traduction, chaque panneau a son propre bouton Copier symétrique */}
+          {currentMode !== 'traduction' && (
+            <button
+              className={styles.toolbarButton}
+              onClick={handleCopy}
+              disabled={text.length === 0}
+              title={t('copyTitle')}
+            >
+              <Copy size={18} />
+              <span className={styles.toolbarButtonText}>{t('copy')}</span>
+            </button>
+          )}
         </div>
       </div>
 
       {currentMode === 'traduction' && translationPane ? (
         <div className={styles.splitContainer}>
           <div className={styles.splitPane}>
+            {sourcePaneHeader}
             <TiptapEditor
               globalText={text}
               setGlobalText={onChange}

@@ -6,8 +6,15 @@ const APOSTROPHE_VARIANTS = /['’ʼ‛]/g; // ' ’ ʼ ‛
 /** Variantes de tirets/traits d'union normalisées vers le tiret simple. */
 const DASH_VARIANTS = /[-–—‑]/g; // - – — ‑
 
-/** Nombre de mots au-delà duquel on tente de réduire une correction "phrase entière". */
-const TRIM_WORD_THRESHOLD = 3;
+/**
+ * Nombre de mots au-delà duquel on tente de réduire une correction en unités
+ * minimales. À 1, toute correction multi-mots passe par le diff : les fautes
+ * indépendantes séparées par un mot inchangé sont scindées (granularité
+ * LanguageTool, ex: "je ne sait" -> je→Je + sait→sais), tandis qu'une
+ * correction composée dont les mots adjacents changent ensemble (ex:
+ * "le chien" -> "la chienne") reste UNE seule région, donc un seul clic.
+ */
+const TRIM_WORD_THRESHOLD = 1;
 
 /** Séparateur de paragraphes : ligne vide = 2 sauts de ligne consécutifs ou plus. */
 const PARAGRAPH_SEPARATOR = /(?:\r?\n){2,}/g;

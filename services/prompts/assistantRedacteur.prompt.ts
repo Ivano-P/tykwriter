@@ -204,11 +204,46 @@ Je clôture donc la demande.
 Cordialement,`;
 
 /**
+ * Jeu d'exemples CONDENSÉ pour les appels par chunk (phrase par phrase) :
+ * les trois exemples les plus instructifs — correction FR avec tutoiement/trait
+ * d'union, mise en forme e-mail multi-paragraphe, et correction d'anglais —
+ * couvrent les comportements clés pour ~1/4 du poids en tokens. La passe de
+ * vérification finale conserve le jeu complet.
+ */
+const PROMPT_EXAMPLES_CONDENSED = `EXEMPLES DE COMPORTEMENT ATTENDU (texte soumis -> valeur de "texte_corrige") :
+
+	texte: salut, comment vas tu ? je te confirme le rdv.
+	texte_corrige: Salut, comment vas-tu ? Je te confirme le rdv.
+
+	texte: i will send you the report tomorow. see you soon
+	texte_corrige: I will send you the report tomorrow. See you soon.
+
+	texte: Bonjour,
+
+Comment vas tu je técrit cette email pour te présenter mes excuses pour ce qui s'est passé hier soit. cordialement
+	texte_corrige: Bonjour,
+
+Comment vas-tu ? Je t'écris cet e-mail pour te présenter mes excuses pour ce qui s'est passé hier soir.
+
+Cordialement,`;
+
+export interface AssistantPromptBuildOptions {
+  /**
+   * true = variante allégée pour les appels par chunk : TOUTES les règles sont
+   * conservées à l'identique, seuls les exemples sont réduits (10 -> 3).
+   */
+  condensed?: boolean;
+}
+
+/**
  * Construit le prompt système de l'assistant rédacteur selon les options d'écriture.
  * Sans options (défauts), le prompt reproduit le prompt historique, augmenté
  * uniquement de la directive explicite de conservation des abréviations.
  */
-export function buildAssistantRedacteurPrompt(options: AssistantOptions = {}): string {
+export function buildAssistantRedacteurPrompt(
+  options: AssistantOptions = {},
+  buildOptions: AssistantPromptBuildOptions = {}
+): string {
   const tone: AssistantTone = options.tone ?? 'auto';
   const abreviations: AssistantAbreviations = options.abreviations ?? 'conserver';
   const englishVariant: EnglishVariant = options.englishVariant ?? 'auto';
@@ -233,7 +268,7 @@ export function buildAssistantRedacteurPrompt(options: AssistantOptions = {}): s
     parts.push(EXAMPLES_NOTE_TONE);
   }
 
-  parts.push(PROMPT_EXAMPLES);
+  parts.push(buildOptions.condensed ? PROMPT_EXAMPLES_CONDENSED : PROMPT_EXAMPLES);
   return parts.join('\n\n');
 }
 
