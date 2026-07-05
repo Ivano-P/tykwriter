@@ -59,7 +59,10 @@
     overflow-wrap: break-word;
     font-size: 1.125rem;
     color: var(--foreground);
-    padding: 0.5rem 0;
+    /* Haut à 1rem : reflète le padding .textArea appliqué DEUX fois côté
+       source (wrapper TipTap + élément ProseMirror, 0.5rem + 0.5rem) pour
+       que la première ligne des deux panneaux soit alignée. */
+    padding: 1rem 0 0.5rem;
 }
 
 .outputPlaceholder {
