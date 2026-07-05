@@ -65,7 +65,9 @@ export class MistralAiProService {
       const response = await this.client.chat.complete({
         model: ASSISTANT_REDACTEUR_MODEL,
         messages: [
-          { role: 'system', content: buildAssistantRedacteurPrompt(options ?? {}) },
+          // Variante condensée : mêmes règles, exemples réduits — les appels par
+          // chunk sont fréquents, le poids du prompt domine leur coût/latence.
+          { role: 'system', content: buildAssistantRedacteurPrompt(options ?? {}, { condensed: true }) },
           { role: 'user', content: text },
         ],
         responseFormat: {
