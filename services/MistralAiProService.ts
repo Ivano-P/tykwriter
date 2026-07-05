@@ -17,6 +17,7 @@ import {
 } from './prompts/finalCheck.prompt';
 import {
   buildTraductionPrompt,
+  buildTraductionStreamPrompt,
   TRADUCTION_JSON_SCHEMA,
   type TargetLanguage,
   type SourceLanguage,
@@ -191,6 +192,39 @@ export class MistralAiProService {
     } catch (error) {
       console.error('Mistral AI Translation Error:', error);
       throw new Error('Failed to translate with Mistral API.');
+    }
+  }
+
+  /**
+   * Traduction en STREAMING : générateur asynchrone des fragments de texte
+   * produits par le modèle. Protocole (voir buildTraductionStreamPrompt) :
+   * première ligne = en-tête JSON {langue_detectee, est_supportee}, suite =
+   * texte traduit brut. Le découpage/parsing est laissé au consommateur.
+   * @param signal Annulation transmise à l'appel Mistral : interrompre la
+   *               requête stoppe la génération (et sa facturation) côté API.
+   */
+  static async *translateStream(
+    text: string,
+    targetLanguage: TargetLanguage,
+    sourceLanguage: SourceLanguage = 'auto',
+    signal?: AbortSignal
+  ): AsyncGenerator<string> {
+    const stream = await this.client.chat.stream(
+      {
+        model: TRADUCTION_MODEL,
+        messages: [
+          { role: 'system', content: buildTraductionStreamPrompt(targetLanguage, sourceLanguage) },
+          { role: 'user', content: text },
+        ],
+      },
+      signal ? { fetchOptions: { signal } } : undefined
+    );
+
+    for await (const event of stream) {
+      const delta = event.data?.choices?.[0]?.delta?.content;
+      if (typeof delta === 'string' && delta.length > 0) {
+        yield delta;
+      }
     }
   }
 
