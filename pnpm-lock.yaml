@@ -23,9 +23,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.20.1
         version: 3.20.1
-      '@types/diff':
-        specifier: ^8.0.0
-        version: 8.0.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -35,9 +32,6 @@ importers:
       diff:
         specifier: ^8.0.3
         version: 8.0.3
-      dotenv:
-        specifier: ^17.3.1
-        version: 17.3.1
       lucide-react:
         specifier: ^0.576.0
         version: 0.576.0(react@19.2.3)
@@ -63,6 +57,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.2.1
+      '@types/diff':
+        specifier: ^8.0.0
+        version: 8.0.0
       '@types/node':
         specifier: ^20
         version: 20.19.35
