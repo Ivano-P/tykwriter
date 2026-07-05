@@ -1,6 +1,5 @@
 'use server';
 
-import { OllamaService } from '@/services/OllamaService';
 import { MistralAiProService } from '@/services/MistralAiProService';
 import {
   sanitizeAssistantOptions,
@@ -22,7 +21,8 @@ export async function spellcheckAction(
 
 
   return await MistralAiProService.autoCheckSpellingAndFormat(text, sanitizeAssistantOptions(options));
-  //return await OllamaService.checkSpelling(text); //use this to test the local ollama server
+  // Pour tester avec le serveur Ollama local : importer OllamaService depuis
+  // '@/services/OllamaService' et retourner OllamaService.checkSpelling(text).
 }
 
 import { CorrectionResponse } from '@/services/MistralAiProService';

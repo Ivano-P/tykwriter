@@ -130,11 +130,18 @@ export function TiptapEditor({
             init() {
               return DecorationSet.empty;
             },
-            apply(tr) {
+            apply(tr, oldSet) {
               const issues = issuesRef.current;
               const { doc } = tr;
               if (!issues || issues.length === 0) {
                 return DecorationSet.empty;
+              }
+
+              // Transaction sans modification du document (déplacement de
+              // curseur, sélection…) : on remappe l'ensemble existant au lieu
+              // de re-scanner tout le document — travail principal du fil UI.
+              if (!tr.docChanged && !tr.getMeta('updateCorrections')) {
+                return oldSet.map(tr.mapping, doc);
               }
 
               // Build the full document text EXACTLY like editor.getText()
