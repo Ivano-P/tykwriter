@@ -46,6 +46,7 @@ export default function TraductionPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState<TranslationError>(null);
   const [justCopied, setJustCopied] = useState(false);
+  const [justCopiedSource, setJustCopiedSource] = useState(false);
 
   // Cache des traductions déjà obtenues (évite de re-payer un appel identique)
   const cacheRef = useRef<Map<string, TraductionResponse>>(new Map());
@@ -225,6 +226,14 @@ export default function TraductionPage() {
     }).catch(console.error);
   };
 
+  const handleCopySource = () => {
+    if (!globalText) return;
+    navigator.clipboard.writeText(globalText).then(() => {
+      setJustCopiedSource(true);
+      setTimeout(() => setJustCopiedSource(false), 1500);
+    }).catch(console.error);
+  };
+
   const showUnsupported = result !== null && !result.est_supportee;
   // Pendant le streaming, streamText grandit au fil de l'eau ; à la fin il est
   // vidé et le résultat final (mis en cache) prend le relais.
@@ -235,6 +244,23 @@ export default function TraductionPage() {
   const targetOptions = useMemo(
     () => TARGET_LANGUAGES.map((lang) => ({ value: lang, label: labelOf(lang) })),
     [labelOf]
+  );
+
+  // En-tête du panneau SOURCE : bouton Copier symétrique de celui de la sortie
+  // (le bouton Copier de la barre d'outils est masqué en mode traduction).
+  const sourcePaneHeader = (
+    <div className={styles.outputHeader}>
+      <span />
+      <button
+        className={styles.copyButton}
+        onClick={handleCopySource}
+        disabled={!globalText}
+        title={tp('copySource')}
+      >
+        {justCopiedSource ? <Check size={14} /> : <Copy size={14} />}
+        {justCopiedSource ? tp('copied') : tp('copy')}
+      </button>
+    </div>
   );
 
   const translationPane = (
@@ -295,6 +321,7 @@ export default function TraductionPage() {
             handleRedo={() => {}}
             MAX_CHARS={MAX_CHARS}
             translationPane={translationPane}
+            sourcePaneHeader={sourcePaneHeader}
             languageOptions={sourceOptions}
             languageValue={sourceLanguage}
             onLanguageChange={(value) => setSourceLanguage(sanitizeSourceLanguage(value))}

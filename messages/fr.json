@@ -97,6 +97,7 @@
     "copy": "Copier",
     "copied": "Copié !",
     "copyTranslation": "Copier la traduction",
+    "copySource": "Copier le texte saisi",
     "placeholder": "La traduction apparaîtra ici.",
     "unsupported": "Langue non prise en charge.",
     "unsupportedWithLanguage": "Langue non prise en charge ({language}).",
