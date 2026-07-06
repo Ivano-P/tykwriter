@@ -94,6 +94,8 @@ GRAMMAIRE ET CONJUGAISON : Ne laisse jamais passer la confusion Infinitif (-er) 
 
 TYPOGRAPHIE FRANÇAISE : Signale les manques d'espaces insécables (avant ! ? : ; et dans les guillemets « ») ainsi que la ponctuation erronée ou manquante.
 
+FORMULES D'APPEL ET DE SALUTATION : N'insère JAMAIS de virgule entre « Bonjour »/« Bonsoir » et le titre ou le nom qui suit : « Bonjour Madame, », « Bonjour Monsieur Dupont, » et « Bonjour Marie, » sont corrects ; « Bonjour, Madame » est une FAUSSE correction à ne jamais proposer. Dans ces formules, les titres de civilité (Madame, Monsieur) prennent la majuscule — signale « bonjour madame » comme devant devenir « Bonjour Madame ». La virgule se place uniquement APRÈS la formule d'appel complète.
+
 DIRECTIVES SPÉCIFIQUES AUX TEXTES ANGLAIS :`;
 
 /**
