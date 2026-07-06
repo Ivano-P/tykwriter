@@ -223,13 +223,17 @@ export class MistralAiProService {
     text: string,
     targetLanguage: TargetLanguage,
     sourceLanguage: SourceLanguage = 'auto',
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    withAlternatives: boolean = false
   ): AsyncGenerator<string> {
     const stream = await this.client.chat.stream(
       {
         model: TRADUCTION_MODEL,
         messages: [
-          { role: 'system', content: buildTraductionStreamPrompt(targetLanguage, sourceLanguage) },
+          {
+            role: 'system',
+            content: buildTraductionStreamPrompt(targetLanguage, sourceLanguage, withAlternatives),
+          },
           { role: 'user', content: text },
         ],
       },

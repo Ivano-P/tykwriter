@@ -89,8 +89,11 @@
   },
   "traductionSidebar": {
     "actions": "Actions",
+    "translateNow": "Traduire maintenant",
     "autoTranslateHint": "Traduction automatique après une pause de saisie.",
-    "translating": "Traduction…"
+    "translating": "Traduction…",
+    "alternatives": "Autres traductions",
+    "alternativePickTitle": "Utiliser cette traduction"
   },
   "traductionPage": {
     "sourceAuto": "Détection auto",

@@ -2,6 +2,7 @@ import { MistralAiProService } from '@/services/MistralAiProService';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
+  SHORT_TEXT_FOR_ALTERNATIVES,
 } from '@/services/prompts/traduction.prompt';
 
 /**
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
 
   const target = sanitizeTargetLanguage(body.targetLanguage);
   const source = sanitizeSourceLanguage(body.sourceLanguage);
+  // Alternatives proposées uniquement pour les textes courts (une seule
+  // traduction au-delà du seuil).
+  const withAlternatives = text.length <= SHORT_TEXT_FOR_ALTERNATIVES;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -69,7 +73,8 @@ export async function POST(request: Request) {
           text,
           target,
           source,
-          request.signal
+          request.signal,
+          withAlternatives
         )) {
           if (headerSent) {
             emit(chunk);
