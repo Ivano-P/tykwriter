@@ -40,6 +40,7 @@
     "languageTitle": "Langue",
     "languageAuto": "Auto",
     "languageAutoDetected": "Auto : {language}",
+    "swapLanguagesTitle": "Inverser les langues",
     "charCount": "{current} / {max} char",
     "wordCount": "{count} mots"
   },

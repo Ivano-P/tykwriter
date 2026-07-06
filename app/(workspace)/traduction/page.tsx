@@ -10,6 +10,8 @@ import {
   SOURCE_LANGUAGES,
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
+  targetToSourceLanguage,
+  sourceToTargetLanguage,
   type TargetLanguage,
   type SourceLanguage,
   type TraductionResponse,
@@ -246,6 +248,24 @@ export default function TraductionPage() {
     [labelOf]
   );
 
+  // Langue source EFFECTIVE pour l'inversion : la sélection explicite, sinon
+  // la langue détectée (source = Auto). null si l'inversion est impossible.
+  const effectiveSource: Exclude<SourceLanguage, 'auto'> | null = (() => {
+    if (sourceLanguage !== 'auto') return sourceLanguage;
+    const detected = result?.langue_detectee;
+    if (detected && (SOURCE_LANGUAGES as readonly string[]).includes(detected) && detected !== 'auto') {
+      return detected as Exclude<SourceLanguage, 'auto'>;
+    }
+    return null;
+  })();
+
+  /** Inverse les langues source et cible (le texte saisi reste en place). */
+  const handleSwapLanguages = () => {
+    if (!effectiveSource) return;
+    setSourceLanguage(targetToSourceLanguage(targetLanguage));
+    setTargetLanguage(sourceToTargetLanguage(effectiveSource));
+  };
+
   // En-tête du panneau SOURCE : bouton Copier symétrique de celui de la sortie
   // (le bouton Copier de la barre d'outils est masqué en mode traduction).
   const sourcePaneHeader = (
@@ -329,6 +349,8 @@ export default function TraductionPage() {
             targetLanguageValue={targetLanguage}
             onTargetLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
             targetLanguageTitle={tp('targetLanguage')}
+            onSwapLanguages={handleSwapLanguages}
+            swapLanguagesDisabled={!effectiveSource}
           />
         </div>
 
