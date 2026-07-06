@@ -50,6 +50,21 @@ export default function AssistantRedacteurPage() {
 
   const tc = useTranslations('contentArea');
 
+  /**
+   * Prend en compte une nouvelle détection : si elle CONTREDIT une langue
+   * choisie explicitement (ex: « français » sélectionné mais texte anglais),
+   * le sélecteur bascule sur Auto pour afficher la langue réellement utilisée
+   * — sans jamais imposer une variante d'anglais non demandée.
+   */
+  const reconcileDetectedLanguage = useCallback((detected: string) => {
+    setDetectedLanguage(detected);
+    setWritingLanguage(prev => {
+      if (prev === 'auto') return prev;
+      const expected = prev === 'fr' ? 'fr' : 'en';
+      return detected === expected ? prev : 'auto';
+    });
+  }, []);
+
   // Options du sélecteur de langue de la barre d'outils, libellées dans la
   // langue de l'UI ; l'option Auto affiche la langue détectée dès qu'elle est connue.
   const languageOptions = useMemo(() => {
@@ -135,9 +150,10 @@ export default function AssistantRedacteurPage() {
 
       const data = await resp.json();
       const correctedText = data.correctedText;
-      // Alimente l'indicateur « Auto : {langue} » du sélecteur de la barre d'outils
+      // Alimente l'indicateur de langue et rebascule sur Auto si la langue
+      // choisie explicitement contredit la langue détectée
       if (typeof data.detectedLanguage === 'string' && data.detectedLanguage) {
-        setDetectedLanguage(data.detectedLanguage);
+        reconcileDetectedLanguage(data.detectedLanguage);
       }
       const processed = AutoCorrect.processCorrections(originalText, correctedText);
 
@@ -188,7 +204,7 @@ export default function AssistantRedacteurPage() {
       pendingRequestsRef.current.delete(originalText);
       processingBlocksRef.current.delete(originalText);
     }
-  }, [tone, abreviations, englishVariant]);
+  }, [tone, abreviations, englishVariant, reconcileDetectedLanguage]);
 
   // Non-blocking Hybrid Trigger for Assistant Rédacteur
   useEffect(() => {
@@ -365,7 +381,7 @@ export default function AssistantRedacteurPage() {
     setIsProcessing(true);
     try {
       const result = await spellcheckAction(textToCheck, false, { tone, abreviations, englishVariant });
-      if (result.langueDetectee) setDetectedLanguage(result.langueDetectee);
+      if (result.langueDetectee) reconcileDetectedLanguage(result.langueDetectee);
       const processed = AutoCorrect.processCorrections(textToCheck, result.texteCorrige);
 
       if (processed.hasChanges) {

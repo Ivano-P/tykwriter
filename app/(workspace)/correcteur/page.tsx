@@ -39,6 +39,21 @@ export default function CorrecteurPage() {
 
   const tc = useTranslations('contentArea');
 
+  /**
+   * Prend en compte une nouvelle détection : si elle CONTREDIT une langue
+   * choisie explicitement (ex: « français » sélectionné mais texte anglais),
+   * le sélecteur bascule sur Auto pour afficher la langue réellement utilisée
+   * — sans jamais imposer une variante d'anglais non demandée.
+   */
+  const reconcileDetectedLanguage = useCallback((detected: string) => {
+    setDetectedLanguage(detected);
+    setWritingLanguage(prev => {
+      if (prev === 'auto') return prev;
+      const expected = prev === 'fr' ? 'fr' : 'en';
+      return detected === expected ? prev : 'auto';
+    });
+  }, []);
+
   // Options du sélecteur de langue de la barre d'outils, libellées dans la
   // langue de l'UI ; l'option Auto affiche la langue détectée dès qu'elle est connue.
   const languageOptions = useMemo(() => {
@@ -140,8 +155,9 @@ export default function CorrecteurPage() {
       const response = await checkSpellingIssuesAction(paragraphText, uiLocale, { englishVariant });
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
-      // Alimente l'indicateur « Auto : {langue} » du sélecteur de la barre d'outils
-      if (response.langue_detectee) setDetectedLanguage(response.langue_detectee);
+      // Alimente l'indicateur de langue et rebascule sur Auto si la langue
+      // choisie explicitement contredit la langue détectée
+      if (response.langue_detectee) reconcileDetectedLanguage(response.langue_detectee);
     } catch (error) {
       console.error(error);
     } finally {
@@ -149,7 +165,7 @@ export default function CorrecteurPage() {
       setInFlightCount(inFlightRef.current.size);
       mergeIssuesFromCache();
     }
-  }, [mergeIssuesFromCache, uiLocale, englishVariant]);
+  }, [mergeIssuesFromCache, uiLocale, englishVariant, reconcileDetectedLanguage]);
 
   // Changement de langue d'interface ou de variante d'anglais : les résultats
   // en cache reflètent les anciens réglages, on invalide le cache (les
