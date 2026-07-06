@@ -50,9 +50,18 @@ export interface CorrectionIssue {
 }
 
 export interface CorrectionResponse {
+  /** Code ISO 639-1 de la langue dominante détectée par le modèle. */
+  langue_detectee?: string;
   texte_corrige_complet?: string;
   raisonnement_global?: string;
   erreurs: CorrectionIssue[];
+}
+
+/** Résultat d'une passe de correction invisible (assistant rédacteur). */
+export interface AssistantCorrectionResult {
+  texteCorrige: string;
+  /** Code ISO 639-1 de la langue dominante détectée par le modèle. */
+  langueDetectee?: string;
 }
 
 export class MistralAiProService {
@@ -61,7 +70,10 @@ export class MistralAiProService {
   });
 
 
-  static async autoCheckSpellingAndFormat(text: string, options?: AssistantOptions): Promise<string> {
+  static async autoCheckSpellingAndFormat(
+    text: string,
+    options?: AssistantOptions
+  ): Promise<AssistantCorrectionResult> {
     try {
       const response = await this.client.chat.complete({
         model: ASSISTANT_REDACTEUR_MODEL,
@@ -86,11 +98,15 @@ export class MistralAiProService {
         throw new Error('Invalid response from Mistral AI');
       }
 
-      const parsed: { texte_corrige?: unknown } = JSON.parse(result);
+      const parsed: { texte_corrige?: unknown; langue_detectee?: unknown } = JSON.parse(result);
       if (typeof parsed.texte_corrige !== 'string') {
         throw new Error('Missing "texte_corrige" field in Mistral AI response');
       }
-      return parsed.texte_corrige.trim();
+      return {
+        texteCorrige: parsed.texte_corrige.trim(),
+        langueDetectee:
+          typeof parsed.langue_detectee === 'string' ? parsed.langue_detectee : undefined,
+      };
     } catch (error) {
       console.error('Mistral AI Pro Service Error:', error);
       throw new Error('Failed to correct spelling with Mistral API.');

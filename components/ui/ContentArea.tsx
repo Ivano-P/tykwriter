@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Copy, Undo2, Redo2, ChevronDown, Trash2 } from 'lucide-react';
+import { Copy, Undo2, Redo2, ChevronDown, Trash2, ArrowLeftRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
@@ -38,6 +38,9 @@ interface ContentAreaProps {
   targetLanguageValue?: string;
   onTargetLanguageChange?: (value: string) => void;
   targetLanguageTitle?: string;
+  /** Inversion des langues source/cible (traduction) : bouton après le sélecteur source. */
+  onSwapLanguages?: () => void;
+  swapLanguagesDisabled?: boolean;
 }
 
 export function ContentArea({
@@ -63,6 +66,8 @@ export function ContentArea({
   targetLanguageValue,
   onTargetLanguageChange,
   targetLanguageTitle,
+  onSwapLanguages,
+  swapLanguagesDisabled,
 }: ContentAreaProps) {
   const t = useTranslations('contentArea');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -139,6 +144,18 @@ export function ContentArea({
                 </option>
               ))}
             </select>
+          )}
+
+          {onSwapLanguages && (
+            <button
+              className={styles.toolbarButton}
+              onClick={onSwapLanguages}
+              disabled={swapLanguagesDisabled}
+              title={t('swapLanguagesTitle')}
+              aria-label={t('swapLanguagesTitle')}
+            >
+              <ArrowLeftRight size={18} />
+            </button>
           )}
         </div>
 

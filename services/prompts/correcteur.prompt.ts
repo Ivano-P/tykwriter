@@ -94,6 +94,8 @@ GRAMMAIRE ET CONJUGAISON : Ne laisse jamais passer la confusion Infinitif (-er) 
 
 TYPOGRAPHIE FRANÇAISE : Signale les manques d'espaces insécables (avant ! ? : ; et dans les guillemets « ») ainsi que la ponctuation erronée ou manquante.
 
+FORMULES D'APPEL ET DE SALUTATION : N'insère JAMAIS de virgule entre « Bonjour »/« Bonsoir » et le titre ou le nom qui suit : « Bonjour Madame, », « Bonjour Monsieur Dupont, » et « Bonjour Marie, » sont corrects ; « Bonjour, Madame » est une FAUSSE correction à ne jamais proposer. Dans ces formules, les titres de civilité (Madame, Monsieur) prennent la majuscule — signale « bonjour madame » comme devant devenir « Bonjour Madame ». La virgule se place uniquement APRÈS la formule d'appel complète.
+
 DIRECTIVES SPÉCIFIQUES AUX TEXTES ANGLAIS :`;
 
 /**
@@ -129,6 +131,7 @@ Si le texte original ne contient aucune erreur, le tableau "erreurs" doit être 
 
 STRUCTURE JSON ATTENDUE :
 {
+"langue_detectee": "code de la langue dominante détectée ('fr', 'en', ou code ISO 639-1)",
 "texte_corrige_complet": "Le texte entièrement corrigé ici.",
 "raisonnement_global": "Explication courte du contexte sémantique.",
 "erreurs": [
@@ -175,8 +178,14 @@ export const CORRECTEUR_SYSTEM_PROMPT = buildCorrecteurPrompt('fr');
  */
 export const CORRECTEUR_JSON_SCHEMA = {
   type: 'object',
-  required: ['texte_corrige_complet', 'raisonnement_global', 'erreurs'],
+  required: ['langue_detectee', 'texte_corrige_complet', 'raisonnement_global', 'erreurs'],
   properties: {
+    // Déclarée en PREMIER : la détection de langue précède la correction.
+    langue_detectee: {
+      type: 'string',
+      description:
+        "Code ISO 639-1 de la langue dominante détectée dans le texte soumis (ex: 'fr', 'en').",
+    },
     texte_corrige_complet: {
       type: 'string',
       description: 'Le texte source entièrement corrigé, en appliquant toutes les directives.',

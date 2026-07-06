@@ -1,6 +1,6 @@
 'use server';
 
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { MistralAiProService, type AssistantCorrectionResult } from '@/services/MistralAiProService';
 import {
   sanitizeAssistantOptions,
   type AssistantOptions,
@@ -14,7 +14,7 @@ export async function spellcheckAction(
   text: string,
   useBooster: boolean = false,
   options?: AssistantOptions
-): Promise<string> {
+): Promise<AssistantCorrectionResult> {
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid text provided for spellcheck.');
   }
