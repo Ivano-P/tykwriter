@@ -266,6 +266,31 @@ export default function TraductionPage() {
     setTargetLanguage(sourceToTargetLanguage(effectiveSource));
   };
 
+  /**
+   * Garde anti-doublon : choisir comme source la langue de la cible (ou
+   * inversement) bascule l'autre côté sur l'ancienne valeur — jamais la même
+   * langue des deux côtés. La détection Auto n'est pas concernée.
+   */
+  const handleSourceChange = (value: string) => {
+    const next = sanitizeSourceLanguage(value);
+    if (next !== 'auto' && next === targetToSourceLanguage(targetLanguage)) {
+      setTargetLanguage(
+        effectiveSource
+          ? sourceToTargetLanguage(effectiveSource)
+          : next === 'fr' ? 'en-US' : 'fr'
+      );
+    }
+    setSourceLanguage(next);
+  };
+
+  const handleTargetChange = (value: string) => {
+    const next = sanitizeTargetLanguage(value);
+    if (sourceLanguage !== 'auto' && targetToSourceLanguage(next) === sourceLanguage) {
+      setSourceLanguage(targetToSourceLanguage(targetLanguage));
+    }
+    setTargetLanguage(next);
+  };
+
   // En-tête du panneau SOURCE : bouton Copier symétrique de celui de la sortie
   // (le bouton Copier de la barre d'outils est masqué en mode traduction).
   const sourcePaneHeader = (
@@ -344,10 +369,10 @@ export default function TraductionPage() {
             sourcePaneHeader={sourcePaneHeader}
             languageOptions={sourceOptions}
             languageValue={sourceLanguage}
-            onLanguageChange={(value) => setSourceLanguage(sanitizeSourceLanguage(value))}
+            onLanguageChange={handleSourceChange}
             targetLanguageOptions={targetOptions}
             targetLanguageValue={targetLanguage}
-            onTargetLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
+            onTargetLanguageChange={handleTargetChange}
             targetLanguageTitle={tp('targetLanguage')}
             onSwapLanguages={handleSwapLanguages}
             swapLanguagesDisabled={!effectiveSource}
