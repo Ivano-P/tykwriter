@@ -14,9 +14,8 @@ import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/as
 import {
   WRITING_LANGUAGES,
   writingLanguageToVariant,
-  variantToWritingLanguage,
   sanitizeWritingLanguage,
-  type EnglishVariant,
+  type WritingLanguage,
 } from '@/services/prompts/englishVariant';
 import { MAX_APPLIED_CORRECTIONS, type AppliedCorrection } from '@/services/prompts/finalCheck.prompt';
 import layoutStyles from '../layout.module.css';
@@ -42,19 +41,36 @@ export default function AssistantRedacteurPage() {
   // Options d'écriture (ton + abréviations + variante d'anglais) injectées dans le prompt système
   const [tone, setTone] = useState<AssistantTone>('auto');
   const [abreviations, setAbreviations] = useState<AssistantAbreviations>('conserver');
-  const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
+  // Langue d'écriture du sélecteur (auto/fr/en-US/en-GB) ; la variante
+  // d'anglais injectée dans le prompt en est dérivée.
+  const [writingLanguage, setWritingLanguage] = useState<WritingLanguage>('auto');
+  const englishVariant = writingLanguageToVariant(writingLanguage);
+  // Langue détectée par la dernière correction (affichée sur l'option Auto)
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
 
-  // Options du sélecteur de langue de la barre d'outils, libellées dans la langue de l'UI
+  const tc = useTranslations('contentArea');
+
+  // Options du sélecteur de langue de la barre d'outils, libellées dans la
+  // langue de l'UI ; l'option Auto affiche la langue détectée dès qu'elle est connue.
   const languageOptions = useMemo(() => {
     const names = new Intl.DisplayNames([uiLocale], { type: 'language' });
-    return WRITING_LANGUAGES.map((lang) => {
-      let label: string = lang;
+    const labelOf = (code: string) => {
       try {
-        label = names.of(lang) ?? lang;
-      } catch { /* code inconnu : on garde le code brut */ }
-      return { value: lang, label };
-    });
-  }, [uiLocale]);
+        return names.of(code) ?? code;
+      } catch {
+        return code;
+      }
+    };
+    return WRITING_LANGUAGES.map((lang) => ({
+      value: lang,
+      label:
+        lang === 'auto'
+          ? detectedLanguage
+            ? tc('languageAutoDetected', { language: labelOf(detectedLanguage) })
+            : tc('languageAuto')
+          : labelOf(lang),
+    }));
+  }, [uiLocale, detectedLanguage, tc]);
 
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
@@ -119,6 +135,10 @@ export default function AssistantRedacteurPage() {
 
       const data = await resp.json();
       const correctedText = data.correctedText;
+      // Alimente l'indicateur « Auto : {langue} » du sélecteur de la barre d'outils
+      if (typeof data.detectedLanguage === 'string' && data.detectedLanguage) {
+        setDetectedLanguage(data.detectedLanguage);
+      }
       const processed = AutoCorrect.processCorrections(originalText, correctedText);
 
       processedCacheRef.current.set(originalText, {
@@ -180,6 +200,7 @@ export default function AssistantRedacteurPage() {
         processedCacheRef.current.clear();
         appliedCorrectionsRef.current = [];
         lastFinalCheckedTextRef.current = '';
+        setDetectedLanguage(null);
       }
       return;
     }
@@ -344,7 +365,8 @@ export default function AssistantRedacteurPage() {
     setIsProcessing(true);
     try {
       const result = await spellcheckAction(textToCheck, false, { tone, abreviations, englishVariant });
-      const processed = AutoCorrect.processCorrections(textToCheck, result);
+      if (result.langueDetectee) setDetectedLanguage(result.langueDetectee);
+      const processed = AutoCorrect.processCorrections(textToCheck, result.texteCorrige);
 
       if (processed.hasChanges) {
         setDiffParts(processed.diffParts);
@@ -448,10 +470,8 @@ export default function AssistantRedacteurPage() {
             MAX_CHARS={MAX_CHARS}
             isLinkEnabled={isLinkEnabled}
             languageOptions={languageOptions}
-            languageValue={variantToWritingLanguage(englishVariant)}
-            onLanguageChange={(value) =>
-              setEnglishVariant(writingLanguageToVariant(sanitizeWritingLanguage(value)))
-            }
+            languageValue={writingLanguage}
+            onLanguageChange={(value) => setWritingLanguage(sanitizeWritingLanguage(value))}
           />
         </div>
 

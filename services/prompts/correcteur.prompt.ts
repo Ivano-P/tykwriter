@@ -129,6 +129,7 @@ Si le texte original ne contient aucune erreur, le tableau "erreurs" doit être 
 
 STRUCTURE JSON ATTENDUE :
 {
+"langue_detectee": "code de la langue dominante détectée ('fr', 'en', ou code ISO 639-1)",
 "texte_corrige_complet": "Le texte entièrement corrigé ici.",
 "raisonnement_global": "Explication courte du contexte sémantique.",
 "erreurs": [
@@ -175,8 +176,14 @@ export const CORRECTEUR_SYSTEM_PROMPT = buildCorrecteurPrompt('fr');
  */
 export const CORRECTEUR_JSON_SCHEMA = {
   type: 'object',
-  required: ['texte_corrige_complet', 'raisonnement_global', 'erreurs'],
+  required: ['langue_detectee', 'texte_corrige_complet', 'raisonnement_global', 'erreurs'],
   properties: {
+    // Déclarée en PREMIER : la détection de langue précède la correction.
+    langue_detectee: {
+      type: 'string',
+      description:
+        "Code ISO 639-1 de la langue dominante détectée dans le texte soumis (ex: 'fr', 'en').",
+    },
     texte_corrige_complet: {
       type: 'string',
       description: 'Le texte source entièrement corrigé, en appliquant toutes les directives.',

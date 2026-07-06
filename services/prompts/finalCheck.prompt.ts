@@ -11,7 +11,6 @@
 
 import {
   buildAssistantRedacteurPrompt,
-  ASSISTANT_REDACTEUR_JSON_SCHEMA,
   type AssistantOptions,
 } from './assistantRedacteur.prompt';
 
@@ -96,6 +95,17 @@ export function buildFinalCheckPrompt(
 
 /**
  * Schéma JSON strict pour le mode `json_schema` de Mistral.
- * Même contrat que la passe phrase par phrase.
+ * Propre à la passe finale (la passe par chunk renvoie en plus la langue
+ * détectée, inutile ici : la passe finale ne pilote aucun indicateur d'UI).
  */
-export const FINAL_CHECK_JSON_SCHEMA = ASSISTANT_REDACTEUR_JSON_SCHEMA;
+export const FINAL_CHECK_JSON_SCHEMA = {
+  type: 'object',
+  required: ['texte_corrige'],
+  properties: {
+    texte_corrige: {
+      type: 'string',
+      description: 'Le texte intégral corrigé, sans aucun ajout ni commentaire.',
+    },
+  },
+  additionalProperties: false,
+};

@@ -38,6 +38,8 @@
     "modeAssistant": "Assistant Rédacteur",
     "modeTraduction": "Traduction",
     "languageTitle": "Langue",
+    "languageAuto": "Auto",
+    "languageAutoDetected": "Auto : {language}",
     "charCount": "{current} / {max} char",
     "wordCount": "{count} mots"
   },

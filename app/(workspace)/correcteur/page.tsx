@@ -11,9 +11,8 @@ import { SpellcheckService } from '@/services/SpellcheckService';
 import {
   WRITING_LANGUAGES,
   writingLanguageToVariant,
-  variantToWritingLanguage,
   sanitizeWritingLanguage,
-  type EnglishVariant,
+  type WritingLanguage,
 } from '@/services/prompts/englishVariant';
 import { useText } from '@/lib/TextContext';
 import layoutStyles from '../layout.module.css';
@@ -31,21 +30,36 @@ export default function CorrecteurPage() {
   const { globalText, setGlobalText } = useText();
   const [correctionIssues, setCorrectionIssues] = useState<CorrectionIssue[]>([]);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
-  // Variante d'anglais exigée (auto/us/uk) : injectée dans le prompt du correcteur.
-  // Exposée dans la barre d'outils comme langue d'écriture (fr / en-US / en-GB).
-  const [englishVariant, setEnglishVariant] = useState<EnglishVariant>('auto');
+  // Langue d'écriture du sélecteur (auto/fr/en-US/en-GB) ; la variante
+  // d'anglais injectée dans le prompt en est dérivée.
+  const [writingLanguage, setWritingLanguage] = useState<WritingLanguage>('auto');
+  const englishVariant = writingLanguageToVariant(writingLanguage);
+  // Langue détectée par la dernière vérification (affichée sur l'option Auto)
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
 
-  // Options du sélecteur de langue de la barre d'outils, libellées dans la langue de l'UI
+  const tc = useTranslations('contentArea');
+
+  // Options du sélecteur de langue de la barre d'outils, libellées dans la
+  // langue de l'UI ; l'option Auto affiche la langue détectée dès qu'elle est connue.
   const languageOptions = useMemo(() => {
     const names = new Intl.DisplayNames([uiLocale], { type: 'language' });
-    return WRITING_LANGUAGES.map((lang) => {
-      let label: string = lang;
+    const labelOf = (code: string) => {
       try {
-        label = names.of(lang) ?? lang;
-      } catch { /* code inconnu : on garde le code brut */ }
-      return { value: lang, label };
-    });
-  }, [uiLocale]);
+        return names.of(code) ?? code;
+      } catch {
+        return code;
+      }
+    };
+    return WRITING_LANGUAGES.map((lang) => ({
+      value: lang,
+      label:
+        lang === 'auto'
+          ? detectedLanguage
+            ? tc('languageAutoDetected', { language: labelOf(detectedLanguage) })
+            : tc('languageAuto')
+          : labelOf(lang),
+    }));
+  }, [uiLocale, detectedLanguage, tc]);
   // Nombre de paragraphes en cours de vérification (réactif, miroir de inFlightRef)
   const [inFlightCount, setInFlightCount] = useState(0);
   const isProcessing = inFlightCount > 0;
@@ -126,6 +140,8 @@ export default function CorrecteurPage() {
       const response = await checkSpellingIssuesAction(paragraphText, uiLocale, { englishVariant });
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
+      // Alimente l'indicateur « Auto : {langue} » du sélecteur de la barre d'outils
+      if (response.langue_detectee) setDetectedLanguage(response.langue_detectee);
     } catch (error) {
       console.error(error);
     } finally {
@@ -237,6 +253,7 @@ export default function CorrecteurPage() {
       if (val.trim() === '') {
         resultsCacheRef.current.clear();
         setCorrectionIssues([]);
+        setDetectedLanguage(null);
       } else {
         setCorrectionIssues(prev =>
           SpellcheckService.reconcileIssuesAfterEdit(val, prev)
@@ -311,10 +328,8 @@ export default function CorrecteurPage() {
             applyCorrection={applyCorrection}
             ignoreCorrection={ignoreCorrection}
             languageOptions={languageOptions}
-            languageValue={variantToWritingLanguage(englishVariant)}
-            onLanguageChange={(value) =>
-              setEnglishVariant(writingLanguageToVariant(sanitizeWritingLanguage(value)))
-            }
+            languageValue={writingLanguage}
+            onLanguageChange={(value) => setWritingLanguage(sanitizeWritingLanguage(value))}
           />
         </div>
 
