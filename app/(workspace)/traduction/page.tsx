@@ -10,6 +10,8 @@ import {
   SOURCE_LANGUAGES,
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
+  targetToSourceLanguage,
+  sourceToTargetLanguage,
   type TargetLanguage,
   type SourceLanguage,
   type TraductionResponse,
@@ -93,6 +95,36 @@ export default function TraductionPage() {
     [detectedLabel, labelOf, tp]
   );
 
+  /**
+   * Réaligne la direction de traduction sur la langue DÉTECTÉE :
+   * - texte déjà dans la langue CIBLE (ex: fr→en réglé, texte anglais saisi) :
+   *   la direction s'inverse — la cible devient l'ancienne source (ou l'autre
+   *   langue principale) et la source reflète la langue détectée. Le debounce
+   *   relance alors la traduction dans le bon sens.
+   * - simple contradiction avec une source explicite : le sélecteur bascule
+   *   sur Auto pour afficher la langue réellement détectée.
+   */
+  const reconcileDirection = useCallback(
+    (response: TraductionResponse, declaredSource: SourceLanguage, target: TargetLanguage) => {
+      if (!response.est_supportee || !response.langue_detectee) return;
+      const detected = response.langue_detectee;
+      if (!(SOURCE_LANGUAGES as readonly string[]).includes(detected) || detected === 'auto') return;
+
+      if (detected === targetToSourceLanguage(target)) {
+        // Le texte est déjà dans la langue cible : on inverse la direction.
+        const newTarget =
+          declaredSource !== 'auto' && declaredSource !== detected
+            ? sourceToTargetLanguage(declaredSource)
+            : detected === 'fr' ? 'en-US' : 'fr';
+        setSourceLanguage(detected as SourceLanguage);
+        setTargetLanguage(newTarget);
+      } else if (declaredSource !== 'auto' && detected !== declaredSource) {
+        setSourceLanguage('auto');
+      }
+    },
+    []
+  );
+
   const runTranslation = useCallback(
     async (text: string, target: TargetLanguage, source: SourceLanguage) => {
       const cacheKey = `${source}::${target}::${text}`;
@@ -100,6 +132,7 @@ export default function TraductionPage() {
       if (cached) {
         setResult(cached);
         setError(null);
+        reconcileDirection(cached, source, target);
         return;
       }
 
@@ -178,6 +211,7 @@ export default function TraductionPage() {
         }
         setResult(response);
         setStreamText('');
+        reconcileDirection(response, source, target);
       } catch (err) {
         if (controller.signal.aborted) return; // annulation volontaire : silencieux
         console.error(err);
@@ -188,7 +222,7 @@ export default function TraductionPage() {
         if (abortRef.current === controller) setIsTranslating(false);
       }
     },
-    []
+    [reconcileDirection]
   );
 
   // Traduction automatique après une pause de saisie (ou un changement de langue).
@@ -245,6 +279,73 @@ export default function TraductionPage() {
     () => TARGET_LANGUAGES.map((lang) => ({ value: lang, label: labelOf(lang) })),
     [labelOf]
   );
+
+  // Langue source EFFECTIVE pour l'inversion : la sélection explicite, sinon
+  // la langue détectée (source = Auto). null si l'inversion est impossible.
+  const effectiveSource: Exclude<SourceLanguage, 'auto'> | null = (() => {
+    if (sourceLanguage !== 'auto') return sourceLanguage;
+    const detected = result?.langue_detectee;
+    if (detected && (SOURCE_LANGUAGES as readonly string[]).includes(detected) && detected !== 'auto') {
+      return detected as Exclude<SourceLanguage, 'auto'>;
+    }
+    return null;
+  })();
+
+  /**
+   * Inverse les langues source et cible. Si une traduction est affichée, les
+   * TEXTES sont aussi échangés : la traduction devient la saisie, et l'ancienne
+   * saisie devient la sortie — instantanément et sans appel API, puisqu'elle
+   * est par construction la traduction exacte dans le sens inverse (le cache
+   * est pré-alimenté avec cette paire).
+   */
+  const handleSwapLanguages = () => {
+    if (!effectiveSource) return;
+    const newSource = targetToSourceLanguage(targetLanguage);
+    const newTarget = sourceToTargetLanguage(effectiveSource);
+    const currentTranslation = result?.est_supportee ? result.traduction : '';
+    const currentInput = globalText;
+
+    setSourceLanguage(newSource);
+    setTargetLanguage(newTarget);
+
+    if (currentTranslation && currentTranslation.length <= MAX_CHARS) {
+      const seeded: TraductionResponse = {
+        langue_detectee: newSource,
+        est_supportee: true,
+        traduction: currentInput,
+      };
+      cacheRef.current.set(`${newSource}::${newTarget}::${currentTranslation}`, seeded);
+      setGlobalText(currentTranslation);
+      setResult(seeded);
+      setStreamText('');
+      setError(null);
+    }
+  };
+
+  /**
+   * Garde anti-doublon : choisir comme source la langue de la cible (ou
+   * inversement) bascule l'autre côté sur l'ancienne valeur — jamais la même
+   * langue des deux côtés. La détection Auto n'est pas concernée.
+   */
+  const handleSourceChange = (value: string) => {
+    const next = sanitizeSourceLanguage(value);
+    if (next !== 'auto' && next === targetToSourceLanguage(targetLanguage)) {
+      setTargetLanguage(
+        effectiveSource
+          ? sourceToTargetLanguage(effectiveSource)
+          : next === 'fr' ? 'en-US' : 'fr'
+      );
+    }
+    setSourceLanguage(next);
+  };
+
+  const handleTargetChange = (value: string) => {
+    const next = sanitizeTargetLanguage(value);
+    if (sourceLanguage !== 'auto' && targetToSourceLanguage(next) === sourceLanguage) {
+      setSourceLanguage(targetToSourceLanguage(targetLanguage));
+    }
+    setTargetLanguage(next);
+  };
 
   // En-tête du panneau SOURCE : bouton Copier symétrique de celui de la sortie
   // (le bouton Copier de la barre d'outils est masqué en mode traduction).
@@ -324,11 +425,13 @@ export default function TraductionPage() {
             sourcePaneHeader={sourcePaneHeader}
             languageOptions={sourceOptions}
             languageValue={sourceLanguage}
-            onLanguageChange={(value) => setSourceLanguage(sanitizeSourceLanguage(value))}
+            onLanguageChange={handleSourceChange}
             targetLanguageOptions={targetOptions}
             targetLanguageValue={targetLanguage}
-            onTargetLanguageChange={(value) => setTargetLanguage(sanitizeTargetLanguage(value))}
+            onTargetLanguageChange={handleTargetChange}
             targetLanguageTitle={tp('targetLanguage')}
+            onSwapLanguages={handleSwapLanguages}
+            swapLanguagesDisabled={!effectiveSource}
           />
         </div>
 

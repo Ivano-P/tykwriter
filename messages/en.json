@@ -38,6 +38,9 @@
     "modeAssistant": "Writing Assistant",
     "modeTraduction": "Translation",
     "languageTitle": "Language",
+    "languageAuto": "Auto",
+    "languageAutoDetected": "Auto: {language}",
+    "swapLanguagesTitle": "Swap languages",
     "charCount": "{current} / {max} char",
     "wordCount": "{count} words"
   },

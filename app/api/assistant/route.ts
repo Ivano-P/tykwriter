@@ -23,8 +23,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ correctedText });
     }
 
-    const correctedText = await MistralAiProService.autoCheckSpellingAndFormat(text, options);
-    return NextResponse.json({ correctedText });
+    const result = await MistralAiProService.autoCheckSpellingAndFormat(text, options);
+    return NextResponse.json({
+      correctedText: result.texteCorrige,
+      detectedLanguage: result.langueDetectee ?? null,
+    });
   } catch (error: any) {
     if (error.name === 'AbortError') {
       return NextResponse.json({ error: 'Request was aborted.' }, { status: 499 });

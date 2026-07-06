@@ -92,6 +92,16 @@ export function sanitizeSourceLanguage(value: unknown): SourceLanguage {
     : 'auto';
 }
 
+/** Convertit une langue CIBLE en langue SOURCE équivalente (en-US/en-GB → en). */
+export function targetToSourceLanguage(target: TargetLanguage): SourceLanguage {
+  return target === 'en-US' || target === 'en-GB' ? 'en' : target;
+}
+
+/** Convertit une langue SOURCE explicite en langue CIBLE par défaut (en → en-US). */
+export function sourceToTargetLanguage(source: Exclude<SourceLanguage, 'auto'>): TargetLanguage {
+  return source === 'en' ? 'en-US' : source;
+}
+
 /** Libellés des langues sources déclarées dans le prompt. */
 const SOURCE_LABELS: Record<Exclude<SourceLanguage, 'auto'>, string> = {
   en: "l'anglais",
