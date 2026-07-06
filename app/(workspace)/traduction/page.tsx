@@ -95,6 +95,36 @@ export default function TraductionPage() {
     [detectedLabel, labelOf, tp]
   );
 
+  /**
+   * Réaligne la direction de traduction sur la langue DÉTECTÉE :
+   * - texte déjà dans la langue CIBLE (ex: fr→en réglé, texte anglais saisi) :
+   *   la direction s'inverse — la cible devient l'ancienne source (ou l'autre
+   *   langue principale) et la source reflète la langue détectée. Le debounce
+   *   relance alors la traduction dans le bon sens.
+   * - simple contradiction avec une source explicite : le sélecteur bascule
+   *   sur Auto pour afficher la langue réellement détectée.
+   */
+  const reconcileDirection = useCallback(
+    (response: TraductionResponse, declaredSource: SourceLanguage, target: TargetLanguage) => {
+      if (!response.est_supportee || !response.langue_detectee) return;
+      const detected = response.langue_detectee;
+      if (!(SOURCE_LANGUAGES as readonly string[]).includes(detected) || detected === 'auto') return;
+
+      if (detected === targetToSourceLanguage(target)) {
+        // Le texte est déjà dans la langue cible : on inverse la direction.
+        const newTarget =
+          declaredSource !== 'auto' && declaredSource !== detected
+            ? sourceToTargetLanguage(declaredSource)
+            : detected === 'fr' ? 'en-US' : 'fr';
+        setSourceLanguage(detected as SourceLanguage);
+        setTargetLanguage(newTarget);
+      } else if (declaredSource !== 'auto' && detected !== declaredSource) {
+        setSourceLanguage('auto');
+      }
+    },
+    []
+  );
+
   const runTranslation = useCallback(
     async (text: string, target: TargetLanguage, source: SourceLanguage) => {
       const cacheKey = `${source}::${target}::${text}`;
@@ -102,6 +132,7 @@ export default function TraductionPage() {
       if (cached) {
         setResult(cached);
         setError(null);
+        reconcileDirection(cached, source, target);
         return;
       }
 
@@ -180,6 +211,7 @@ export default function TraductionPage() {
         }
         setResult(response);
         setStreamText('');
+        reconcileDirection(response, source, target);
       } catch (err) {
         if (controller.signal.aborted) return; // annulation volontaire : silencieux
         console.error(err);
@@ -190,7 +222,7 @@ export default function TraductionPage() {
         if (abortRef.current === controller) setIsTranslating(false);
       }
     },
-    []
+    [reconcileDirection]
   );
 
   // Traduction automatique après une pause de saisie (ou un changement de langue).
