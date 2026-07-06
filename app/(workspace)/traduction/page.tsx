@@ -259,11 +259,35 @@ export default function TraductionPage() {
     return null;
   })();
 
-  /** Inverse les langues source et cible (le texte saisi reste en place). */
+  /**
+   * Inverse les langues source et cible. Si une traduction est affichée, les
+   * TEXTES sont aussi échangés : la traduction devient la saisie, et l'ancienne
+   * saisie devient la sortie — instantanément et sans appel API, puisqu'elle
+   * est par construction la traduction exacte dans le sens inverse (le cache
+   * est pré-alimenté avec cette paire).
+   */
   const handleSwapLanguages = () => {
     if (!effectiveSource) return;
-    setSourceLanguage(targetToSourceLanguage(targetLanguage));
-    setTargetLanguage(sourceToTargetLanguage(effectiveSource));
+    const newSource = targetToSourceLanguage(targetLanguage);
+    const newTarget = sourceToTargetLanguage(effectiveSource);
+    const currentTranslation = result?.est_supportee ? result.traduction : '';
+    const currentInput = globalText;
+
+    setSourceLanguage(newSource);
+    setTargetLanguage(newTarget);
+
+    if (currentTranslation && currentTranslation.length <= MAX_CHARS) {
+      const seeded: TraductionResponse = {
+        langue_detectee: newSource,
+        est_supportee: true,
+        traduction: currentInput,
+      };
+      cacheRef.current.set(`${newSource}::${newTarget}::${currentTranslation}`, seeded);
+      setGlobalText(currentTranslation);
+      setResult(seeded);
+      setStreamText('');
+      setError(null);
+    }
   };
 
   /**
