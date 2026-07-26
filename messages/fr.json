@@ -62,8 +62,7 @@
   "assistantSidebar": {
     "actions": "Actions",
     "autoCorrect": "Correction automatique",
-    "finalCheck": "Vérification finale",
-    "finalCheckHint": "Relecture globale automatique après une pause d'écriture.",
+    "finalCheckHint": "Inclut une relecture globale après une pause d'écriture.",
     "finalChecking": "Vérification finale…",
     "checking": "Vérification...",
     "checkNow": "Vérifier maintenant",
@@ -83,14 +82,17 @@
     "abbreviationsConserver": "Conserver",
     "abbreviationsDevelopper": "Développer",
     "noErrors": "Aucune erreur détectées",
-    "correctionApplied": "Correction appliquée",
+    "recentCorrections": "Dernières corrections",
     "undoCorrectionTitle": "Annuler la correction",
     "undo": "Annuler"
   },
   "traductionSidebar": {
     "actions": "Actions",
+    "translateNow": "Traduire maintenant",
     "autoTranslateHint": "Traduction automatique après une pause de saisie.",
-    "translating": "Traduction…"
+    "translating": "Traduction…",
+    "alternatives": "Autres traductions",
+    "alternativePickTitle": "Utiliser cette traduction"
   },
   "traductionPage": {
     "sourceAuto": "Détection auto",

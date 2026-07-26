@@ -1,6 +1,6 @@
 'use server';
 
-import { MistralAiProService, type AssistantCorrectionResult } from '@/services/MistralAiProService';
+import { AiProService, type AssistantCorrectionResult } from '@/services/AiProService';
 import {
   sanitizeAssistantOptions,
   type AssistantOptions,
@@ -20,12 +20,10 @@ export async function spellcheckAction(
   }
 
 
-  return await MistralAiProService.autoCheckSpellingAndFormat(text, sanitizeAssistantOptions(options));
-  // Pour tester avec le serveur Ollama local : importer OllamaService depuis
-  // '@/services/OllamaService' et retourner OllamaService.checkSpelling(text).
+  return await AiProService.autoCheckSpellingAndFormat(text, sanitizeAssistantOptions(options));
 }
 
-import { CorrectionResponse } from '@/services/MistralAiProService';
+import { CorrectionResponse } from '@/services/aiTypes';
 import {
   sanitizeUiLocale,
   sanitizeCorrecteurOptions,
@@ -43,7 +41,7 @@ export async function checkSpellingIssuesAction(
   // Locale d'interface (langue des explications) : seules 'fr'|'en' sont
   // acceptées, toute autre valeur retombe sur 'fr'. Les options (variante
   // d'anglais) sont validées de la même façon.
-  return await MistralAiProService.checkSpelling(
+  return await AiProService.checkSpelling(
     text,
     sanitizeUiLocale(uiLocale),
     sanitizeCorrecteurOptions(options)

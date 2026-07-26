@@ -191,12 +191,17 @@ STRUCTURE JSON ATTENDUE :
  */
 export function buildTraductionStreamPrompt(
   targetLanguage: TargetLanguage,
-  sourceLanguage: SourceLanguage = 'auto'
+  sourceLanguage: SourceLanguage = 'auto',
+  withAlternatives: boolean = false
 ): string {
   const declaredSourceDirective =
     sourceLanguage === 'auto'
       ? ''
       : `\n- L'utilisateur déclare que le texte source est en ${SOURCE_LABELS[sourceLanguage]} : en cas d'ambiguïté (texte court, mots communs à plusieurs langues), retiens cette langue. Si le texte est MANIFESTEMENT dans une autre langue, fais confiance à ta propre détection.`;
+
+  const alternativesDirective = withAlternatives
+    ? `\n4. ALTERNATIVES (texte court) : APRÈS la traduction principale, ajoute une ligne contenant exactement ${ALTERNATIVES_DELIMITER} puis jusqu'à ${MAX_ALTERNATIVES} traductions alternatives complètes, UNE PAR LIGNE. Une bonne alternative propose une tournure ou un registre réellement différents (ex: plus littéral, plus idiomatique, plus familier), pas une simple variante de ponctuation. Pour un texte court, il existe presque toujours au moins une formulation alternative naturelle : n'omets la section ${ALTERNATIVES_DELIMITER} que si toute reformulation serait artificielle (noms propres, chiffres, texte déjà minimal).`
+    : '';
 
   return `Tu es un traducteur professionnel expert. Ta tâche se déroule en DEUX étapes obligatoires.
 
@@ -212,7 +217,7 @@ FORMAT DE SORTIE (IMPÉRATIF, EN DEUX PARTIES) :
    - "langue_detectee" : le code de la langue source détectée ("fr", "en", "ja"… ou "und" si indéterminable).
    - "est_supportee" : true si la langue fait partie des langues supportées, false sinon.
 2. Si "est_supportee" est false : N'ÉCRIS RIEN après cette ligne. NE TRADUIS PAS.
-3. Si "est_supportee" est true : après un saut de ligne, écris UNIQUEMENT le texte intégralement traduit vers ${TARGET_LABELS[targetLanguage]} — texte BRUT, sans guillemets d'encadrement, sans JSON, sans commentaire, sans balise de code.
+3. Si "est_supportee" est true : après un saut de ligne, écris UNIQUEMENT le texte intégralement traduit vers ${TARGET_LABELS[targetLanguage]} — texte BRUT, sans guillemets d'encadrement, sans JSON, sans commentaire, sans balise de code.${alternativesDirective}
 
 DIRECTIVES DE TRADUCTION :
 1. FIDÉLITÉ : Traduis le SENS, pas mot à mot. Aucun ajout, aucune omission, aucun résumé.
@@ -229,7 +234,19 @@ export interface TraductionResponse {
   langue_detectee: string;
   est_supportee: boolean;
   traduction: string;
+  /** Traductions alternatives (textes courts uniquement, 2 au maximum). */
+  alternatives?: string[];
 }
+
+/**
+ * Longueur maximale (en caractères) du texte source pour laquelle des
+ * traductions alternatives sont demandées. Au-delà, une seule traduction.
+ */
+export const SHORT_TEXT_FOR_ALTERNATIVES = 200;
+/** Nombre maximal d'alternatives en plus de la traduction principale. */
+export const MAX_ALTERNATIVES = 2;
+/** Ligne délimitant la section des alternatives dans le flux streamé. */
+export const ALTERNATIVES_DELIMITER = '---ALTERNATIVES---';
 
 /**
  * Schéma JSON strict pour le mode `json_schema` de Mistral.

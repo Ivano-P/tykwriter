@@ -22,6 +22,14 @@ import layoutStyles from '../layout.module.css';
 
 const ASSISTANT_REDACTEUR_DELAY = 5000;
 const MAX_CHARS = 2000;
+/** Nombre de corrections conservées dans l'historique du panneau latéral. */
+const MAX_RECENT_CORRECTIONS = 5;
+
+/** Entrée de l'historique « Dernières corrections » du panneau latéral. */
+export interface RecentCorrection {
+  id: number;
+  parts: Diff.Change[];
+}
 /** Pause d'écriture après laquelle la vérification finale (texte complet) se déclenche. */
 const FINAL_CHECK_IDLE_DELAY = 12000;
 /** Nouvelle tentative si des corrections de chunks sont encore en vol au moment du déclenchement. */
@@ -34,7 +42,7 @@ export default function AssistantRedacteurPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
-  const [isFinalCheckEnabled, setIsFinalCheckEnabled] = useState(true);
+  // La vérification finale suit la correction automatique : plus de toggle dédié.
   const [isFinalChecking, setIsFinalChecking] = useState(false);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
@@ -90,6 +98,17 @@ export default function AssistantRedacteurPage() {
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [diffParts, setDiffParts] = useState<Diff.Change[] | null>(null);
+
+  // Historique des dernières corrections appliquées (le surlignement dans
+  // l'éditeur ne dure que quelques secondes ; le panneau garde une trace).
+  const [recentCorrections, setRecentCorrections] = useState<RecentCorrection[]>([]);
+  const correctionIdRef = useRef(0);
+  const pushRecentCorrection = useCallback((parts: Diff.Change[] | null) => {
+    if (!parts || parts.length === 0) return;
+    correctionIdRef.current += 1;
+    const entry: RecentCorrection = { id: correctionIdRef.current, parts };
+    setRecentCorrections((prev) => [entry, ...prev].slice(0, MAX_RECENT_CORRECTIONS));
+  }, []);
 
   const skipDebounceRef = useRef(false);
   const pendingRequestsRef = useRef<Map<string, AbortController>>(new Map());
@@ -193,6 +212,7 @@ export default function AssistantRedacteurPage() {
         setUndoStack((prev) => [...prev, latestGlobalTextRef.current]);
         setRedoStack([]);
         setDiffParts(processed.diffParts);
+        pushRecentCorrection(processed.diffParts);
         skipDebounceRef.current = true;
       }
 
@@ -204,7 +224,7 @@ export default function AssistantRedacteurPage() {
       pendingRequestsRef.current.delete(originalText);
       processingBlocksRef.current.delete(originalText);
     }
-  }, [tone, abreviations, englishVariant, reconcileDetectedLanguage]);
+  }, [tone, abreviations, englishVariant, reconcileDetectedLanguage, pushRecentCorrection]);
 
   // Non-blocking Hybrid Trigger for Assistant Rédacteur
   useEffect(() => {
@@ -217,6 +237,7 @@ export default function AssistantRedacteurPage() {
         appliedCorrectionsRef.current = [];
         lastFinalCheckedTextRef.current = '';
         setDetectedLanguage(null);
+        setRecentCorrections([]);
       }
       return;
     }
@@ -266,7 +287,7 @@ export default function AssistantRedacteurPage() {
   // inline (appliquées phrase par phrase, sans contexte) avec le contexte global.
   const runFinalCheck = useCallback(async () => {
     if (finalCheckInFlightRef.current) return;
-    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+    if (!isAutoCorrectEnabled) return;
 
     const sentText = latestGlobalTextRef.current;
     if (!sentText.trim() || sentText.length > MAX_CHARS) return;
@@ -339,6 +360,7 @@ export default function AssistantRedacteurPage() {
       setUndoStack((prev) => [...prev, sentText]);
       setRedoStack([]);
       setDiffParts(processed.diffParts);
+      pushRecentCorrection(processed.diffParts);
       skipDebounceRef.current = true;
     } catch (err) {
       console.error('Final check error:', err);
@@ -346,7 +368,7 @@ export default function AssistantRedacteurPage() {
       finalCheckInFlightRef.current = false;
       setIsFinalChecking(false);
     }
-  }, [isFinalCheckEnabled, isAutoCorrectEnabled, tone, abreviations, englishVariant]);
+  }, [isAutoCorrectEnabled, tone, abreviations, englishVariant, pushRecentCorrection]);
 
   useEffect(() => {
     runFinalCheckRef.current = runFinalCheck;
@@ -360,7 +382,7 @@ export default function AssistantRedacteurPage() {
       finalCheckRetryRef.current = null;
     }
 
-    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+    if (!isAutoCorrectEnabled) return;
     if (globalText.trim() === '' || globalText.length > MAX_CHARS) return;
     if (globalText.trim() === lastFinalCheckedTextRef.current.trim()) return;
 
@@ -372,7 +394,7 @@ export default function AssistantRedacteurPage() {
         finalCheckRetryRef.current = null;
       }
     };
-  }, [globalText, isFinalCheckEnabled, isAutoCorrectEnabled]);
+  }, [globalText, isAutoCorrectEnabled]);
 
   // Legacy manual check fallback
   const handleSpellCheck = async (textToCheck: string) => {
@@ -386,6 +408,7 @@ export default function AssistantRedacteurPage() {
 
       if (processed.hasChanges) {
         setDiffParts(processed.diffParts);
+        pushRecentCorrection(processed.diffParts);
         setUndoStack((prev: string[]) => [...prev, textToCheck]);
         setRedoStack([]);
 
@@ -433,6 +456,9 @@ export default function AssistantRedacteurPage() {
     lastFinalCheckedTextRef.current = lastText;
     setGlobalText(lastText);
     setDiffParts(null);
+    // La correction la plus récente vient d'être annulée : on la retire de
+    // l'historique du panneau.
+    setRecentCorrections((prev) => prev.slice(1));
   };
 
   const handleRedo = () => {
@@ -494,13 +520,12 @@ export default function AssistantRedacteurPage() {
         <AssistantRedacteurSidebar
           isProcessing={currentlyProcessing}
           diffParts={diffParts}
+          recentCorrections={recentCorrections}
           handleUndo={handleUndo}
           handleManualSubmit={handleManualSubmit}
           isSubmitDisabled={currentlyProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
           isAutoCorrectEnabled={isAutoCorrectEnabled}
           setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
-          isFinalCheckEnabled={isFinalCheckEnabled}
-          setIsFinalCheckEnabled={setIsFinalCheckEnabled}
           isFinalChecking={isFinalChecking}
           handleFormatEmail={handleFormatEmail}
           isLinkEnabled={isLinkEnabled}

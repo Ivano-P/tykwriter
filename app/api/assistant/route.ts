@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
 import { sanitizeAssistantOptions } from '@/services/prompts/assistantRedacteur.prompt';
 import { sanitizeAppliedCorrections } from '@/services/prompts/finalCheck.prompt';
 
@@ -19,11 +19,11 @@ export async function POST(request: Request) {
     // avec la liste (validée et plafonnée) des corrections inline déjà appliquées.
     if (body.mode === 'final') {
       const appliedCorrections = sanitizeAppliedCorrections(body.appliedCorrections);
-      const correctedText = await MistralAiProService.finalCheck(text, appliedCorrections, options);
+      const correctedText = await AiProService.finalCheck(text, appliedCorrections, options);
       return NextResponse.json({ correctedText });
     }
 
-    const result = await MistralAiProService.autoCheckSpellingAndFormat(text, options);
+    const result = await AiProService.autoCheckSpellingAndFormat(text, options);
     return NextResponse.json({
       correctedText: result.texteCorrige,
       detectedLanguage: result.langueDetectee ?? null,
