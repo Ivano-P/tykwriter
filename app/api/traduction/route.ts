@@ -1,4 +1,4 @@
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       };
 
       try {
-        for await (const chunk of MistralAiProService.translateStream(
+        for await (const chunk of AiProService.translateStream(
           text,
           target,
           source,

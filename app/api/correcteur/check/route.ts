@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
 import { SpellcheckService } from '@/services/SpellcheckService';
 import {
   sanitizeUiLocale,
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await MistralAiProService.checkSpelling(
+    const response = await AiProService.checkSpelling(
       text,
       sanitizeUiLocale(body.uiLocale),
       sanitizeCorrecteurOptions(body.options),

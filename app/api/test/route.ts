@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
 import { sanitizeTargetLanguage } from '@/services/prompts/traduction.prompt';
 
 /**
@@ -15,10 +15,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid text provided.' }, { status: 400 });
     }
     if (body.mode === 'traduction') {
-      const result = await MistralAiProService.translate(text, sanitizeTargetLanguage(body.targetLanguage));
+      const result = await AiProService.translate(text, sanitizeTargetLanguage(body.targetLanguage));
       return NextResponse.json({ result });
     }
-    const result = await MistralAiProService.checkSpelling(text);
+    const result = await AiProService.checkSpelling(text);
     return NextResponse.json({ result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';

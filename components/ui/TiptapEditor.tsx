@@ -9,7 +9,7 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import * as Diff from 'diff';
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 import styles from './TiptapEditor.module.css';
 
 // ─── Region diff helper ─────────────────────────────────────────────

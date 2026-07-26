@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 
 interface CorrecteurSidebarProps {
   isProcessing: boolean;

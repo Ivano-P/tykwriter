@@ -1,6 +1,6 @@
 'use server';
 
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
@@ -25,7 +25,7 @@ export async function translateAction(
   if (text.length > MAX_CHARS) {
     throw new Error(`Text exceeds ${MAX_CHARS} characters.`);
   }
-  return await MistralAiProService.translate(
+  return await AiProService.translate(
     text,
     sanitizeTargetLanguage(targetLanguage),
     sanitizeSourceLanguage(sourceLanguage)

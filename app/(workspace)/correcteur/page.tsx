@@ -6,7 +6,7 @@ import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 import { SpellcheckService } from '@/services/SpellcheckService';
 import {
   WRITING_LANGUAGES,
