@@ -82,7 +82,7 @@
     "abbreviationsConserver": "Keep",
     "abbreviationsDevelopper": "Expand",
     "noErrors": "No errors detected",
-    "correctionApplied": "Correction applied",
+    "recentCorrections": "Latest corrections",
     "undoCorrectionTitle": "Undo the correction",
     "undo": "Undo"
   },

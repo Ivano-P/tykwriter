@@ -5,7 +5,19 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
+import type { RecentCorrection } from '@/app/(workspace)/assistant-redacteur/page';
 import styles from './CorrectionSidebar.module.css';
+
+// Les passages inchangés d'un diff peuvent être longs (passe finale sur tout
+// le texte) : on ne garde qu'un peu de contexte autour des modifications.
+const CONTEXT_CHARS = 24;
+
+function compactUnchanged(value: string, isFirst: boolean, isLast: boolean): string {
+  if (value.length <= CONTEXT_CHARS * 2 + 1) return value;
+  if (isFirst) return `…${value.slice(-CONTEXT_CHARS)}`;
+  if (isLast) return `${value.slice(0, CONTEXT_CHARS)}…`;
+  return `${value.slice(0, CONTEXT_CHARS)}…${value.slice(-CONTEXT_CHARS)}`;
+}
 
 // Les valeurs restent les identifiants internes envoyés au prompt ;
 // seuls les libellés affichés sont traduits (clés du namespace assistantSidebar).
@@ -24,6 +36,7 @@ const ABREVIATION_CHOICES: { value: AssistantAbreviations; labelKey: string }[] 
 interface AssistantRedacteurSidebarProps {
   isProcessing: boolean;
   diffParts: Diff.Change[] | null;
+  recentCorrections: RecentCorrection[];
   handleUndo: () => void;
   handleManualSubmit: () => void;
   isSubmitDisabled: boolean;
@@ -42,6 +55,7 @@ interface AssistantRedacteurSidebarProps {
 export function AssistantRedacteurSidebar({
   isProcessing,
   diffParts,
+  recentCorrections,
   handleUndo,
   handleManualSubmit,
   isSubmitDisabled,
@@ -167,22 +181,38 @@ export function AssistantRedacteurSidebar({
         </div>
       )}
 
-      {diffParts && diffParts.length > 0 && !isProcessing && (
+      {/* Historique persistant : le surlignement dans l'éditeur s'efface au
+          bout de quelques secondes, cette liste garde les dernières corrections
+          (la plus récente en premier — seule annulable). */}
+      {recentCorrections.length > 0 && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>{t('correctionApplied')}</span>
-            <button className={styles.undoButton} onClick={handleUndo} title={t('undoCorrectionTitle')}>
+            <span className={styles.diffTitle}>{t('recentCorrections')}</span>
+            <button
+              className={styles.undoButton}
+              onClick={handleUndo}
+              disabled={isProcessing}
+              title={t('undoCorrectionTitle')}
+            >
               <RotateCcw size={16} />
               <span>{t('undo')}</span>
             </button>
           </div>
-          <div className={styles.diffContent}>
-            {diffParts.map((part: Diff.Change, index: number) => {
-              if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
-              if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
-              return <span key={index}>{part.value}</span>;
-            })}
-          </div>
+          <ul className={styles.correctionList}>
+            {recentCorrections.map((correction) => (
+              <li key={correction.id} className={styles.correctionItem}>
+                {correction.parts.map((part: Diff.Change, index: number) => {
+                  if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
+                  if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
+                  return (
+                    <span key={index}>
+                      {compactUnchanged(part.value, index === 0, index === correction.parts.length - 1)}
+                    </span>
+                  );
+                })}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

@@ -362,6 +362,27 @@
   word-wrap: break-word;
 }
 
+/* Historique « Dernières corrections » : une entrée par correction appliquée */
+.correctionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.correctionItem {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 0.5rem 0;
+}
+
+.correctionItem+.correctionItem {
+  border-top: 1px dashed rgba(160, 140, 115, 0.2);
+}
+
 .diffAdded {
   background-color: rgba(15, 82, 186, 0.15);
   color: var(--tyk-sapphire, #0F52BA);
