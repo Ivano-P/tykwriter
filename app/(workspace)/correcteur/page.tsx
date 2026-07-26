@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
+import { RateLimitBanner } from '@/components/ui/RateLimitBanner';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
 import { CorrectionIssue } from '@/services/aiTypes';
 import { SpellcheckService } from '@/services/SpellcheckService';
@@ -36,6 +37,8 @@ export default function CorrecteurPage() {
   const englishVariant = writingLanguageToVariant(writingLanguage);
   // Langue détectée par la dernière vérification (affichée sur l'option Auto)
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  // Quota IA anonyme épuisé : bannière + arrêt des vérifications.
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   const tc = useTranslations('contentArea');
 
@@ -153,6 +156,10 @@ export default function CorrecteurPage() {
     setInFlightCount(inFlightRef.current.size);
     try {
       const response = await checkSpellingIssuesAction(paragraphText, uiLocale, { englishVariant });
+      if ('rateLimited' in response) {
+        setIsRateLimited(true);
+        return;
+      }
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
       // Alimente l'indicateur de langue et rebascule sur Auto si la langue
@@ -323,6 +330,8 @@ export default function CorrecteurPage() {
           {t('correcteurSubtitle')}
         </p>
       </div>
+
+      {isRateLimited && <RateLimitBanner />}
 
       <div className={layoutStyles.workspaceContent}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>

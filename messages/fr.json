@@ -120,6 +120,10 @@
     "style": "Style",
     "ponctuation": "Ponctuation"
   },
+  "rateLimit": {
+    "message": "Vous avez atteint la limite quotidienne gratuite. Connectez-vous pour continuer sans limite — c'est gratuit.",
+    "signIn": "Se connecter"
+  },
   "auth": {
     "signInTitle": "Connexion",
     "signUpTitle": "Créer un compte",

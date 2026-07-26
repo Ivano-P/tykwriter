@@ -1,4 +1,5 @@
 import { AiProService } from '@/services/AiProService';
+import { allowAiRequest } from '@/lib/aiGate';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
@@ -18,6 +19,11 @@ import {
 const MAX_CHARS = 2000;
 
 export async function POST(request: Request) {
+  // Quota IA des anonymes (les connectés passent sans limite).
+  if (!(await allowAiRequest())) {
+    return new Response(JSON.stringify({ error: 'Rate limited.' }), { status: 429 });
+  }
+
   let body: { text?: unknown; targetLanguage?: unknown; sourceLanguage?: unknown };
   try {
     body = await request.json();

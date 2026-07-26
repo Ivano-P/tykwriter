@@ -4,6 +4,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -81,6 +82,17 @@ export const folder = pgTable(
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
   (t) => [index('folder_user_idx').on(t.userId)],
+);
+
+/** Compteur journalier des requêtes IA anonymes (rate limiting par IP). */
+export const anonUsage = pgTable(
+  'anon_usage',
+  {
+    day: text('day').notNull(), // YYYY-MM-DD (UTC)
+    ip: text('ip').notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.ip] })],
 );
 
 export const note = pgTable(

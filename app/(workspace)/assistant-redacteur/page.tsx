@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { AssistantRedacteurSidebar } from '@/components/ui/AssistantRedacteurSidebar';
+import { RateLimitBanner } from '@/components/ui/RateLimitBanner';
 import { spellcheckAction } from '@/actions/spellcheck.action';
 import { AutoCorrect } from '@/services/AutoCorrect';
 import { ChunkManager } from '@/services/ChunkManager';
@@ -42,6 +43,8 @@ export default function AssistantRedacteurPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
+  // Quota IA anonyme épuisé : bannière + arrêt des corrections automatiques.
+  const [isRateLimited, setIsRateLimited] = useState(false);
   // La vérification finale suit la correction automatique : plus de toggle dédié.
   const [isFinalChecking, setIsFinalChecking] = useState(false);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
@@ -163,6 +166,10 @@ export default function AssistantRedacteurPage() {
         signal: controller.signal
       });
 
+      if (resp.status === 429) {
+        setIsRateLimited(true);
+        return;
+      }
       if (!resp.ok) {
         throw new Error('API Request failed');
       }
@@ -316,6 +323,10 @@ export default function AssistantRedacteurPage() {
         }),
       });
 
+      if (resp.status === 429) {
+        setIsRateLimited(true);
+        return;
+      }
       if (!resp.ok) {
         throw new Error('Final check API request failed');
       }
@@ -403,6 +414,10 @@ export default function AssistantRedacteurPage() {
     setIsProcessing(true);
     try {
       const result = await spellcheckAction(textToCheck, false, { tone, abreviations, englishVariant });
+      if ('rateLimited' in result) {
+        setIsRateLimited(true);
+        return;
+      }
       if (result.langueDetectee) reconcileDetectedLanguage(result.langueDetectee);
       const processed = AutoCorrect.processCorrections(textToCheck, result.texteCorrige);
 
@@ -497,6 +512,8 @@ export default function AssistantRedacteurPage() {
           {t('assistantSubtitle')}
         </p>
       </div>
+
+      {isRateLimited && <RateLimitBanner />}
 
       <div className={layoutStyles.workspaceContent}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>

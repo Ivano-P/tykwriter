@@ -61,11 +61,14 @@
 - NB : TipTap aligné en 3.29 (upgrade depuis 3.20) — correcteur re-testé OK.
 - NB : le contenu TipTap transite en chaîne JSON vers les Server Actions (`contentJson`) — la sérialisation RSC supprime silencieusement les objets `attrs` de ProseMirror. Ne pas revenir à un passage d'objet.
 
-## Phase 4 — Garde-fous ⬜
+## Phase 4 — Garde-fous ✅
 
-- [ ] Rate limiting anonymes (~20 req IA/jour/IP, compteurs en DB)
-- [ ] Kill-switch global budget anonymes
-- [ ] Message UI « limite atteinte, connectez-vous » localisé
+- [x] Rate limiting anonymes (20 req IA/jour/IP, compteurs Postgres `anon_usage`, jour UTC)
+- [x] Kill-switch global : 300 req IA anonymes/jour toutes IP confondues
+- [x] Bannière « limite atteinte, connectez-vous » localisée (RateLimitBanner) sur correcteur, assistant, traduction
+- [x] Connectés : aucune limite ; extension Chrome : inchangée (apiGuard existant)
+- Points d'entrée gardés : actions spellcheck/checkSpellingIssues/translate + routes /api/assistant et /api/traduction (429)
+- Testé : 429 anonyme à quota atteint (les 2 routes), bannière anonyme sur correcteur, bypass connecté vérifié
 
 ## Phase 5 — Menu utilisateur complet ⬜
 

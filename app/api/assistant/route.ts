@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { AiProService } from '@/services/AiProService';
+import { allowAiRequest } from '@/lib/aiGate';
 import { sanitizeAssistantOptions } from '@/services/prompts/assistantRedacteur.prompt';
 import { sanitizeAppliedCorrections } from '@/services/prompts/finalCheck.prompt';
 
 export async function POST(request: Request) {
   try {
+    // Quota IA des anonymes (les connectés passent sans limite).
+    if (!(await allowAiRequest())) {
+      return NextResponse.json({ error: 'Rate limited.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const { text } = body;
 
