@@ -157,6 +157,9 @@ export function Navbar() {
                       <span className={styles.userName}>{session.user.name}</span>
                       <span className={styles.userEmail}>{session.user.email}</span>
                     </div>
+                    <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
+                      {t('account')}
+                    </Link>
                     <button className={styles.dropdownItem} onClick={handleSignOut}>
                       {t('logout')}
                     </button>
@@ -199,6 +202,9 @@ export function Navbar() {
                 <span className={styles.userName}>{session.user.name}</span>
                 <span className={styles.userEmail}>{session.user.email}</span>
               </div>
+              <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
+                {t('account')}
+              </Link>
               <button className={styles.dropdownItem} onClick={handleSignOut}>
                 {t('logout')}
               </button>

@@ -1,0 +1,149 @@
+/* Mobile-first base styles */
+.page {
+    max-width: 36rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid rgba(160, 140, 115, 0.15);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.sectionTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--foreground, #111827);
+}
+
+.sectionTitleDanger {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #b91c1c;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.readonlyValue {
+    color: var(--foreground, #111827);
+}
+
+.input {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(160, 140, 115, 0.35);
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--foreground, #111827);
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--tyk-sapphire, #0F52BA);
+    box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.15);
+}
+
+.submit {
+    align-self: flex-start;
+    padding: 0.55rem 1.1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit:hover {
+    background-color: #0c429a;
+}
+
+.submit:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.dangerCard {
+    border-color: rgba(185, 28, 28, 0.3);
+}
+
+.dangerText {
+    font-size: 0.9rem;
+    color: var(--foreground, #111827);
+}
+
+.dangerButton {
+    align-self: flex-start;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid #b91c1c;
+    border-radius: 0.5rem;
+    background-color: transparent;
+    color: #b91c1c;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.dangerButton:hover {
+    background-color: #b91c1c;
+    color: #ffffff;
+}
+
+.dangerButton:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.feedbackOk {
+    color: #15803d;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.feedbackError {
+    color: #b91c1c;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/************** Larger screens adjustments *****************************/
+@media (min-width: 768px) {
+    .page {
+        padding: 2.5rem 1rem 4rem;
+    }
+
+    .card {
+        padding: 1.5rem 1.75rem;
+    }
+}

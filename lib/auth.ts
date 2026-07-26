@@ -14,6 +14,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    deleteUser: {
+      enabled: true,
+      // Les lignes DB (notes, dossiers, sessions, comptes) tombent par FK
+      // cascade ; il reste à purger les images R2 de l'utilisateur.
+      afterDelete: async (user) => {
+        try {
+          const { StorageService } = await import('@/services/StorageService');
+          await StorageService.deleteByPrefix(`notes/${user.id}/`);
+        } catch {
+          // R2 non configuré ou purge échouée : ne bloque pas la suppression.
+        }
+      },
+    },
+  },
   // nextCookies doit rester le DERNIER plugin (gestion des cookies dans les
   // Server Actions / Route Handlers Next.js).
   plugins: [nextCookies()],

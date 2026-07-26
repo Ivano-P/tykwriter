@@ -70,11 +70,13 @@
 - Points d'entrée gardés : actions spellcheck/checkSpellingIssues/translate + routes /api/assistant et /api/traduction (429)
 - Testé : 429 anonyme à quota atteint (les 2 routes), bannière anonyme sur correcteur, bypass connecté vérifié
 
-## Phase 5 — Menu utilisateur complet ⬜
+## Phase 5 — Menu utilisateur complet ✅
 
-- [ ] Page compte : infos, changement nom d'utilisateur
-- [ ] Changement de mot de passe
-- [ ] Suppression de compte (cascade DB + purge images R2)
+- [x] Page `/compte` : email affiché, changement de nom (updateUser)
+- [x] Changement de mot de passe (changePassword + révocation des autres sessions)
+- [x] Suppression de compte : mot de passe requis + confirmation, cascade FK (notes/dossiers/sessions/comptes) + purge R2 `notes/{userId}/` via hook afterDelete
+- [x] Lien « Mon compte » dans le menu utilisateur (desktop + mobile)
+- Testé navigateur : renommage, changement de mdp (vérifié en l'utilisant pour la suppression), suppression → toutes les tables à 0, compte de test recréé (`test@tykwriter.local` / voir mdp phase 1 +456 → recréé avec mdp initial)
 
 ## Phase 6 — IA sur les notes ⬜
 
