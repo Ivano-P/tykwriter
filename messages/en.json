@@ -12,7 +12,12 @@
     "traduction": "Translation",
     "language": "Language",
     "switchToFrench": "Switch the interface to French",
-    "switchToEnglish": "Switch the interface to English"
+    "switchToEnglish": "Switch the interface to English",
+    "notes": "Notes",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "account": "My account",
+    "userMenu": "User menu"
   },
   "footer": {
     "slogan": "The ally of your genius, the guardian of your words.",
@@ -114,5 +119,27 @@
     "typographie": "Typography",
     "style": "Style",
     "ponctuation": "Punctuation"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signUpTitle": "Create an account",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "signInButton": "Sign in",
+    "signUpButton": "Sign up",
+    "loading": "One moment…",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "switchToSignUp": "Create an account",
+    "switchToSignIn": "Sign in",
+    "errorInvalidCredentials": "Invalid email or password.",
+    "errorEmailExists": "An account already exists with this email.",
+    "errorPasswordTooShort": "The password must be at least 8 characters long.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "notes": {
+    "title": "Notes",
+    "comingSoon": "Note taking is coming here very soon."
   }
 }

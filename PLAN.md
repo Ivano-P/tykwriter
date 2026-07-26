@@ -25,18 +25,19 @@
 
 ---
 
-## Phase 1 — Fondations : DB + Auth 🔄
+## Phase 1 — Fondations : DB + Auth ✅
 
-- [ ] Retirer `@better-auth/infra`, installer `drizzle-orm`, `postgres`, `drizzle-kit`
-- [ ] Schéma Drizzle : tables Better Auth (user, session, account, verification) + `folder` + `note`
-- [ ] Migrations (drizzle-kit) appliquées sur la DB locale
-- [ ] `lib/auth.ts` réécrit (drizzleAdapter + emailAndPassword + nextCookies)
-- [ ] Route `app/api/auth/[...all]/route.ts`
-- [ ] Page `/connexion` (login + inscription, CSS Module, FR/EN)
-- [ ] Navbar : bouton "Se connecter" → menu utilisateur (nom/email, déconnexion) ; entrée "Notes" visible si connecté
-- [ ] Page `/notes` placeholder protégée (redirect `/connexion` si non connecté)
+- [x] Retirer `@better-auth/infra`, installer `drizzle-orm`, `postgres`, `drizzle-kit`
+- [x] Schéma Drizzle : tables Better Auth (user, session, account, verification) + `folder` + `note`
+- [x] Migrations (drizzle-kit) appliquées sur la DB locale
+- [x] `lib/auth.ts` réécrit (drizzleAdapter + emailAndPassword + nextCookies)
+- [x] Route `app/api/auth/[...all]/route.ts`
+- [x] Page `/connexion` (login + inscription, CSS Module, FR/EN)
+- [x] Navbar : bouton "Se connecter" → menu utilisateur (nom/email, déconnexion) ; entrée "Notes" visible si connecté
+- [x] Page `/notes` placeholder protégée (redirect `/connexion` si non connecté)
+- Testé navigateur : inscription, redirection /notes, menu utilisateur, déconnexion, erreur mot de passe invalide (FR), reconnexion. Compte de test : `test@tykwriter.local`.
 
-## Phase 2 — Notes core ⬜
+## Phase 2 — Notes core 🔄
 
 - [ ] CRUD notes + dossiers (actions → `services/NoteService`)
 - [ ] Sidebar : dossiers + liste des notes (tri par dernière modif), recherche

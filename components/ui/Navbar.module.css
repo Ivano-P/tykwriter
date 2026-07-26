@@ -119,6 +119,42 @@
   cursor: not-allowed;
 }
 
+.loginButton {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--tyk-sapphire, #0F52BA);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.loginButton:hover {
+  background-color: #0c429a;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(160, 140, 115, 0.15);
+  margin-bottom: 0.25rem;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--foreground, #111827);
+}
+
+.userEmail {
+  font-size: 0.8rem;
+  color: var(--tyk-dust-brown, #A08C73);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /************** Larger screens adjustments *****************************/
 @media (min-width: 768px) {
   .navContainer {

@@ -3,16 +3,20 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, X, ChevronDown, CircleUserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { signOut, useSession } from '@/lib/auth-client';
 import styles from './Navbar.module.css';
 
 export function Navbar() {
   const t = useTranslations('navbar');
+  const router = useRouter();
+  const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
   const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // Fermeture au clic EXTÉRIEUR (même mécanisme que le sélecteur de mode de
   // ContentArea) : un clic dans le menu ne le démonte jamais avant que la
@@ -20,9 +24,10 @@ export function Navbar() {
   // qui fermait le menu au bout de 200 ms, avant le mouseup des clics lents.
   const modesDropdownRef = useRef<HTMLDivElement>(null);
   const moreDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isModesDropdownOpen && !isMoreDropdownOpen) return;
+    if (!isModesDropdownOpen && !isMoreDropdownOpen && !isUserMenuOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -32,13 +37,24 @@ export function Navbar() {
       if (moreDropdownRef.current && !moreDropdownRef.current.contains(target)) {
         setIsMoreDropdownOpen(false);
       }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isModesDropdownOpen, isMoreDropdownOpen]);
+  }, [isModesDropdownOpen, isMoreDropdownOpen, isUserMenuOpen]);
 
   const pathname = usePathname();
+
+  const handleSignOut = async () => {
+    setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false);
+    await signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <nav className={styles.navbar}>
@@ -118,9 +134,40 @@ export function Navbar() {
                   <Link href="/correcteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('correcteur')}</Link>
                   <Link href="/assistant-redacteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('assistantExperimental')}</Link>
                   <Link href="/traduction" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('traduction')}</Link>
+                  {session && (
+                    <Link href="/notes" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('notes')}</Link>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Zone auth : bouton connexion, ou icône + menu utilisateur */}
+            {session ? (
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  className={styles.iconButton}
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  aria-label={t('userMenu')}
+                >
+                  <CircleUserRound size={24} />
+                </button>
+                {isUserMenuOpen && (
+                  <div className={styles.dropdownMenuRight}>
+                    <div className={styles.userInfo}>
+                      <span className={styles.userName}>{session.user.name}</span>
+                      <span className={styles.userEmail}>{session.user.email}</span>
+                    </div>
+                    <button className={styles.dropdownItem} onClick={handleSignOut}>
+                      {t('logout')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/connexion" className={styles.loginButton}>
+                {t('login')}
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -134,12 +181,33 @@ export function Navbar() {
           <Link href="/correcteur" className={`px-6 py-2 ${pathname === '/correcteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('correcteur')}</Link>
           <Link href="/traduction" className={`px-6 py-2 ${pathname === '/traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('traduction')}</Link>
           <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('assistant')}</Link>
+          {session && (
+            <Link href="/notes" className={`px-6 py-2 ${pathname === '/notes' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('notes')}</Link>
+          )}
 
           <div className="border-t border-gray-100 my-2"></div>
 
           <div className="px-4 py-2 font-bold text-[#0F52BA]">{t('learnMore')}</div>
           <Link href="/about" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('about')}</Link>
           <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('roadmap')}</Link>
+
+          <div className="border-t border-gray-100 my-2"></div>
+
+          {session ? (
+            <>
+              <div className={styles.userInfo}>
+                <span className={styles.userName}>{session.user.name}</span>
+                <span className={styles.userEmail}>{session.user.email}</span>
+              </div>
+              <button className={styles.dropdownItem} onClick={handleSignOut}>
+                {t('logout')}
+              </button>
+            </>
+          ) : (
+            <Link href="/connexion" className="px-6 py-2 font-semibold text-[#0F52BA] hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>
+              {t('login')}
+            </Link>
+          )}
         </div>
       )}
     </nav>
