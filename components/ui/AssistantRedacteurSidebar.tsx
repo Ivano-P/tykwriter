@@ -29,8 +29,6 @@ interface AssistantRedacteurSidebarProps {
   isSubmitDisabled: boolean;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
-  isFinalCheckEnabled: boolean;
-  setIsFinalCheckEnabled: (val: boolean) => void;
   isFinalChecking: boolean;
   handleFormatEmail: () => void;
   isLinkEnabled: boolean;
@@ -49,8 +47,6 @@ export function AssistantRedacteurSidebar({
   isSubmitDisabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
-  isFinalCheckEnabled,
-  setIsFinalCheckEnabled,
   isFinalChecking,
   handleFormatEmail,
   isLinkEnabled,
@@ -69,8 +65,10 @@ export function AssistantRedacteurSidebar({
 
       <div className={styles.actionSection}>
 
+        {/* La vérification finale n'a plus de bouton dédié : elle est incluse
+            dans la correction automatique (hint affiché sous le toggle). */}
         <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel}>
+          <label className={styles.toggleLabel} title={t('finalCheckHint')}>
             <span className={styles.toggleText}>{t('autoCorrect')}</span>
             <div className={styles.toggleWrapper}>
               <input
@@ -78,22 +76,6 @@ export function AssistantRedacteurSidebar({
                 className={styles.toggleCheckbox}
                 checked={isAutoCorrectEnabled}
                 onChange={(e) => setIsAutoCorrectEnabled(e.target.checked)}
-                disabled={isProcessing}
-              />
-              <div className={styles.toggleSlider}></div>
-            </div>
-          </label>
-        </div>
-
-        <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel} title={t('finalCheckHint')}>
-            <span className={styles.toggleText}>{t('finalCheck')}</span>
-            <div className={styles.toggleWrapper}>
-              <input
-                type="checkbox"
-                className={styles.toggleCheckbox}
-                checked={isFinalCheckEnabled}
-                onChange={(e) => setIsFinalCheckEnabled(e.target.checked)}
                 disabled={isProcessing}
               />
               <div className={styles.toggleSlider}></div>

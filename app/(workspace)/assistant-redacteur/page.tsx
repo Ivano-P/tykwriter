@@ -34,7 +34,7 @@ export default function AssistantRedacteurPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAutoCorrectEnabled, setIsAutoCorrectEnabled] = useState(true);
-  const [isFinalCheckEnabled, setIsFinalCheckEnabled] = useState(true);
+  // La vérification finale suit la correction automatique : plus de toggle dédié.
   const [isFinalChecking, setIsFinalChecking] = useState(false);
   const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
@@ -266,7 +266,7 @@ export default function AssistantRedacteurPage() {
   // inline (appliquées phrase par phrase, sans contexte) avec le contexte global.
   const runFinalCheck = useCallback(async () => {
     if (finalCheckInFlightRef.current) return;
-    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+    if (!isAutoCorrectEnabled) return;
 
     const sentText = latestGlobalTextRef.current;
     if (!sentText.trim() || sentText.length > MAX_CHARS) return;
@@ -346,7 +346,7 @@ export default function AssistantRedacteurPage() {
       finalCheckInFlightRef.current = false;
       setIsFinalChecking(false);
     }
-  }, [isFinalCheckEnabled, isAutoCorrectEnabled, tone, abreviations, englishVariant]);
+  }, [isAutoCorrectEnabled, tone, abreviations, englishVariant]);
 
   useEffect(() => {
     runFinalCheckRef.current = runFinalCheck;
@@ -360,7 +360,7 @@ export default function AssistantRedacteurPage() {
       finalCheckRetryRef.current = null;
     }
 
-    if (!isFinalCheckEnabled || !isAutoCorrectEnabled) return;
+    if (!isAutoCorrectEnabled) return;
     if (globalText.trim() === '' || globalText.length > MAX_CHARS) return;
     if (globalText.trim() === lastFinalCheckedTextRef.current.trim()) return;
 
@@ -372,7 +372,7 @@ export default function AssistantRedacteurPage() {
         finalCheckRetryRef.current = null;
       }
     };
-  }, [globalText, isFinalCheckEnabled, isAutoCorrectEnabled]);
+  }, [globalText, isAutoCorrectEnabled]);
 
   // Legacy manual check fallback
   const handleSpellCheck = async (textToCheck: string) => {
@@ -499,8 +499,6 @@ export default function AssistantRedacteurPage() {
           isSubmitDisabled={currentlyProcessing || !globalText.trim() || globalText.length > MAX_CHARS}
           isAutoCorrectEnabled={isAutoCorrectEnabled}
           setIsAutoCorrectEnabled={setIsAutoCorrectEnabled}
-          isFinalCheckEnabled={isFinalCheckEnabled}
-          setIsFinalCheckEnabled={setIsFinalCheckEnabled}
           isFinalChecking={isFinalChecking}
           handleFormatEmail={handleFormatEmail}
           isLinkEnabled={isLinkEnabled}

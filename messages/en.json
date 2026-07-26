@@ -62,8 +62,7 @@
   "assistantSidebar": {
     "actions": "Actions",
     "autoCorrect": "Automatic correction",
-    "finalCheck": "Final check",
-    "finalCheckHint": "Automatic full-text review after a writing pause.",
+    "finalCheckHint": "Includes a full-text review after a writing pause.",
     "finalChecking": "Final check…",
     "checking": "Checking...",
     "checkNow": "Check now",

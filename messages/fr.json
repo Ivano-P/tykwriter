@@ -62,8 +62,7 @@
   "assistantSidebar": {
     "actions": "Actions",
     "autoCorrect": "Correction automatique",
-    "finalCheck": "Vérification finale",
-    "finalCheckHint": "Relecture globale automatique après une pause d'écriture.",
+    "finalCheckHint": "Inclut une relecture globale après une pause d'écriture.",
     "finalChecking": "Vérification finale…",
     "checking": "Vérification...",
     "checkNow": "Vérifier maintenant",
