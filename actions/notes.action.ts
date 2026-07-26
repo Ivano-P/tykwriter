@@ -43,9 +43,21 @@ export async function createNoteAction(
   return NoteService.createNote(userId, folderId);
 }
 
+/** Charge utile de mise à jour côté client.
+ * Le contenu TipTap transite en chaîne JSON : la sérialisation des arguments
+ * de Server Action supprime silencieusement les objets `attrs` de ProseMirror
+ * (objets à prototype nul) — une chaîne passe intacte. */
+export interface NoteUpdatePayload {
+  title?: string;
+  contentJson?: string;
+  folderId?: string | null;
+}
+
+const CONTENT_MAX_BYTES = 2 * 1024 * 1024; // 2 Mo de JSON par note
+
 export async function updateNoteAction(
   id: string,
-  data: NoteUpdate,
+  data: NoteUpdatePayload,
 ): Promise<NoteMeta | null> {
   const userId = await requireUserId();
   assertId(id);
@@ -55,11 +67,23 @@ export async function updateNoteAction(
     if (typeof data.title !== 'string') throw new Error('INVALID_TITLE');
     clean.title = data.title.slice(0, TITLE_MAX);
   }
-  if (data.content !== undefined) {
-    if (typeof data.content !== 'object' || data.content === null) {
+  if (data.contentJson !== undefined) {
+    if (
+      typeof data.contentJson !== 'string' ||
+      data.contentJson.length > CONTENT_MAX_BYTES
+    ) {
       throw new Error('INVALID_CONTENT');
     }
-    clean.content = data.content;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(data.contentJson);
+    } catch {
+      throw new Error('INVALID_CONTENT');
+    }
+    if (typeof parsed !== 'object' || parsed === null) {
+      throw new Error('INVALID_CONTENT');
+    }
+    clean.content = parsed as Record<string, unknown>;
   }
   if (data.folderId !== undefined) {
     if (data.folderId !== null) assertId(data.folderId);

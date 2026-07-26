@@ -54,7 +54,14 @@ export function NotesWorkspace({ initialFolders, initialNotes }: Props) {
     pendingRef.current = {};
 
     setSaveState('saving');
-    const updated = await updateNoteAction(noteId, pending);
+    // Contenu envoyé en chaîne JSON (voir NoteUpdatePayload).
+    const updated = await updateNoteAction(noteId, {
+      title: pending.title,
+      contentJson:
+        pending.content !== undefined
+          ? JSON.stringify(pending.content)
+          : undefined,
+    });
     setSaveState('saved');
     if (updated) {
       setNotes((prev) => {

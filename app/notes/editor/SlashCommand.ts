@@ -59,6 +59,7 @@ export function buildSlashItems(labels: {
   codeBlock: string;
   table: string;
   divider: string;
+  image: string;
 }): SlashItem[] {
   const heading = (level: 1 | 2 | 3 | 4 | 5, label: string): SlashItem => ({
     key: `h${level}`,
@@ -141,6 +142,16 @@ export function buildSlashItems(labels: {
       group: labels.groups.inserts,
       command: ({ editor, range }) =>
         editor.chain().focus().deleteRange(range).setHorizontalRule().run(),
+    },
+    {
+      key: 'image',
+      label: labels.image,
+      group: labels.groups.inserts,
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).run();
+        // Le NoteEditor écoute cet événement et ouvre le sélecteur de fichier.
+        document.dispatchEvent(new CustomEvent('tykwriter:pick-image'));
+      },
     },
   ];
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useTranslations } from 'next-intl';
 import type { FolderMeta, NoteFull } from '@/services/NoteService';
+import { createImageUploadAction } from '@/actions/storage.action';
 import type { SaveState } from './NotesWorkspace';
 import { buildNoteExtensions } from './editor/extensions';
 import { SlashCommand } from './editor/SlashCommand';
@@ -29,6 +30,14 @@ export function NoteEditor({
   onMoveToFolder,
 }: Props) {
   const t = useTranslations('notes');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error'>(
+    'idle',
+  );
+
+  // Les handlers paste/drop sont capturés à la création de l'éditeur ;
+  // on passe par une ref pour appeler la version courante.
+  const uploadRef = useRef<(files: File[], pos?: number) => void>(() => {});
 
   // Extensions stables pour la durée de vie de l'éditeur (une note = un éditeur).
   const extensions = useMemo(
@@ -55,6 +64,7 @@ export function NoteEditor({
           codeBlock: t('slashCodeBlock'),
           table: t('slashTable'),
           divider: t('slashDivider'),
+          image: t('slashImage'),
         }),
       }),
     ],
@@ -70,11 +80,80 @@ export function NoteEditor({
       attributes: {
         class: styles.prosemirror,
       },
+      handlePaste: (_view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? []).filter((f) =>
+          f.type.startsWith('image/'),
+        );
+        if (files.length === 0) return false;
+        event.preventDefault();
+        uploadRef.current(files);
+        return true;
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false;
+        const files = Array.from(event.dataTransfer?.files ?? []).filter((f) =>
+          f.type.startsWith('image/'),
+        );
+        if (files.length === 0) return false;
+        event.preventDefault();
+        const pos = view.posAtCoords({
+          left: event.clientX,
+          top: event.clientY,
+        })?.pos;
+        uploadRef.current(files, pos);
+        return true;
+      },
     },
     onUpdate: ({ editor }) => {
       onContentChange(editor.getJSON() as Record<string, unknown>);
     },
   });
+
+  const uploadImages = useCallback(
+    async (files: File[], pos?: number) => {
+      if (!editor) return;
+      setUploadState('uploading');
+      let failed = false;
+      for (const file of files) {
+        try {
+          const ticket = await createImageUploadAction(
+            note.id,
+            file.type,
+            file.size,
+          );
+          const res = await fetch(ticket.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': file.type },
+          });
+          if (!res.ok) throw new Error('UPLOAD_FAILED');
+          const imageNode = { type: 'image', attrs: { src: ticket.publicUrl } };
+          if (pos !== undefined) {
+            editor.chain().focus().insertContentAt(pos, imageNode).run();
+          } else {
+            editor.chain().focus().insertContent(imageNode).run();
+          }
+        } catch {
+          failed = true;
+        }
+      }
+      setUploadState(failed ? 'error' : 'idle');
+    },
+    [editor, note.id],
+  );
+
+  useEffect(() => {
+    uploadRef.current = (files, pos) => {
+      void uploadImages(files, pos);
+    };
+  }, [uploadImages]);
+
+  // Ouverture du sélecteur de fichier depuis la commande « /image ».
+  useEffect(() => {
+    const openPicker = () => fileInputRef.current?.click();
+    document.addEventListener('tykwriter:pick-image', openPicker);
+    return () => document.removeEventListener('tykwriter:pick-image', openPicker);
+  }, []);
 
   return (
     <div className={styles.editor}>
@@ -103,16 +182,31 @@ export function NoteEditor({
             </select>
           </label>
           <span
-            className={`${styles.saveIndicator} ${saveState === 'saving' ? styles.saveIndicatorActive : ''}`}
+            className={`${styles.saveIndicator} ${saveState === 'saving' || uploadState === 'uploading' ? styles.saveIndicatorActive : ''} ${uploadState === 'error' ? styles.saveIndicatorError : ''}`}
           >
-            {saveState === 'saving' && t('saving')}
-            {saveState === 'saved' && t('saved')}
+            {uploadState === 'uploading' && t('uploadingImage')}
+            {uploadState === 'error' && t('imageUploadError')}
+            {uploadState === 'idle' && saveState === 'saving' && t('saving')}
+            {uploadState === 'idle' && saveState === 'saved' && t('saved')}
           </span>
         </div>
       </div>
 
       {editor && <EditorBubbleMenu editor={editor} />}
       <EditorContent editor={editor} className={styles.content} />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          e.target.value = '';
+          if (files.length > 0) void uploadImages(files);
+        }}
+      />
     </div>
   );
 }

@@ -67,6 +67,10 @@
     color: var(--tyk-sapphire, #0F52BA);
 }
 
+.saveIndicatorError {
+    color: #b91c1c;
+}
+
 .content {
     flex: 1;
     min-height: 0;
@@ -294,15 +298,43 @@
     list-style: none;
 }
 
-/* Images */
-.prosemirror img {
+/* Images (node view redimensionnable) */
+.prosemirror :global(.note-image) {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    margin: 0.5rem 0;
+    line-height: 0;
+}
+
+.prosemirror :global(.note-image) img {
     max-width: 100%;
     height: auto;
     border-radius: 0.5rem;
+    display: block;
 }
 
-.prosemirror img:global(.ProseMirror-selectednode) {
+.prosemirror :global(.note-image.ProseMirror-selectednode) img {
     outline: 2px solid var(--tyk-sapphire, #0F52BA);
+}
+
+.prosemirror :global(.note-image-handle) {
+    position: absolute;
+    right: -0.35rem;
+    bottom: -0.35rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 9999px;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    border: 2px solid #ffffff;
+    cursor: nwse-resize;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.prosemirror :global(.note-image:hover .note-image-handle),
+.prosemirror :global(.note-image.ProseMirror-selectednode .note-image-handle) {
+    opacity: 1;
 }
 
 /************** Larger screens adjustments *****************************/

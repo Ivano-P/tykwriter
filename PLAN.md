@@ -46,7 +46,7 @@
 - [x] Localisation FR/EN de toute l'UI notes
 - Testé navigateur : création note, autosave titre+contenu, persistance après reload, création dossier, déplacement note vers dossier, recherche. (NB : les events `keydown` ne sont pas délivrés par l'outil navigateur de test — vérifié que c'est une limite de l'outil, pas un bug appli.)
 
-## Phase 3 — Éditeur riche 🔄
+## Phase 3 — Éditeur riche ✅
 
 (charger `.claude/skills/tiptap-skill/` avant de commencer)
 - [x] Titres 1–5 + raccourcis (StarterKit levels 1-5)
@@ -57,8 +57,9 @@
 - [x] Slash commands (menu `/` localisé, filtrage, nav clavier, groupes)
 - [x] Tableaux (insertion 3x3 avec en-tête, colonnes redimensionnables) — menus lignes/colonnes à enrichir plus tard
 - [x] Titres dépliables (extension Details v3, chevron animé, état persisté)
-- [ ] Images : upload R2 (URL présignée), collage/drag & drop, redimensionnement
+- [x] Images : upload R2 (URL présignée, testé avec le vrai bucket + domaine public), collage/drag & drop, `/image` (sélecteur), redimensionnement par poignée, purge R2 à la suppression de note
 - NB : TipTap aligné en 3.29 (upgrade depuis 3.20) — correcteur re-testé OK.
+- NB : le contenu TipTap transite en chaîne JSON vers les Server Actions (`contentJson`) — la sérialisation RSC supprime silencieusement les objets `attrs` de ProseMirror. Ne pas revenir à un passage d'objet.
 
 ## Phase 4 — Garde-fous ⬜
 

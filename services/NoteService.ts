@@ -1,6 +1,7 @@
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { folder, note } from '@/db/schema';
+import { StorageService } from './StorageService';
 
 /** Métadonnées d'une note (liste sidebar — sans le contenu, volumineux). */
 export interface NoteMeta {
@@ -129,6 +130,14 @@ export class NoteService {
 
   static async deleteNote(userId: string, id: string): Promise<void> {
     await db.delete(note).where(and(eq(note.id, id), eq(note.userId, userId)));
+    // Purge des images R2 de la note ; ne bloque jamais la suppression
+    // (R2 non configuré en dev, ou erreur réseau : les orphelins seront
+    // nettoyés par la purge compte).
+    try {
+      await StorageService.deleteByPrefix(`notes/${userId}/${id}/`);
+    } catch {
+      // best effort
+    }
   }
 
   static async createFolder(userId: string, name: string): Promise<FolderMeta> {
