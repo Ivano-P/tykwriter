@@ -21,8 +21,6 @@ export async function spellcheckAction(
 
 
   return await AiProService.autoCheckSpellingAndFormat(text, sanitizeAssistantOptions(options));
-  // Pour tester avec le serveur Ollama local : importer OllamaService depuis
-  // '@/services/OllamaService' et retourner OllamaService.checkSpelling(text).
 }
 
 import { CorrectionResponse } from '@/services/aiTypes';
