@@ -287,6 +287,14 @@ export function TiptapEditor({
       attributes: {
         class: `focus:outline-none overflow-y-auto flex-1 h-full w-full ${className}`,
       },
+      // Copie en texte brut « 1 pour 1 » : un Entrée (= un paragraphe) devient
+      // UN seul saut de ligne, pas deux — sinon Bloc-notes & co affichent une
+      // ligne vide entre chaque paragraphe. (Ne concerne que text/plain ; la
+      // représentation interne "\n\n" entre blocs reste inchangée.)
+      clipboardTextSerializer: (slice) =>
+        slice.content.textBetween(0, slice.content.size, '\n', (leaf) =>
+          leaf.type.name === 'hardBreak' ? '\n' : ''
+        ),
     },
     onUpdate: ({ editor: ed, transaction }) => {
       if (!transaction.docChanged) return;
@@ -505,7 +513,8 @@ export function TiptapEditor({
     if (!editor) return;
 
     const handleCopyAll = () => {
-      const fullText = editor.getText();
+      // Même règle « 1 Entrée = 1 saut de ligne » que la copie native (Ctrl+C).
+      const fullText = editor.getText({ blockSeparator: '\n' });
       const html = editor.getHTML();
 
       try {
