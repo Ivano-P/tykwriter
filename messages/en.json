@@ -213,6 +213,23 @@
     "underline": "Underline",
     "strike": "Strikethrough",
     "highlight": "Highlight",
-    "inlineCode": "Inline code"
+    "inlineCode": "Inline code",
+    "aiPanelToggle": "AI",
+    "aiPanelTitle": "AI assistant",
+    "aiClose": "Close the AI panel",
+    "aiAsk": "Ask a question",
+    "aiQuestionPlaceholder": "Your question about this note…",
+    "aiAskButton": "Ask",
+    "aiNoteSection": "Whole note",
+    "aiRestructure": "Restructure the note",
+    "aiRestructureConfirm": "Restructure the whole note? The content will be reorganized (undo with Ctrl+Z).",
+    "aiSelection": "Selection",
+    "aiFixSelection": "Fix the selection",
+    "aiTranslateSelection": "Translate the selection",
+    "aiTargetLanguage": "To:",
+    "aiNoSelection": "Select some text in the note first.",
+    "aiWorking": "The AI is working…",
+    "aiError": "The AI action failed. Please try again.",
+    "aiUnsupportedLanguage": "Unsupported language."
   }
 }

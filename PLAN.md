@@ -78,12 +78,15 @@
 - [x] Lien « Mon compte » dans le menu utilisateur (desktop + mobile)
 - Testé navigateur : renommage, changement de mdp (vérifié en l'utilisant pour la suppression), suppression → toutes les tables à 0, compte de test recréé (`test@tykwriter.local` / voir mdp phase 1 +456 → recréé avec mdp initial)
 
-## Phase 6 — IA sur les notes ⬜
+## Phase 6 — IA sur les notes ✅
 
-- [ ] Poser des questions sur la note courante
-- [ ] Restructurer la note
-- [ ] Correction orthographique d'une sélection (réutilise SpellcheckService)
-- [ ] Traduction d'une sélection (réutilise service traduction)
+- [x] Panneau « Assistant IA » dans l'éditeur de note (bouton IA du header, panneau latéral)
+- [x] Poser des questions sur la note courante (AiProService.askNote, rôle 'assistant')
+- [x] Restructurer la note (HTML → HTML restreint, setContent avec emitUpdate → autosave, annulable Ctrl+Z)
+- [x] Correction orthographique d'une sélection (réutilise autoCheckSpellingAndFormat)
+- [x] Traduction d'une sélection (réutilise translate, sélecteur de langue via Intl.DisplayNames)
+- Actions réservées aux connectés (pas de rate limiting nécessaire)
+- Testé navigateur : Q&A (réponse correcte), restructuration (H1/H2 + listes), correction de sélection — tout autosauvegardé en DB
 
 ## Phase 7 — Polish ⬜
 

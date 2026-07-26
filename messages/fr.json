@@ -213,6 +213,23 @@
     "underline": "Souligné",
     "strike": "Barré",
     "highlight": "Surligner",
-    "inlineCode": "Code en ligne"
+    "inlineCode": "Code en ligne",
+    "aiPanelToggle": "IA",
+    "aiPanelTitle": "Assistant IA",
+    "aiClose": "Fermer le panneau IA",
+    "aiAsk": "Poser une question",
+    "aiQuestionPlaceholder": "Votre question sur cette note…",
+    "aiAskButton": "Demander",
+    "aiNoteSection": "Note entière",
+    "aiRestructure": "Restructurer la note",
+    "aiRestructureConfirm": "Restructurer toute la note ? Le contenu sera réorganisé (annulable avec Ctrl+Z).",
+    "aiSelection": "Sélection",
+    "aiFixSelection": "Corriger la sélection",
+    "aiTranslateSelection": "Traduire la sélection",
+    "aiTargetLanguage": "Vers :",
+    "aiNoSelection": "Sélectionnez d'abord du texte dans la note.",
+    "aiWorking": "L'IA travaille…",
+    "aiError": "L'action IA a échoué. Réessayez.",
+    "aiUnsupportedLanguage": "Langue non prise en charge."
   }
 }

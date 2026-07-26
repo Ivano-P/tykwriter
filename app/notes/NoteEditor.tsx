@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { FolderMeta, NoteFull } from '@/services/NoteService';
 import { createImageUploadAction } from '@/actions/storage.action';
@@ -10,6 +11,7 @@ import { buildNoteExtensions } from './editor/extensions';
 import { SlashCommand } from './editor/SlashCommand';
 import { createSlashSuggestion } from './editor/slashSuggestion';
 import { EditorBubbleMenu } from './editor/EditorBubbleMenu';
+import { NotesAiPanel } from './NotesAiPanel';
 import styles from './NoteEditor.module.css';
 
 interface Props {
@@ -34,6 +36,7 @@ export function NoteEditor({
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error'>(
     'idle',
   );
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
 
   // Les handlers paste/drop sont capturés à la création de l'éditeur ;
   // on passe par une ref pour appeler la version courante.
@@ -189,11 +192,23 @@ export function NoteEditor({
             {uploadState === 'idle' && saveState === 'saving' && t('saving')}
             {uploadState === 'idle' && saveState === 'saved' && t('saved')}
           </span>
+          <button
+            className={`${styles.aiToggle} ${isAiPanelOpen ? styles.aiToggleActive : ''}`}
+            onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+            aria-label={t('aiPanelTitle')}
+            title={t('aiPanelTitle')}
+          >
+            <Sparkles size={16} />
+            <span>{t('aiPanelToggle')}</span>
+          </button>
         </div>
       </div>
 
       {editor && <EditorBubbleMenu editor={editor} />}
       <EditorContent editor={editor} className={styles.content} />
+      {editor && isAiPanelOpen && (
+        <NotesAiPanel editor={editor} onClose={() => setIsAiPanelOpen(false)} />
+      )}
 
       <input
         ref={fileInputRef}
