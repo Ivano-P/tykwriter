@@ -1,0 +1,119 @@
+/* Mobile-first base styles */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.roleCard {
+    border: 1px solid rgba(160, 140, 115, 0.25);
+    border-radius: 0.75rem;
+    background: #fffdf5;
+    padding: 0.75rem 1rem 1rem;
+}
+
+.roleTitle {
+    font-weight: 600;
+    color: var(--tyk-sapphire, #0F52BA);
+    font-size: 0.95rem;
+    padding: 0 0.35rem;
+}
+
+.selectRow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+}
+
+.fieldLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tyk-dust-brown, #A08C73);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.9) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%230F52BA' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+    border: 1px solid var(--tyk-sapphire, #0F52BA);
+    color: var(--tyk-sapphire, #0F52BA);
+    padding: 0.45rem 1.75rem 0.45rem 0.6rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.saveButton {
+    border: none;
+    border-radius: 9999px;
+    font-weight: bold;
+    padding: 0.7rem 1.75rem;
+    font-size: 0.95rem;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(15, 82, 186, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.saveButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(15, 82, 186, 0.4);
+}
+
+.saveButton:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+}
+
+.saveButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.statusOk {
+    color: #2e7d32;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.statusWarn {
+    color: #7a5c00;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.statusError {
+    color: #b71c1c;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/************** Larger screens adjustments *****************************/
+@media (min-width: 768px) {
+    .selectRow {
+        flex-direction: row;
+    }
+}
