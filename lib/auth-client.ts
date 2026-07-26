@@ -1,10 +1,6 @@
-import { createAuthClient } from "better-auth/react";
-import { sentinelClient } from "@better-auth/infra/client";
+import { createAuthClient } from 'better-auth/react';
 
-export const authClient = createAuthClient({
-  // ... your existing config
-  plugins: [
-    // ... other plugins
-    sentinelClient()
-  ]
-})
+/** Client Better Auth côté navigateur (même origine → pas de baseURL). */
+export const authClient = createAuthClient();
+
+export const { signIn, signUp, signOut, useSession } = authClient;
