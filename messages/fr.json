@@ -140,6 +140,25 @@
   },
   "notes": {
     "title": "Notes",
-    "comingSoon": "La prise de notes arrive ici très bientôt."
+    "newNote": "Nouvelle note",
+    "newFolder": "Nouveau dossier",
+    "untitled": "Sans titre",
+    "titlePlaceholder": "Titre de la note…",
+    "searchPlaceholder": "Rechercher…",
+    "empty": "Aucune note. Créez-en une !",
+    "noResults": "Aucune note ne correspond.",
+    "selectNote": "Sélectionnez une note ou créez-en une nouvelle.",
+    "rootFolder": "Sans dossier",
+    "moveToFolder": "Dossier :",
+    "renameFolder": "Renommer le dossier",
+    "deleteFolder": "Supprimer le dossier",
+    "confirmDeleteNote": "Supprimer définitivement cette note ?",
+    "confirmDeleteFolder": "Supprimer ce dossier ? Ses notes reviendront à la racine.",
+    "deleteNote": "Supprimer la note",
+    "folderNamePlaceholder": "Nom du dossier…",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "openSidebar": "Afficher la liste des notes",
+    "closeSidebar": "Masquer la liste des notes"
   }
 }

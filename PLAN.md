@@ -37,15 +37,16 @@
 - [x] Page `/notes` placeholder protégée (redirect `/connexion` si non connecté)
 - Testé navigateur : inscription, redirection /notes, menu utilisateur, déconnexion, erreur mot de passe invalide (FR), reconnexion. Compte de test : `test@tykwriter.local`.
 
-## Phase 2 — Notes core 🔄
+## Phase 2 — Notes core ✅
 
-- [ ] CRUD notes + dossiers (actions → `services/NoteService`)
-- [ ] Sidebar : dossiers + liste des notes (tri par dernière modif), recherche
-- [ ] Autosave (debounce) du contenu TipTap (JSON) 
-- [ ] Layout notes pleine largeur (vs largeur contrainte des autres modes)
-- [ ] Localisation FR/EN de toute l'UI notes
+- [x] CRUD notes + dossiers (actions → `services/NoteService`, scopé par userId)
+- [x] Sidebar : dossiers + liste des notes (tri par dernière modif), recherche
+- [x] Autosave (debounce 800 ms) du contenu TipTap (JSON) + indicateur Enregistrement/Enregistré
+- [x] Layout notes pleine largeur, sidebar overlay sur mobile (bouton toggle)
+- [x] Localisation FR/EN de toute l'UI notes
+- Testé navigateur : création note, autosave titre+contenu, persistance après reload, création dossier, déplacement note vers dossier, recherche. (NB : les events `keydown` ne sont pas délivrés par l'outil navigateur de test — vérifié que c'est une limite de l'outil, pas un bug appli.)
 
-## Phase 3 — Éditeur riche ⬜
+## Phase 3 — Éditeur riche 🔄
 
 (charger `.claude/skills/tiptap-skill/` avant de commencer)
 - [ ] Titres 1–5 + raccourcis

@@ -140,6 +140,25 @@
   },
   "notes": {
     "title": "Notes",
-    "comingSoon": "Note taking is coming here very soon."
+    "newNote": "New note",
+    "newFolder": "New folder",
+    "untitled": "Untitled",
+    "titlePlaceholder": "Note title…",
+    "searchPlaceholder": "Search…",
+    "empty": "No notes yet. Create one!",
+    "noResults": "No matching notes.",
+    "selectNote": "Select a note or create a new one.",
+    "rootFolder": "No folder",
+    "moveToFolder": "Folder:",
+    "renameFolder": "Rename folder",
+    "deleteFolder": "Delete folder",
+    "confirmDeleteNote": "Permanently delete this note?",
+    "confirmDeleteFolder": "Delete this folder? Its notes will move back to the root.",
+    "deleteNote": "Delete note",
+    "folderNamePlaceholder": "Folder name…",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "openSidebar": "Show the notes list",
+    "closeSidebar": "Hide the notes list"
   }
 }

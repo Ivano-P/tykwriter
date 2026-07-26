@@ -1,8 +1,8 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
-import styles from './notes.module.css';
+import { NoteService } from '@/services/NoteService';
+import { NotesWorkspace } from './NotesWorkspace';
 
 export default async function NotesPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -10,12 +10,7 @@ export default async function NotesPage() {
     redirect('/connexion');
   }
 
-  const t = await getTranslations('notes');
+  const { folders, notes } = await NoteService.listForUser(session.user.id);
 
-  return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>{t('title')}</h1>
-      <p className={styles.comingSoon}>{t('comingSoon')}</p>
-    </div>
-  );
+  return <NotesWorkspace initialFolders={folders} initialNotes={notes} />;
 }
