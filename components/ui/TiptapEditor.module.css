@@ -89,6 +89,29 @@
   flex-shrink: 0;
 }
 
+/* ── Surlignement temporaire des corrections de l'assistant ──
+   Classe globale : posée par une décoration ProseMirror (CorrectionFlash).
+   La durée totale de l'animation doit rester égale à CORRECTION_FLASH_MS
+   dans TiptapEditor.tsx (le meta 'clear' retire la décoration à la fin). */
+:global(.tyk-correction-flash) {
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: correctionFlashFade 6s ease-out forwards;
+}
+
+@keyframes correctionFlashFade {
+
+  0%,
+  55% {
+    background-color: rgba(255, 213, 79, 0.45);
+  }
+
+  100% {
+    background-color: rgba(255, 213, 79, 0);
+  }
+}
+
 /************** Larger screens adjustments *****************************/
 @media (min-width: 768px) {
   .bubbleMenu {
