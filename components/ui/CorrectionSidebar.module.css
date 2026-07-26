@@ -54,6 +54,11 @@
   box-shadow: 0 6px 14px rgba(15, 82, 186, 0.4);
 }
 
+.submitButton:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 6px rgba(15, 82, 186, 0.3);
+}
+
 .submitButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -88,6 +93,10 @@
 .secondaryActionBtn:hover:not(:disabled) {
   background: var(--tyk-sapphire, #0F52BA);
   color: white;
+}
+
+.secondaryActionBtn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .secondaryActionBtn:disabled {
@@ -247,6 +256,10 @@
 .segmentBtn:hover:not(:disabled) {
   background: var(--tyk-sapphire, #0F52BA);
   color: white;
+}
+
+.segmentBtn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .segmentBtn:disabled {
