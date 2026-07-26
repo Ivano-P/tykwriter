@@ -1,10 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import { useTranslations } from 'next-intl';
 import type { FolderMeta, NoteFull } from '@/services/NoteService';
 import type { SaveState } from './NotesWorkspace';
+import { buildNoteExtensions } from './editor/extensions';
+import { SlashCommand } from './editor/SlashCommand';
+import { createSlashSuggestion } from './editor/slashSuggestion';
+import { EditorBubbleMenu } from './editor/EditorBubbleMenu';
 import styles from './NoteEditor.module.css';
 
 interface Props {
@@ -26,8 +30,40 @@ export function NoteEditor({
 }: Props) {
   const t = useTranslations('notes');
 
+  // Extensions stables pour la durée de vie de l'éditeur (une note = un éditeur).
+  const extensions = useMemo(
+    () => [
+      ...buildNoteExtensions(t('editorPlaceholder')),
+      SlashCommand.configure({
+        suggestion: createSlashSuggestion({
+          groups: {
+            headings: t('slashGroupHeadings'),
+            blocks: t('slashGroupBlocks'),
+            inserts: t('slashGroupInserts'),
+          },
+          text: t('slashText'),
+          h1: t('slashH1'),
+          h2: t('slashH2'),
+          h3: t('slashH3'),
+          h4: t('slashH4'),
+          h5: t('slashH5'),
+          bulletList: t('slashBulletList'),
+          orderedList: t('slashOrderedList'),
+          taskList: t('slashTaskList'),
+          toggle: t('slashToggle'),
+          quote: t('slashQuote'),
+          codeBlock: t('slashCodeBlock'),
+          table: t('slashTable'),
+          divider: t('slashDivider'),
+        }),
+      }),
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions,
     content: note.content ?? '',
     immediatelyRender: false,
     editorProps: {
@@ -75,6 +111,7 @@ export function NoteEditor({
         </div>
       </div>
 
+      {editor && <EditorBubbleMenu editor={editor} />}
       <EditorContent editor={editor} className={styles.content} />
     </div>
   );

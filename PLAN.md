@@ -49,15 +49,16 @@
 ## Phase 3 — Éditeur riche 🔄
 
 (charger `.claude/skills/tiptap-skill/` avant de commencer)
-- [ ] Titres 1–5 + raccourcis
-- [ ] Checklists (task list)
-- [ ] Blocs de code avec coloration (lowlight) + code inline
-- [ ] Surlignage, souligné, gras, italique
-- [ ] Bubble menu (menu flottant de sélection)
-- [ ] Slash commands (menu `/`)
-- [ ] Tableaux (+ menus lignes/colonnes)
-- [ ] Titres dépliables (foldable headings — via Details ou node view custom)
+- [x] Titres 1–5 + raccourcis (StarterKit levels 1-5)
+- [x] Checklists (task list, imbrication OK)
+- [x] Blocs de code avec coloration (lowlight/common) + code inline
+- [x] Surlignage, souligné, gras, italique, barré
+- [x] Bubble menu (menu flottant de sélection — gras/italique/souligné/barré/surlignage/code)
+- [x] Slash commands (menu `/` localisé, filtrage, nav clavier, groupes)
+- [x] Tableaux (insertion 3x3 avec en-tête, colonnes redimensionnables) — menus lignes/colonnes à enrichir plus tard
+- [x] Titres dépliables (extension Details v3, chevron animé, état persisté)
 - [ ] Images : upload R2 (URL présignée), collage/drag & drop, redimensionnement
+- NB : TipTap aligné en 3.29 (upgrade depuis 3.20) — correcteur re-testé OK.
 
 ## Phase 4 — Garde-fous ⬜
 
