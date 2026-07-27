@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import styles from './Footer.module.css';
 
 export async function Footer() {
@@ -36,9 +37,10 @@ export async function Footer() {
           </div>
         </div>
 
-        {/* Right: Language switcher */}
+        {/* Right: Language switcher + theme toggle */}
         <div className={styles.langWrapper}>
           <LanguageSwitcher className={styles.languageSwitcher} />
+          <ThemeToggle />
         </div>
 
       </div>

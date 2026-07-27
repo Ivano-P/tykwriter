@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, CircleUserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from '@/lib/auth-client';
-import { ThemeToggle } from './ThemeToggle';
 import styles from './Navbar.module.css';
 
 export function Navbar() {
@@ -74,8 +73,7 @@ export function Navbar() {
               />
             </Link>
           </div>
-          <div className="flex items-center mr-2 gap-2">
-            <ThemeToggle />
+          <div className="flex items-center mr-2 gap-4">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={styles.iconButton}
@@ -142,8 +140,6 @@ export function Navbar() {
                 </div>
               )}
             </div>
-
-            <ThemeToggle />
 
             {/* Zone auth : bouton connexion, ou icône + menu utilisateur */}
             {session ? (
