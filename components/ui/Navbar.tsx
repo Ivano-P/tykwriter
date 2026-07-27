@@ -69,7 +69,15 @@ export function Navbar() {
                 width={120}
                 height={32}
                 priority
-                className="object-contain"
+                className="object-contain dark:hidden"
+              />
+              <Image
+                src="/images/tykwriter_logo_darkmode.png"
+                alt="Tykwriter Logo"
+                width={120}
+                height={32}
+                priority
+                className="object-contain hidden dark:block"
               />
             </Link>
           </div>
@@ -95,7 +103,15 @@ export function Navbar() {
                 width={160}
                 height={42}
                 priority
-                className="object-contain"
+                className="object-contain dark:hidden"
+              />
+              <Image
+                src="/images/tykwriter_logo_darkmode.png"
+                alt="Tykwriter Logo"
+                width={160}
+                height={42}
+                priority
+                className="object-contain hidden dark:block"
               />
             </Link>
           </div>

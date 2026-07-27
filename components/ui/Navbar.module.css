@@ -27,7 +27,7 @@
   border-radius: 0.375rem;
   background: var(--surface-soft);
   /* very light contrast */
-  border: none;
+  border: 1px solid currentColor;
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -44,7 +44,7 @@
   color: var(--tyk-dust-brown, #A08C73);
   background: var(--surface-soft);
   /* subtle background to distinguish from white navbar */
-  border: none;
+  border: 1px solid currentColor;
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -126,6 +126,7 @@
   font-weight: 600;
   color: var(--tyk-dust-brown, #A08C73);
   background: var(--surface-soft);
+  border: 1px solid currentColor;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   text-decoration: none;

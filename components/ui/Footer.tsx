@@ -20,7 +20,14 @@ export async function Footer() {
               alt="Tykwriter Logo"
               width={110}
               height={30}
-              className={styles.logo}
+              className={`${styles.logo} dark:hidden`}
+            />
+            <Image
+              src="/images/tykwriter_logo_darkmode.png"
+              alt="Tykwriter Logo"
+              width={110}
+              height={30}
+              className={`${styles.logo} hidden dark:block`}
             />
           </Link>
         </div>
