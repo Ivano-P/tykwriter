@@ -15,8 +15,8 @@
 }
 
 .card {
-    background-color: #ffffff;
-    border: 1px solid rgba(160, 140, 115, 0.15);
+    background-color: var(--surface);
+    border: 1px solid var(--border-soft);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     padding: 1.25rem;
@@ -61,7 +61,7 @@
 
 .input {
     padding: 0.55rem 0.7rem;
-    border: 1px solid rgba(160, 140, 115, 0.35);
+    border: 1px solid var(--border-strong);
     border-radius: 0.5rem;
     font-size: 0.95rem;
     color: var(--foreground, #111827);

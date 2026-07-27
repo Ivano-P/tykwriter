@@ -17,7 +17,9 @@
     "login": "Sign in",
     "logout": "Sign out",
     "account": "My account",
-    "userMenu": "User menu"
+    "userMenu": "User menu",
+    "themeToDark": "Switch to dark mode",
+    "themeToLight": "Switch to light mode"
   },
   "footer": {
     "slogan": "The ally of your genius, the guardian of your words.",

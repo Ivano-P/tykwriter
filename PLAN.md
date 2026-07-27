@@ -88,10 +88,17 @@
 - Actions réservées aux connectés (pas de rate limiting nécessaire)
 - Testé navigateur : Q&A (réponse correcte), restructuration (H1/H2 + listes), correction de sélection — tout autosauvegardé en DB
 
-## Phase 7 — Polish ⬜
+## Phase 7 — Polish ✅
 
-- [ ] Passe responsive/mobile complète (éditeur notes inclus)
-- [ ] Dark mode (variables CSS, blanc→noir, bleu conservé) — EN DERNIER
+- [x] Passe responsive/mobile : sidebar notes en overlay (fix sélecteur), /connexion, /compte, pas de débordement horizontal
+- [x] Dark mode : variables sémantiques (`--surface`, `--surface-soft`, `--border-soft/strong`, `--page-bg`, `--soft-card-bg`) surchargées par `.dark` ; blanc→noir, bleu conservé (éclairci `#4d8be8`)
+- [x] Bascule ThemeToggle (navbar desktop + mobile), persistée en cookie `tyk-theme`, classe posée côté serveur (pas de flash)
+- [x] Sweep de tous les CSS Modules (blancs/crèmes/bordures en dur → variables) + variantes `dark:` du menu mobile
+- Testé navigateur : bascule sombre/clair, persistance après reload, notes/correcteur/compte/pages statiques lisibles ; `pnpm build` OK
+
+---
+
+**TOUTES LES PHASES SONT TERMINÉES.** Reste (hors scope v1, voir section Reporté) : kanban, SMTP (vérif email + reset mdp), embeddings pgvector, nettoyage R2 périodique.
 
 ## Reporté / hors scope
 

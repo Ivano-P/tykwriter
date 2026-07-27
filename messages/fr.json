@@ -17,7 +17,9 @@
     "login": "Se connecter",
     "logout": "Se déconnecter",
     "account": "Mon compte",
-    "userMenu": "Menu utilisateur"
+    "userMenu": "Menu utilisateur",
+    "themeToDark": "Passer en mode sombre",
+    "themeToLight": "Passer en mode clair"
   },
   "footer": {
     "slogan": "Le complice de votre génie, le gardien de vos textes.",

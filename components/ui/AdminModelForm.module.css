@@ -8,7 +8,7 @@
 .roleCard {
     border: 1px solid rgba(160, 140, 115, 0.25);
     border-radius: 0.75rem;
-    background: #fffdf5;
+    background: var(--soft-card-bg);
     padding: 0.75rem 1rem 1rem;
 }
 

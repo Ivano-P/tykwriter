@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, CircleUserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from '@/lib/auth-client';
+import { ThemeToggle } from './ThemeToggle';
 import styles from './Navbar.module.css';
 
 export function Navbar() {
@@ -73,7 +74,8 @@ export function Navbar() {
               />
             </Link>
           </div>
-          <div className="flex items-center mr-2 gap-4">
+          <div className="flex items-center mr-2 gap-2">
+            <ThemeToggle />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={styles.iconButton}
@@ -141,6 +143,8 @@ export function Navbar() {
               )}
             </div>
 
+            <ThemeToggle />
+
             {/* Zone auth : bouton connexion, ou icône + menu utilisateur */}
             {session ? (
               <div className="relative" ref={userDropdownRef}>
@@ -177,22 +181,22 @@ export function Navbar() {
 
       {/* MOBILE MENU DROPDOWN */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 mt-2 py-2 flex flex-col z-50">
+        <div className="md:hidden bg-white dark:bg-neutral-900 border-t border-gray-100 dark:border-neutral-800 shadow-lg absolute w-full left-0 mt-2 py-2 flex flex-col z-50">
           <div className="px-4 py-2 flex items-center gap-1">
             <span className="font-bold text-[#0F52BA] text-base">{t('modeMobile')}</span>
           </div>
-          <Link href="/correcteur" className={`px-6 py-2 ${pathname === '/correcteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('correcteur')}</Link>
-          <Link href="/traduction" className={`px-6 py-2 ${pathname === '/traduction' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('traduction')}</Link>
-          <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('assistant')}</Link>
+          <Link href="/correcteur" className={`px-6 py-2 ${pathname === '/correcteur' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('correcteur')}</Link>
+          <Link href="/traduction" className={`px-6 py-2 ${pathname === '/traduction' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('traduction')}</Link>
+          <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('assistant')}</Link>
           {session && (
-            <Link href="/notes" className={`px-6 py-2 ${pathname === '/notes' ? 'bg-gray-50 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 text-gray-700'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('notes')}</Link>
+            <Link href="/notes" className={`px-6 py-2 ${pathname === '/notes' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('notes')}</Link>
           )}
 
           <div className="border-t border-gray-100 my-2"></div>
 
           <div className="px-4 py-2 font-bold text-[#0F52BA]">{t('learnMore')}</div>
-          <Link href="/about" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('about')}</Link>
-          <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 text-gray-700">{t('roadmap')}</Link>
+          <Link href="/about" className="px-6 py-2 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200">{t('about')}</Link>
+          <Link href="/feuille-de-route" className="px-6 py-2 hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200">{t('roadmap')}</Link>
 
           <div className="border-t border-gray-100 my-2"></div>
 
