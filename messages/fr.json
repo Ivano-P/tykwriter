@@ -132,6 +132,7 @@
     "name": "Nom",
     "email": "Email",
     "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
     "signInButton": "Se connecter",
     "signUpButton": "S'inscrire",
     "loading": "Un instant…",
@@ -142,6 +143,7 @@
     "errorInvalidCredentials": "Email ou mot de passe invalide.",
     "errorEmailExists": "Un compte existe déjà avec cet email.",
     "errorPasswordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+    "errorPasswordMismatch": "Les deux mots de passe ne correspondent pas.",
     "errorGeneric": "Une erreur est survenue. Réessayez."
   },
   "account": {

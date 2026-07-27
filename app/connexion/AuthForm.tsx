@@ -15,6 +15,7 @@ export function AuthForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,6 +36,10 @@ export function AuthForm() {
     e.preventDefault();
     if (loading) return;
     setErrorKey(null);
+    if (mode === 'signup' && password !== confirmPassword) {
+      setErrorKey('errorPasswordMismatch');
+      return;
+    }
     setLoading(true);
 
     const result =
@@ -55,6 +60,7 @@ export function AuthForm() {
 
   const switchMode = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin');
+    setConfirmPassword('');
     setErrorKey(null);
   };
 
@@ -104,6 +110,21 @@ export function AuthForm() {
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
           </label>
+
+          {mode === 'signup' && (
+            <label className={styles.field}>
+              <span className={styles.label}>{t('confirmPassword')}</span>
+              <input
+                className={styles.input}
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+            </label>
+          )}
 
           {errorKey && <p className={styles.error}>{t(errorKey)}</p>}
 
