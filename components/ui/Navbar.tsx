@@ -148,7 +148,7 @@ export function Navbar() {
               {isModesDropdownOpen && (
                 <div className={styles.dropdownMenuRight}>
                   <Link href="/correcteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('correcteur')}</Link>
-                  <Link href="/assistant-redacteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('assistantExperimental')}</Link>
+                  <Link href="/assistant-redacteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('assistant')}</Link>
                   <Link href="/traduction" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('traduction')}</Link>
                   {session && (
                     <Link href="/notes" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('notes')}</Link>

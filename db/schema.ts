@@ -84,6 +84,27 @@ export const folder = pgTable(
   (t) => [index('folder_user_idx').on(t.userId)],
 );
 
+/**
+ * Historique du chat IA d'une note : un enregistrement = un échange
+ * question/réponse. Purgé après 90 jours sans activité sur le chat de la note.
+ */
+export const noteChat = pgTable(
+  'note_chat',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    noteId: uuid('note_id')
+      .notNull()
+      .references(() => note.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    question: text('question').notNull(),
+    answer: text('answer').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('note_chat_note_idx').on(t.noteId, t.createdAt)],
+);
+
 /** Compteur journalier des requêtes IA anonymes (rate limiting par IP). */
 export const anonUsage = pgTable(
   'anon_usage',
