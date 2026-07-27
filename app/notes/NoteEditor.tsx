@@ -28,6 +28,42 @@ interface Props {
   onMoveToFolder: (folderId: string | null) => void;
 }
 
+/** Libellés du menu « / », reconstruits à chaque changement de langue. */
+type TFn = ReturnType<typeof useTranslations<'notes'>>;
+function buildSlashLabels(t: TFn) {
+  return {
+    groups: {
+      headings: t('slashGroupHeadings'),
+      blocks: t('slashGroupBlocks'),
+      inserts: t('slashGroupInserts'),
+    },
+    text: t('slashText'),
+    h1: t('slashH1'),
+    h2: t('slashH2'),
+    h3: t('slashH3'),
+    h4: t('slashH4'),
+    h5: t('slashH5'),
+    bulletList: t('slashBulletList'),
+    orderedList: t('slashOrderedList'),
+    taskList: t('slashTaskList'),
+    toggle: t('slashToggle'),
+    toggleH1: t('slashToggleH1'),
+    toggleH2: t('slashToggleH2'),
+    toggleH3: t('slashToggleH3'),
+    quote: t('slashQuote'),
+    codeBlock: t('slashCodeBlock'),
+    table: t('slashTable'),
+    divider: t('slashDivider'),
+    image: t('slashImage'),
+    noteLink: t('slashNoteLink'),
+  };
+}
+
+/* Objet STABLE : passé en prop au DragHandle, une identité neuve à chaque
+   rendu re-enregistrerait son plugin ProseMirror — ce qui recrée les vues de
+   TOUS les plugins et ferme le menu « / » à chaque autosave. */
+const DRAG_HANDLE_POSITION = { placement: 'right-start' } as const;
+
 export function NoteEditor({
   note,
   folders,
@@ -55,42 +91,34 @@ export function NoteEditor({
     notesRef.current = notes;
   }, [notes]);
 
+  // Libellés localisés lus PAR RÉFÉRENCE par les menus « / », « @ » et le
+  // placeholder : un changement de langue est pris en compte sans recréer
+  // l'éditeur (qui perdrait les modifications non sauvegardées).
+  const labelsRef = useRef({
+    slash: buildSlashLabels(t),
+    noteLink: { group: t('noteLinkGroup'), untitled: t('untitled') },
+    placeholder: t('editorPlaceholder'),
+  });
+  useEffect(() => {
+    labelsRef.current = {
+      slash: buildSlashLabels(t),
+      noteLink: { group: t('noteLinkGroup'), untitled: t('untitled') },
+      placeholder: t('editorPlaceholder'),
+    };
+  }, [t]);
+
   // Extensions stables pour la durée de vie de l'éditeur (une note = un éditeur).
+  // Les libellés sont lus via labelsRef à chaque ouverture de menu.
   const extensions = useMemo(
     () => [
-      ...buildNoteExtensions(t('editorPlaceholder')),
+      ...buildNoteExtensions(() => labelsRef.current.placeholder),
       SlashCommand.configure({
-        suggestion: createSlashSuggestion({
-          groups: {
-            headings: t('slashGroupHeadings'),
-            blocks: t('slashGroupBlocks'),
-            inserts: t('slashGroupInserts'),
-          },
-          text: t('slashText'),
-          h1: t('slashH1'),
-          h2: t('slashH2'),
-          h3: t('slashH3'),
-          h4: t('slashH4'),
-          h5: t('slashH5'),
-          bulletList: t('slashBulletList'),
-          orderedList: t('slashOrderedList'),
-          taskList: t('slashTaskList'),
-          toggle: t('slashToggle'),
-          toggleH1: t('slashToggleH1'),
-          toggleH2: t('slashToggleH2'),
-          toggleH3: t('slashToggleH3'),
-          quote: t('slashQuote'),
-          codeBlock: t('slashCodeBlock'),
-          table: t('slashTable'),
-          divider: t('slashDivider'),
-          image: t('slashImage'),
-          noteLink: t('slashNoteLink'),
-        }),
+        suggestion: createSlashSuggestion(() => labelsRef.current.slash),
       }),
       NoteLinkCommand.configure({
         suggestion: createNoteLinkSuggestion(
           () => notesRef.current.filter((n) => n.id !== note.id),
-          { group: t('noteLinkGroup'), untitled: t('untitled') },
+          () => labelsRef.current.noteLink,
         ),
       }),
     ],
@@ -232,7 +260,7 @@ export function NoteEditor({
       {editor && (
         <DragHandle
           editor={editor}
-          computePositionConfig={{ placement: 'right-start' }}
+          computePositionConfig={DRAG_HANDLE_POSITION}
         >
           <div className={styles.dragHandle}>
             <GripVertical size={16} />

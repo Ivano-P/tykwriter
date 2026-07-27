@@ -70,14 +70,13 @@ export function createSuggestionRender(): NonNullable<
   };
 }
 
-/** Configuration `suggestion` du menu « / » : filtrage des items + rendu. */
+/** Configuration `suggestion` du menu « / » : filtrage des items + rendu.
+ * `getLabels` est lu à chaque ouverture — suit les changements de langue. */
 export function createSlashSuggestion(
-  labels: SlashLabels,
+  getLabels: () => SlashLabels,
 ): Partial<SuggestionOptions<SlashItem, SlashItem>> {
-  const allItems = buildSlashItems(labels);
-
   return {
-    items: ({ query }) => filterSlashItems(allItems, query),
+    items: ({ query }) => filterSlashItems(buildSlashItems(getLabels()), query),
     render: createSuggestionRender(),
   };
 }
@@ -89,11 +88,12 @@ export function createSlashSuggestion(
  */
 export function createNoteLinkSuggestion(
   getNotes: () => { id: string; title: string }[],
-  labels: { group: string; untitled: string },
+  getLabels: () => { group: string; untitled: string },
 ): Partial<SuggestionOptions<SlashItem, SlashItem>> {
   return {
     char: '@',
     items: ({ query }) => {
+      const labels = getLabels();
       const q = query.toLowerCase();
       return getNotes()
         .filter(

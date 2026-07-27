@@ -38,9 +38,9 @@ const NoteDetails = Details.extend({
 
 /**
  * Extensions de l'éditeur de notes (Notion-like).
- * `placeholder` et `detailsSummaryPlaceholder` sont fournis localisés par l'appelant.
+ * `getPlaceholder` est lu à chaque rendu — suit les changements de langue.
  */
-export function buildNoteExtensions(placeholder: string): AnyExtension[] {
+export function buildNoteExtensions(getPlaceholder: () => string): AnyExtension[] {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4, 5] },
@@ -64,7 +64,7 @@ export function buildNoteExtensions(placeholder: string): AnyExtension[] {
     // Sélection multi-blocs pendant le drag (poignée de déplacement).
     NodeRange,
     Placeholder.configure({
-      placeholder,
+      placeholder: () => getPlaceholder(),
       includeChildren: false,
     }),
   ];
