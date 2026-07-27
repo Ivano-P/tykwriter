@@ -77,15 +77,30 @@ export class NoteService {
     };
   }
 
+  /** Retourne le dossier nommé `name` de l'utilisateur, créé si absent. */
+  static async getOrCreateFolderByName(
+    userId: string,
+    name: string,
+  ): Promise<FolderMeta> {
+    const existing = await db
+      .select({ id: folder.id, name: folder.name, position: folder.position })
+      .from(folder)
+      .where(and(eq(folder.userId, userId), eq(folder.name, name)))
+      .limit(1);
+    if (existing[0]) return existing[0];
+    return this.createFolder(userId, name);
+  }
+
   /** Création directe avec titre + contenu (ex : « Enregistrer en note »). */
   static async createNoteFromContent(
     userId: string,
     title: string,
     content: Record<string, unknown>,
+    folderId: string | null = null,
   ): Promise<NoteMeta> {
     const rows = await db
       .insert(note)
-      .values({ userId, folderId: null, title, content })
+      .values({ userId, folderId, title, content })
       .returning({
         id: note.id,
         title: note.title,

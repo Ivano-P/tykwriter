@@ -95,10 +95,16 @@ export async function updateNoteAction(
 
 const SAVED_TEXT_MAX = 20_000;
 
+/** Dossier unique où atterrissent tous les textes enregistrés depuis les
+ * modes d'écriture. Nom constant (non localisé) pour garantir UN seul
+ * dossier même si l'utilisateur change de langue d'interface ; recréé au
+ * prochain enregistrement s'il est supprimé ou renommé. */
+const SAVED_NOTES_FOLDER = 'Textes enregistrés';
+
 /**
  * « Enregistrer en note » depuis le correcteur / l'assistant / la traduction :
- * crée une note à la racine avec le texte fourni (un paragraphe par ligne).
- * Le document TipTap est construit CÔTÉ SERVEUR — pas de souci de
+ * crée une note dans le dossier dédié avec le texte fourni (un paragraphe par
+ * ligne). Le document TipTap est construit CÔTÉ SERVEUR — pas de souci de
  * sérialisation d'attrs ici.
  */
 export async function saveTextAsNoteAction(
@@ -120,10 +126,15 @@ export async function saveTextAsNoteAction(
     ),
   };
 
+  const savedFolder = await NoteService.getOrCreateFolderByName(
+    userId,
+    SAVED_NOTES_FOLDER,
+  );
   return NoteService.createNoteFromContent(
     userId,
     title.trim().slice(0, TITLE_MAX),
     content,
+    savedFolder.id,
   );
 }
 
