@@ -25,4 +25,5 @@ description: Prepare and ship the Next.js 16 app to a Dokploy-managed VPS (stand
 
 **Step 4: Environment Check**
 - Remind the user to set `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` in Dokploy.
-- Ensure `OLLAMA_URL`, `OLLAMA_USERNAME`, and `OLLAMA_PASSWORD` are configured in the Dokploy environment dashboard.
+- Ensure `MISTRAL_API_KEY`, `GEMINI_API_KEY`, `ADMIN_USER`, `ADMIN_PASS`, `CORRECTEUR_API_KEY`, and `CORRECTEUR_ALLOWED_ORIGINS` are configured in the Dokploy environment dashboard.
+- Mount a persistent volume for `data/` (or set `MODEL_SETTINGS_PATH` to a mounted path) so the model settings chosen in /admin survive redeploys.

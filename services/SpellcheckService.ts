@@ -1,5 +1,5 @@
 import * as Diff from 'diff';
-import type { CorrectionIssue, CorrectionResponse } from './MistralAiProService';
+import type { CorrectionIssue, CorrectionResponse } from './aiTypes';
 
 /** Variantes d'apostrophes normalisées vers l'apostrophe droite. */
 const APOSTROPHE_VARIANTS = /['’ʼ‛]/g; // ' ’ ʼ ‛

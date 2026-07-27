@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Copy, Check } from 'lucide-react';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
+import { RateLimitBanner } from '@/components/ui/RateLimitBanner';
 import {
   TARGET_LANGUAGES,
   SOURCE_LANGUAGES,
@@ -12,6 +13,8 @@ import {
   sanitizeSourceLanguage,
   targetToSourceLanguage,
   sourceToTargetLanguage,
+  ALTERNATIVES_DELIMITER,
+  MAX_ALTERNATIVES,
   type TargetLanguage,
   type SourceLanguage,
   type TraductionResponse,
@@ -31,6 +34,7 @@ type TranslationError = 'failed' | null;
 export default function TraductionPage() {
   const t = useTranslations('banner');
   const tp = useTranslations('traductionPage');
+  const tSave = useTranslations('saveAsNote');
   const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
@@ -47,6 +51,8 @@ export default function TraductionPage() {
   const [streamText, setStreamText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState<TranslationError>(null);
+  // Quota IA anonyme épuisé : bannière + arrêt des traductions automatiques.
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [justCopied, setJustCopied] = useState(false);
   const [justCopiedSource, setJustCopiedSource] = useState(false);
 
@@ -126,14 +132,16 @@ export default function TraductionPage() {
   );
 
   const runTranslation = useCallback(
-    async (text: string, target: TargetLanguage, source: SourceLanguage) => {
+    async (text: string, target: TargetLanguage, source: SourceLanguage, force = false) => {
       const cacheKey = `${source}::${target}::${text}`;
-      const cached = cacheRef.current.get(cacheKey);
-      if (cached) {
-        setResult(cached);
-        setError(null);
-        reconcileDirection(cached, source, target);
-        return;
+      if (!force) {
+        const cached = cacheRef.current.get(cacheKey);
+        if (cached) {
+          setResult(cached);
+          setError(null);
+          reconcileDirection(cached, source, target);
+          return;
+        }
       }
 
       // Une seule traduction en vol : la précédente est annulée (l'annulation
@@ -152,6 +160,10 @@ export default function TraductionPage() {
           body: JSON.stringify({ text, targetLanguage: target, sourceLanguage: source }),
           signal: controller.signal,
         });
+        if (resp.status === 429) {
+          setIsRateLimited(true);
+          return;
+        }
         if (!resp.ok || !resp.body) throw new Error('Translation request failed');
 
         // Protocole : 1re ligne = en-tête JSON {langue_detectee, est_supportee},
@@ -187,8 +199,11 @@ export default function TraductionPage() {
           if (header && header.est_supportee && buffer) {
             body += buffer;
             buffer = '';
-            // Sans les sauts de ligne d'amorce, pour un rendu propre au fil de l'eau
-            setStreamText(body.replace(/^\n+/, ''));
+            // Sans les sauts de ligne d'amorce ni la section des alternatives,
+            // pour un rendu propre au fil de l'eau
+            const delimiterIndex = body.indexOf(ALTERNATIVES_DELIMITER);
+            const mainPart = delimiterIndex === -1 ? body : body.slice(0, delimiterIndex);
+            setStreamText(mainPart.replace(/^\n+/, ''));
           }
 
           if (done) break;
@@ -196,10 +211,24 @@ export default function TraductionPage() {
 
         if (!header) throw new Error('Empty translation stream');
 
+        // Sépare la traduction principale des alternatives éventuelles
+        const delimiterIndex = body.indexOf(ALTERNATIVES_DELIMITER);
+        const mainTranslation = (delimiterIndex === -1 ? body : body.slice(0, delimiterIndex)).trim();
+        const alternatives =
+          delimiterIndex === -1
+            ? []
+            : body
+                .slice(delimiterIndex + ALTERNATIVES_DELIMITER.length)
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line && line !== mainTranslation)
+                .slice(0, MAX_ALTERNATIVES);
+
         const response: TraductionResponse = {
           langue_detectee: header.langue_detectee,
           est_supportee: header.est_supportee,
-          traduction: header.est_supportee ? body.trim() : '',
+          traduction: header.est_supportee ? mainTranslation : '',
+          alternatives: alternatives.length > 0 ? alternatives : undefined,
         };
         const cache = cacheRef.current;
         if (cache.has(cacheKey)) cache.delete(cacheKey);
@@ -250,6 +279,29 @@ export default function TraductionPage() {
     if (val.length <= MAX_CHARS) {
       setGlobalText(val);
     }
+  };
+
+  /** Lancement manuel : traduction immédiate, sans attendre le debounce ni le cache. */
+  const handleManualTranslate = () => {
+    runTranslation(globalTextRef.current, targetLanguage, sourceLanguage, true);
+  };
+  const isManualTranslateDisabled =
+    isTranslating || !globalText.trim() || globalText.length > MAX_CHARS;
+
+  /** Remplace la traduction affichée par l'alternative choisie (et permute les deux). */
+  const handlePickAlternative = (alternative: string) => {
+    if (!result?.est_supportee) return;
+    const swapped: TraductionResponse = {
+      ...result,
+      traduction: alternative,
+      alternatives: [
+        result.traduction,
+        ...(result.alternatives ?? []).filter(a => a !== alternative),
+      ].slice(0, MAX_ALTERNATIVES),
+    };
+    setResult(swapped);
+    // Le cache reflète le choix pour que le pair courant le resserve tel quel
+    cacheRef.current.set(`${sourceLanguage}::${targetLanguage}::${globalText}`, swapped);
   };
 
   const handleCopyTranslation = () => {
@@ -409,6 +461,8 @@ export default function TraductionPage() {
         <p className={layoutStyles.headerSubtitle}>{t('traductionSubtitle')}</p>
       </div>
 
+      {isRateLimited && <RateLimitBanner />}
+
       <div className={layoutStyles.workspaceContent}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <ContentArea
@@ -435,7 +489,21 @@ export default function TraductionPage() {
           />
         </div>
 
-        <TraductionSidebar isTranslating={isTranslating} />
+        <TraductionSidebar
+          saveAsNote={{
+            text: translationText,
+            modeLabel: `${tSave('modeTraducteur')} ${labelOf(
+              sourceLanguage !== 'auto'
+                ? sourceLanguage
+                : (result?.langue_detectee ?? 'auto'),
+            )} -> ${labelOf(targetLanguage)}`,
+          }}
+          isTranslating={isTranslating}
+          onManualTranslate={handleManualTranslate}
+          isTranslateDisabled={isManualTranslateDisabled}
+          alternatives={result?.est_supportee ? result.alternatives ?? [] : []}
+          onPickAlternative={handlePickAlternative}
+        />
       </div>
     </>
   );

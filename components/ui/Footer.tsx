@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import styles from './Footer.module.css';
 
 export async function Footer() {
@@ -19,7 +20,14 @@ export async function Footer() {
               alt="Tykwriter Logo"
               width={110}
               height={30}
-              className={styles.logo}
+              className={`${styles.logo} dark:hidden`}
+            />
+            <Image
+              src="/images/tykwriter_logo_darkmode.png"
+              alt="Tykwriter Logo"
+              width={110}
+              height={30}
+              className={`${styles.logo} hidden dark:block`}
             />
           </Link>
         </div>
@@ -36,9 +44,10 @@ export async function Footer() {
           </div>
         </div>
 
-        {/* Right: Language switcher */}
+        {/* Right: Language switcher + theme toggle */}
         <div className={styles.langWrapper}>
           <LanguageSwitcher className={styles.languageSwitcher} />
+          <ThemeToggle />
         </div>
 
       </div>

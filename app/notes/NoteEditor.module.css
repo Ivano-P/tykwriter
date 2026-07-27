@@ -1,0 +1,457 @@
+/* Mobile-first base styles */
+.editor {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Poignée de déplacement des blocs (drag & drop) */
+.dragHandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.1rem;
+    color: var(--tyk-dust-brown, #A08C73);
+    background-color: var(--surface-soft);
+    border-radius: 0.3rem;
+    cursor: grab;
+    opacity: 0.8;
+}
+
+.dragHandle:hover {
+    opacity: 1;
+    color: var(--tyk-sapphire, #0F52BA);
+    background-color: rgba(15, 82, 186, 0.1);
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+}
+
+.aiToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border: none;
+    border-radius: 0.375rem;
+    background-color: rgba(15, 82, 186, 0.08);
+    color: var(--tyk-sapphire, #0F52BA);
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.aiToggle:hover {
+    background-color: rgba(15, 82, 186, 0.15);
+}
+
+.aiToggleActive {
+    background-color: rgba(15, 82, 186, 0.18);
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 0.5rem;
+    padding-left: 3.25rem;
+}
+
+.titleInput {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--foreground, #111827);
+}
+
+.titleInput:focus {
+    outline: none;
+}
+
+.titleInput::placeholder {
+    color: rgba(160, 140, 115, 0.5);
+}
+
+.headerMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.folderSelectLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.folderSelect {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    color: var(--foreground, #111827);
+    background-color: var(--surface);
+}
+
+.saveIndicator {
+    font-size: 0.75rem;
+    color: rgba(160, 140, 115, 0.9);
+    min-width: 6rem;
+    text-align: right;
+    transition: opacity 0.2s;
+}
+
+.saveIndicatorActive {
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.saveIndicatorError {
+    color: #b91c1c;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Zone éditable ProseMirror (classe posée via editorProps.attributes) */
+.prosemirror {
+    flex: 1;
+    outline: none;
+    color: var(--foreground, #111827);
+    line-height: 1.65;
+    padding-top: 0.25rem;
+}
+
+.prosemirror p {
+    margin: 0.4rem 0;
+}
+
+.prosemirror h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 1.2rem 0 0.4rem;
+}
+
+.prosemirror h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 1rem 0 0.35rem;
+}
+
+.prosemirror h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0.9rem 0 0.3rem;
+}
+
+.prosemirror h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.8rem 0 0.25rem;
+}
+
+.prosemirror h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0.7rem 0 0.2rem;
+}
+
+/* Le reset Tailwind met list-style: none — on restaure puces et numéros. */
+.prosemirror ul,
+.prosemirror ol {
+    padding-left: 1.5rem;
+    margin: 0.4rem 0;
+}
+
+.prosemirror ul:not(:global([data-type='taskList'])) {
+    list-style: disc;
+}
+
+.prosemirror ol {
+    list-style: decimal;
+}
+
+.prosemirror li {
+    list-style: inherit;
+}
+
+.prosemirror blockquote {
+    border-left: 3px solid rgba(15, 82, 186, 0.4);
+    padding-left: 0.9rem;
+    margin: 0.6rem 0;
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.prosemirror code {
+    background-color: var(--surface-soft);
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.3rem;
+    font-family: var(--font-geist-mono, monospace);
+    font-size: 0.875em;
+}
+
+.prosemirror pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin: 0.6rem 0;
+    overflow-x: auto;
+}
+
+.prosemirror pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.prosemirror hr {
+    border: none;
+    border-top: 1px solid var(--border-strong);
+    margin: 1rem 0;
+}
+
+/* Placeholder (paragraphe vide) */
+.prosemirror :global(p.is-editor-empty:first-child)::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: rgba(160, 140, 115, 0.55);
+}
+
+/* Surlignage */
+.prosemirror mark {
+    background-color: rgba(250, 204, 21, 0.45);
+    border-radius: 0.2rem;
+    padding: 0.05rem 0.1rem;
+}
+
+/* Listes de tâches */
+.prosemirror ul:global([data-type='taskList']) {
+    list-style: none;
+    padding-left: 0.25rem;
+}
+
+.prosemirror ul:global([data-type='taskList']) li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.prosemirror ul:global([data-type='taskList']) li>label {
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+}
+
+.prosemirror ul:global([data-type='taskList']) li>div {
+    flex: 1;
+    min-width: 0;
+}
+
+.prosemirror ul:global([data-type='taskList']) input[type='checkbox'] {
+    accent-color: var(--tyk-sapphire, #0F52BA);
+    cursor: pointer;
+}
+
+.prosemirror li:global([data-checked='true'])>div {
+    text-decoration: line-through;
+    color: rgba(160, 140, 115, 0.8);
+}
+
+/* Tableaux */
+.prosemirror table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0.75rem 0;
+    overflow: hidden;
+}
+
+.prosemirror th,
+.prosemirror td {
+    border: 1px solid var(--border-strong);
+    padding: 0.4rem 0.6rem;
+    vertical-align: top;
+    position: relative;
+    min-width: 3rem;
+}
+
+.prosemirror th {
+    background-color: var(--surface-soft);
+    font-weight: 600;
+    text-align: left;
+}
+
+.prosemirror :global(.selectedCell)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(15, 82, 186, 0.08);
+    pointer-events: none;
+}
+
+.prosemirror :global(.column-resize-handle) {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: -2px;
+    width: 4px;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    pointer-events: none;
+}
+
+/* Blocs dépliants (details) — node view TipTap : wrapper div + bouton chevron,
+   classe `is-open` quand déplié */
+.prosemirror :global(.note-details) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.6rem 0;
+}
+
+.prosemirror :global(.note-details)>button {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.15rem 0.25rem;
+    color: var(--tyk-sapphire, #0F52BA);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.prosemirror :global(.note-details)>button::before {
+    content: '▸';
+    display: inline-block;
+    transition: transform 0.15s;
+}
+
+.prosemirror :global(.note-details.is-open)>button::before {
+    transform: rotate(90deg);
+}
+
+.prosemirror :global(.note-details)>div {
+    flex: 1;
+    min-width: 0;
+}
+
+.prosemirror :global(.note-details) summary {
+    font-weight: 600;
+    list-style: none;
+}
+
+/* Titres dépliants (details avec data-level) : summary stylé h1/h2/h3, sans
+   cadre — même rendu que les titres classiques, avec le chevron en plus. */
+.prosemirror :global(.note-details[data-level]) {
+    border: none;
+    padding: 0.1rem 0;
+    margin: 0.4rem 0;
+}
+
+.prosemirror :global(.note-details[data-level='1']) summary {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.prosemirror :global(.note-details[data-level='2']) summary {
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.prosemirror :global(.note-details[data-level='3']) summary {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.prosemirror :global(.note-details[data-level])>button {
+    margin-top: 0.35em;
+}
+
+/* Liens inter-notes (chips @) */
+.prosemirror :global(a.note-link) {
+    color: var(--tyk-sapphire, #0F52BA);
+    background-color: rgba(15, 82, 186, 0.08);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.35rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.prosemirror :global(a.note-link):hover {
+    background-color: rgba(15, 82, 186, 0.16);
+}
+
+/* Images (node view redimensionnable) */
+.prosemirror :global(.note-image) {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    margin: 0.5rem 0;
+    line-height: 0;
+}
+
+.prosemirror :global(.note-image) img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
+}
+
+.prosemirror :global(.note-image.ProseMirror-selectednode) img {
+    outline: 2px solid var(--tyk-sapphire, #0F52BA);
+}
+
+.prosemirror :global(.note-image-handle) {
+    position: absolute;
+    right: -0.35rem;
+    bottom: -0.35rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 9999px;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    border: 2px solid #ffffff;
+    cursor: nwse-resize;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.prosemirror :global(.note-image:hover .note-image-handle),
+.prosemirror :global(.note-image.ProseMirror-selectednode .note-image-handle) {
+    opacity: 1;
+}
+
+/************** Larger screens adjustments *****************************/
+@media (min-width: 768px) {
+    .header {
+        padding: 1.25rem 3rem 0.5rem;
+    }
+
+    .titleInput {
+        font-size: 2rem;
+    }
+
+    .content {
+        padding: 0 3rem 3rem;
+    }
+}

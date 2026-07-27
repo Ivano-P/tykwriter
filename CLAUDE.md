@@ -30,7 +30,7 @@ Three modes under `app/(workspace)/`, sharing text via `TextProvider` (`lib/Text
 
 - **Views (`/app` & `/components`):** UI rendering only. No business logic.
 - **Controllers (`/actions`):** Server Actions act as controllers. They handle validation and strictly delegate to the Service layer.
-- **Services (`/services`):** pure TypeScript classes handling business logic and external API calls (Mistral, Ollama).
+- **Services (`/services`):** pure TypeScript classes handling business logic and external API calls (Mistral, Gemini).
 
 ## Styling (strict boundaries)
 

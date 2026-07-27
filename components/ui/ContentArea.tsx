@@ -7,7 +7,7 @@ import { Copy, Undo2, Redo2, ChevronDown, Trash2, ArrowLeftRight } from 'lucide-
 import { useTranslations } from 'next-intl';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 

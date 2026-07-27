@@ -1,6 +1,8 @@
 'use server';
 
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
+import { allowAiRequest } from '@/lib/aiGate';
+import type { RateLimited } from '@/actions/spellcheck.action';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
@@ -18,14 +20,17 @@ export async function translateAction(
   text: string,
   targetLanguage?: string,
   sourceLanguage?: string
-): Promise<TraductionResponse> {
+): Promise<TraductionResponse | RateLimited> {
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid text provided for translation.');
   }
   if (text.length > MAX_CHARS) {
     throw new Error(`Text exceeds ${MAX_CHARS} characters.`);
   }
-  return await MistralAiProService.translate(
+  if (!(await allowAiRequest())) {
+    return { rateLimited: true };
+  }
+  return await AiProService.translate(
     text,
     sanitizeTargetLanguage(targetLanguage),
     sanitizeSourceLanguage(sourceLanguage)

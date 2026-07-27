@@ -1,7 +1,9 @@
-import { MistralAiProService } from '@/services/MistralAiProService';
+import { AiProService } from '@/services/AiProService';
+import { allowAiRequest } from '@/lib/aiGate';
 import {
   sanitizeTargetLanguage,
   sanitizeSourceLanguage,
+  SHORT_TEXT_FOR_ALTERNATIVES,
 } from '@/services/prompts/traduction.prompt';
 
 /**
@@ -17,6 +19,11 @@ import {
 const MAX_CHARS = 2000;
 
 export async function POST(request: Request) {
+  // Quota IA des anonymes (les connectés passent sans limite).
+  if (!(await allowAiRequest())) {
+    return new Response(JSON.stringify({ error: 'Rate limited.' }), { status: 429 });
+  }
+
   let body: { text?: unknown; targetLanguage?: unknown; sourceLanguage?: unknown };
   try {
     body = await request.json();
@@ -36,6 +43,9 @@ export async function POST(request: Request) {
 
   const target = sanitizeTargetLanguage(body.targetLanguage);
   const source = sanitizeSourceLanguage(body.sourceLanguage);
+  // Alternatives proposées uniquement pour les textes courts (une seule
+  // traduction au-delà du seuil).
+  const withAlternatives = text.length <= SHORT_TEXT_FOR_ALTERNATIVES;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -65,11 +75,12 @@ export async function POST(request: Request) {
       };
 
       try {
-        for await (const chunk of MistralAiProService.translateStream(
+        for await (const chunk of AiProService.translateStream(
           text,
           target,
           source,
-          request.signal
+          request.signal,
+          withAlternatives
         )) {
           if (headerSent) {
             emit(chunk);

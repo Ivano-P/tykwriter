@@ -9,7 +9,7 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import * as Diff from 'diff';
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 import styles from './TiptapEditor.module.css';
 
 // ─── Region diff helper ─────────────────────────────────────────────
@@ -51,6 +51,57 @@ export function computeReplaceRegions(oldText: string, newText: string): Replace
 
   return regions;
 }
+
+// ─── Correction flash (surlignement temporaire) ─────────────────────
+// Décorations inline posées sur les régions que l'assistant vient de
+// corriger (via tyk:replaceText). Elles s'estompent en CSS puis sont
+// retirées par un meta 'clear' différé — le document lui-même n'est
+// jamais modifié (décorations uniquement, cf. tiptap-skill).
+const correctionFlashKey = new PluginKey('correctionFlash');
+/** Durée d'affichage du surlignement ; doit correspondre à l'animation CSS. */
+export const CORRECTION_FLASH_MS = 6000;
+
+const CorrectionFlash = Extension.create({
+  name: 'correctionFlash',
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: correctionFlashKey,
+        state: {
+          init() {
+            return DecorationSet.empty;
+          },
+          apply(tr, set) {
+            const meta = tr.getMeta(correctionFlashKey) as
+              | 'clear'
+              | { from: number; to: number }[]
+              | undefined;
+            if (meta === 'clear') return DecorationSet.empty;
+
+            // Suit les frappes suivantes de l'utilisateur sans re-scanner.
+            let mapped = set.map(tr.mapping, tr.doc);
+
+            // Les ranges du meta sont exprimés dans le doc APRÈS la
+            // transaction : on les ajoute après le remapping ci-dessus.
+            if (Array.isArray(meta) && meta.length > 0) {
+              const decorations = meta
+                .filter((r) => r.to > r.from && r.to <= tr.doc.content.size)
+                .map((r) => Decoration.inline(r.from, r.to, { class: 'tyk-correction-flash' }));
+              mapped = mapped.add(tr.doc, decorations);
+            }
+            return mapped;
+          },
+        },
+        props: {
+          decorations(state) {
+            return correctionFlashKey.getState(state);
+          },
+        },
+      }),
+    ];
+  },
+});
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface TiptapEditorProps {
@@ -273,6 +324,7 @@ export function TiptapEditor({
       // so our configured Link below is the only one (avoids duplicate names).
       StarterKit.configure({ link: false }),
       CorrectionHighlighter,
+      CorrectionFlash,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -287,6 +339,14 @@ export function TiptapEditor({
       attributes: {
         class: `focus:outline-none overflow-y-auto flex-1 h-full w-full ${className}`,
       },
+      // Copie en texte brut « 1 pour 1 » : un Entrée (= un paragraphe) devient
+      // UN seul saut de ligne, pas deux — sinon Bloc-notes & co affichent une
+      // ligne vide entre chaque paragraphe. (Ne concerne que text/plain ; la
+      // représentation interne "\n\n" entre blocs reste inchangée.)
+      clipboardTextSerializer: (slice) =>
+        slice.content.textBetween(0, slice.content.size, '\n', (leaf) =>
+          leaf.type.name === 'hardBreak' ? '\n' : ''
+        ),
     },
     onUpdate: ({ editor: ed, transaction }) => {
       if (!transaction.docChanged) return;
@@ -365,8 +425,20 @@ export function TiptapEditor({
   // Mark-preserving replacement: instead of rewriting the whole matched
   // range (or worse, the whole document), only the regions that actually
   // changed are touched, so link marks on unchanged words survive.
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!editor) return;
+
+    // Retire les décorations de surlignement une fois l'animation CSS finie.
+    const scheduleFlashClear = () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => {
+        if (!editor.isDestroyed) {
+          editor.view.dispatch(editor.state.tr.setMeta(correctionFlashKey, 'clear'));
+        }
+      }, CORRECTION_FLASH_MS);
+    };
 
     const handleReplaceText = (e: Event) => {
       const customEvent = e as CustomEvent<{ oldText: string, newText: string }>;
@@ -402,9 +474,24 @@ export function TiptapEditor({
             tr.delete(from, to);
           }
         }
+
+        // Surlignement : positions FINALES des textes insérés. Les régions
+        // sont appliquées de droite à gauche, donc la région i n'est décalée
+        // que par le delta des régions situées avant elle (from plus petit).
+        const flashRanges: { from: number; to: number }[] = [];
+        let delta = 0;
+        for (const { from, to, text } of mapped) {
+          if (text) {
+            flashRanges.push({ from: from + delta, to: from + delta + text.length });
+          }
+          delta += text.length - (to - from);
+        }
+        tr.setMeta(correctionFlashKey, flashRanges);
+
         // No isExternalUpdate flag here: onUpdate must run for this
         // transaction so setGlobalText keeps page state in sync.
         editor.view.dispatch(tr);
+        if (flashRanges.length > 0) scheduleFlashClear();
         return true;
       };
 
@@ -495,7 +582,10 @@ export function TiptapEditor({
     };
 
     window.addEventListener('tyk:replaceText', handleReplaceText);
-    return () => window.removeEventListener('tyk:replaceText', handleReplaceText);
+    return () => {
+      window.removeEventListener('tyk:replaceText', handleReplaceText);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    };
   }, [editor]);
 
   // ── Listen for tyk:copyAll events (toolbar "Copier" button) ────────
@@ -505,7 +595,8 @@ export function TiptapEditor({
     if (!editor) return;
 
     const handleCopyAll = () => {
-      const fullText = editor.getText();
+      // Même règle « 1 Entrée = 1 saut de ligne » que la copie native (Ctrl+C).
+      const fullText = editor.getText({ blockSeparator: '\n' });
       const html = editor.getHTML();
 
       try {

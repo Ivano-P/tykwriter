@@ -5,8 +5,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import * as Diff from 'diff';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { CorrecteurSidebar } from '@/components/ui/CorrecteurSidebar';
+import { RateLimitBanner } from '@/components/ui/RateLimitBanner';
 import { checkSpellingIssuesAction } from '@/actions/spellcheck.action';
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 import { SpellcheckService } from '@/services/SpellcheckService';
 import {
   WRITING_LANGUAGES,
@@ -24,6 +25,7 @@ const MAX_CACHE_ENTRIES = 50;
 
 export default function CorrecteurPage() {
   const t = useTranslations('banner');
+  const tSave = useTranslations('saveAsNote');
   // Locale d'interface active : transmise au correcteur pour que les
   // explications d'erreurs soient rédigées dans la langue de l'UI.
   const uiLocale = useLocale();
@@ -36,6 +38,8 @@ export default function CorrecteurPage() {
   const englishVariant = writingLanguageToVariant(writingLanguage);
   // Langue détectée par la dernière vérification (affichée sur l'option Auto)
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  // Quota IA anonyme épuisé : bannière + arrêt des vérifications.
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   const tc = useTranslations('contentArea');
 
@@ -153,6 +157,10 @@ export default function CorrecteurPage() {
     setInFlightCount(inFlightRef.current.size);
     try {
       const response = await checkSpellingIssuesAction(paragraphText, uiLocale, { englishVariant });
+      if ('rateLimited' in response) {
+        setIsRateLimited(true);
+        return;
+      }
       const localIssues = SpellcheckService.processResponse(response, paragraphText);
       cacheParagraphResult(paragraphText, localIssues);
       // Alimente l'indicateur de langue et rebascule sur Auto si la langue
@@ -324,6 +332,8 @@ export default function CorrecteurPage() {
         </p>
       </div>
 
+      {isRateLimited && <RateLimitBanner />}
+
       <div className={layoutStyles.workspaceContent}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <ContentArea
@@ -350,6 +360,7 @@ export default function CorrecteurPage() {
         </div>
 
         <CorrecteurSidebar
+          saveAsNote={{ text: globalText, modeLabel: tSave('modeCorrecteur') }}
           isProcessing={isProcessing}
           diffParts={diffParts}
           handleUndo={handleUndo}

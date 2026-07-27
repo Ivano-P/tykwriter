@@ -4,8 +4,9 @@ import * as Diff from 'diff';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
+import { SaveAsNoteButton } from './SaveAsNoteButton';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
-import { CorrectionIssue } from '@/services/MistralAiProService';
+import { CorrectionIssue } from '@/services/aiTypes';
 
 interface CorrecteurSidebarProps {
   isProcessing: boolean;
@@ -21,6 +22,8 @@ interface CorrecteurSidebarProps {
   applyCorrection: (issue: CorrectionIssue) => void;
   applyAllCorrections: () => void;
   ignoreCorrection: (issue: CorrectionIssue) => void;
+  /** « Enregistrer en note » (connectés uniquement — le bouton se masque seul). */
+  saveAsNote?: { text: string; modeLabel: string };
 }
 
 export function CorrecteurSidebar({
@@ -37,6 +40,7 @@ export function CorrecteurSidebar({
   applyCorrection,
   applyAllCorrections,
   ignoreCorrection,
+  saveAsNote,
 }: CorrecteurSidebarProps) {
   const t = useTranslations('correcteurSidebar');
 
@@ -78,6 +82,7 @@ export function CorrecteurSidebar({
             {t('fixAll', { count: String(correctionIssues.length) })}
           </Button>
         )}
+        {saveAsNote && <SaveAsNoteButton {...saveAsNote} />}
       </div>
 
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto pr-2 flex-1 min-h-0">

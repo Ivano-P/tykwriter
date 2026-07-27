@@ -4,8 +4,21 @@ import * as Diff from 'diff';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
+import { SaveAsNoteButton } from './SaveAsNoteButton';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
+import type { RecentCorrection } from '@/app/(workspace)/assistant-redacteur/page';
 import styles from './CorrectionSidebar.module.css';
+
+// Les passages inchangés d'un diff peuvent être longs (passe finale sur tout
+// le texte) : on ne garde qu'un peu de contexte autour des modifications.
+const CONTEXT_CHARS = 24;
+
+function compactUnchanged(value: string, isFirst: boolean, isLast: boolean): string {
+  if (value.length <= CONTEXT_CHARS * 2 + 1) return value;
+  if (isFirst) return `…${value.slice(-CONTEXT_CHARS)}`;
+  if (isLast) return `${value.slice(0, CONTEXT_CHARS)}…`;
+  return `${value.slice(0, CONTEXT_CHARS)}…${value.slice(-CONTEXT_CHARS)}`;
+}
 
 // Les valeurs restent les identifiants internes envoyés au prompt ;
 // seuls les libellés affichés sont traduits (clés du namespace assistantSidebar).
@@ -24,13 +37,12 @@ const ABREVIATION_CHOICES: { value: AssistantAbreviations; labelKey: string }[] 
 interface AssistantRedacteurSidebarProps {
   isProcessing: boolean;
   diffParts: Diff.Change[] | null;
+  recentCorrections: RecentCorrection[];
   handleUndo: () => void;
   handleManualSubmit: () => void;
   isSubmitDisabled: boolean;
   isAutoCorrectEnabled: boolean;
   setIsAutoCorrectEnabled: (val: boolean) => void;
-  isFinalCheckEnabled: boolean;
-  setIsFinalCheckEnabled: (val: boolean) => void;
   isFinalChecking: boolean;
   handleFormatEmail: () => void;
   isLinkEnabled: boolean;
@@ -39,18 +51,19 @@ interface AssistantRedacteurSidebarProps {
   setTone: (val: AssistantTone) => void;
   abreviations: AssistantAbreviations;
   setAbreviations: (val: AssistantAbreviations) => void;
+  /** « Enregistrer en note » (connectés uniquement — le bouton se masque seul). */
+  saveAsNote?: { text: string; modeLabel: string };
 }
 
 export function AssistantRedacteurSidebar({
   isProcessing,
   diffParts,
+  recentCorrections,
   handleUndo,
   handleManualSubmit,
   isSubmitDisabled,
   isAutoCorrectEnabled,
   setIsAutoCorrectEnabled,
-  isFinalCheckEnabled,
-  setIsFinalCheckEnabled,
   isFinalChecking,
   handleFormatEmail,
   isLinkEnabled,
@@ -59,6 +72,7 @@ export function AssistantRedacteurSidebar({
   setTone,
   abreviations,
   setAbreviations,
+  saveAsNote,
 }: AssistantRedacteurSidebarProps) {
   const t = useTranslations('assistantSidebar');
 
@@ -69,8 +83,10 @@ export function AssistantRedacteurSidebar({
 
       <div className={styles.actionSection}>
 
+        {/* La vérification finale n'a plus de bouton dédié : elle est incluse
+            dans la correction automatique (hint affiché sous le toggle). */}
         <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel}>
+          <label className={styles.toggleLabel} title={t('finalCheckHint')}>
             <span className={styles.toggleText}>{t('autoCorrect')}</span>
             <div className={styles.toggleWrapper}>
               <input
@@ -78,22 +94,6 @@ export function AssistantRedacteurSidebar({
                 className={styles.toggleCheckbox}
                 checked={isAutoCorrectEnabled}
                 onChange={(e) => setIsAutoCorrectEnabled(e.target.checked)}
-                disabled={isProcessing}
-              />
-              <div className={styles.toggleSlider}></div>
-            </div>
-          </label>
-        </div>
-
-        <div className={styles.toggleContainer}>
-          <label className={styles.toggleLabel} title={t('finalCheckHint')}>
-            <span className={styles.toggleText}>{t('finalCheck')}</span>
-            <div className={styles.toggleWrapper}>
-              <input
-                type="checkbox"
-                className={styles.toggleCheckbox}
-                checked={isFinalCheckEnabled}
-                onChange={(e) => setIsFinalCheckEnabled(e.target.checked)}
                 disabled={isProcessing}
               />
               <div className={styles.toggleSlider}></div>
@@ -117,6 +117,8 @@ export function AssistantRedacteurSidebar({
         >
           {isProcessing ? t('checking') : t('checkNow')}
         </Button>
+
+        {saveAsNote && <SaveAsNoteButton {...saveAsNote} />}
 
         <div className={styles.secondaryActionsGrid}>
           <button
@@ -185,22 +187,38 @@ export function AssistantRedacteurSidebar({
         </div>
       )}
 
-      {diffParts && diffParts.length > 0 && !isProcessing && (
+      {/* Historique persistant : le surlignement dans l'éditeur s'efface au
+          bout de quelques secondes, cette liste garde les dernières corrections
+          (la plus récente en premier — seule annulable). */}
+      {recentCorrections.length > 0 && (
         <div className={styles.diffViewer}>
           <div className={styles.diffHeader}>
-            <span className={styles.diffTitle}>{t('correctionApplied')}</span>
-            <button className={styles.undoButton} onClick={handleUndo} title={t('undoCorrectionTitle')}>
+            <span className={styles.diffTitle}>{t('recentCorrections')}</span>
+            <button
+              className={styles.undoButton}
+              onClick={handleUndo}
+              disabled={isProcessing}
+              title={t('undoCorrectionTitle')}
+            >
               <RotateCcw size={16} />
               <span>{t('undo')}</span>
             </button>
           </div>
-          <div className={styles.diffContent}>
-            {diffParts.map((part: Diff.Change, index: number) => {
-              if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
-              if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
-              return <span key={index}>{part.value}</span>;
-            })}
-          </div>
+          <ul className={styles.correctionList}>
+            {recentCorrections.map((correction) => (
+              <li key={correction.id} className={styles.correctionItem}>
+                {correction.parts.map((part: Diff.Change, index: number) => {
+                  if (part.added) return <span key={index} className={styles.diffAdded}>{part.value}</span>;
+                  if (part.removed) return <span key={index} className={styles.diffRemoved}>{part.value}</span>;
+                  return (
+                    <span key={index}>
+                      {compactUnchanged(part.value, index === 0, index === correction.parts.length - 1)}
+                    </span>
+                  );
+                })}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

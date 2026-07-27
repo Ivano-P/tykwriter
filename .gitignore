@@ -44,3 +44,7 @@ next-env.d.ts
 # Claude Code session artifacts (machine-specific)
 .claude/launch.json
 .claude/worktrees/
+
+# Reglages de modeles IA modifies via /admin (machine-specific)
+/data/
+*.stackdump
