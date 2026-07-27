@@ -4,6 +4,7 @@ import * as Diff from 'diff';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
+import { SaveAsNoteButton } from './SaveAsNoteButton';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
 import type { RecentCorrection } from '@/app/(workspace)/assistant-redacteur/page';
 import styles from './CorrectionSidebar.module.css';
@@ -50,6 +51,8 @@ interface AssistantRedacteurSidebarProps {
   setTone: (val: AssistantTone) => void;
   abreviations: AssistantAbreviations;
   setAbreviations: (val: AssistantAbreviations) => void;
+  /** « Enregistrer en note » (connectés uniquement — le bouton se masque seul). */
+  saveAsNote?: { text: string; modeLabel: string };
 }
 
 export function AssistantRedacteurSidebar({
@@ -69,6 +72,7 @@ export function AssistantRedacteurSidebar({
   setTone,
   abreviations,
   setAbreviations,
+  saveAsNote,
 }: AssistantRedacteurSidebarProps) {
   const t = useTranslations('assistantSidebar');
 
@@ -113,6 +117,8 @@ export function AssistantRedacteurSidebar({
         >
           {isProcessing ? t('checking') : t('checkNow')}
         </Button>
+
+        {saveAsNote && <SaveAsNoteButton {...saveAsNote} />}
 
         <div className={styles.secondaryActionsGrid}>
           <button

@@ -77,6 +77,25 @@ export class NoteService {
     };
   }
 
+  /** Création directe avec titre + contenu (ex : « Enregistrer en note »). */
+  static async createNoteFromContent(
+    userId: string,
+    title: string,
+    content: Record<string, unknown>,
+  ): Promise<NoteMeta> {
+    const rows = await db
+      .insert(note)
+      .values({ userId, folderId: null, title, content })
+      .returning({
+        id: note.id,
+        title: note.title,
+        folderId: note.folderId,
+        updatedAt: note.updatedAt,
+      });
+    const row = rows[0];
+    return { ...row, updatedAt: row.updatedAt.toISOString() };
+  }
+
   static async createNote(
     userId: string,
     folderId: string | null,

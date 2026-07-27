@@ -34,6 +34,7 @@ type TranslationError = 'failed' | null;
 export default function TraductionPage() {
   const t = useTranslations('banner');
   const tp = useTranslations('traductionPage');
+  const tSave = useTranslations('saveAsNote');
   const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
@@ -489,6 +490,14 @@ export default function TraductionPage() {
         </div>
 
         <TraductionSidebar
+          saveAsNote={{
+            text: translationText,
+            modeLabel: `${tSave('modeTraducteur')} ${labelOf(
+              sourceLanguage !== 'auto'
+                ? sourceLanguage
+                : (result?.langue_detectee ?? 'auto'),
+            )} -> ${labelOf(targetLanguage)}`,
+          }}
           isTranslating={isTranslating}
           onManualTranslate={handleManualTranslate}
           isTranslateDisabled={isManualTranslateDisabled}

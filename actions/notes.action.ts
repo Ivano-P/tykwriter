@@ -93,6 +93,40 @@ export async function updateNoteAction(
   return NoteService.updateNote(userId, id, clean);
 }
 
+const SAVED_TEXT_MAX = 20_000;
+
+/**
+ * « Enregistrer en note » depuis le correcteur / l'assistant / la traduction :
+ * crée une note à la racine avec le texte fourni (un paragraphe par ligne).
+ * Le document TipTap est construit CÔTÉ SERVEUR — pas de souci de
+ * sérialisation d'attrs ici.
+ */
+export async function saveTextAsNoteAction(
+  title: string,
+  text: string,
+): Promise<NoteMeta> {
+  const userId = await requireUserId();
+  if (typeof title !== 'string' || !title.trim()) throw new Error('INVALID_TITLE');
+  if (typeof text !== 'string' || !text.trim() || text.length > SAVED_TEXT_MAX) {
+    throw new Error('INVALID_TEXT');
+  }
+
+  const content = {
+    type: 'doc',
+    content: text.split('\n').map((line) =>
+      line.length > 0
+        ? { type: 'paragraph', content: [{ type: 'text', text: line }] }
+        : { type: 'paragraph' },
+    ),
+  };
+
+  return NoteService.createNoteFromContent(
+    userId,
+    title.trim().slice(0, TITLE_MAX),
+    content,
+  );
+}
+
 export async function deleteNoteAction(id: string): Promise<void> {
   const userId = await requireUserId();
   assertId(id);

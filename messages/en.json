@@ -122,6 +122,15 @@
     "style": "Style",
     "ponctuation": "Punctuation"
   },
+  "saveAsNote": {
+    "button": "Save as note",
+    "saving": "Saving…",
+    "saved": "Saved to Notes ✓",
+    "error": "Save failed",
+    "modeCorrecteur": "proofreader",
+    "modeAssistant": "writing assistant",
+    "modeTraducteur": "translator"
+  },
   "rateLimit": {
     "message": "You have reached the free daily limit. Sign in to keep going without limits — it's free.",
     "signIn": "Sign in"

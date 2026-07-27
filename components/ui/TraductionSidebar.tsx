@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { SaveAsNoteButton } from './SaveAsNoteButton';
 import styles from './CorrectionSidebar.module.css'; // Réutilise le CSS principal de la sidebar
 
 interface TraductionSidebarProps {
@@ -11,6 +12,8 @@ interface TraductionSidebarProps {
   /** Traductions alternatives de la traduction affichée (textes courts). */
   alternatives: string[];
   onPickAlternative: (alternative: string) => void;
+  /** « Enregistrer en note » (connectés uniquement — le bouton se masque seul). */
+  saveAsNote?: { text: string; modeLabel: string };
 }
 
 export function TraductionSidebar({
@@ -19,6 +22,7 @@ export function TraductionSidebar({
   isTranslateDisabled,
   alternatives,
   onPickAlternative,
+  saveAsNote,
 }: TraductionSidebarProps) {
   const t = useTranslations('traductionSidebar');
 
@@ -36,6 +40,7 @@ export function TraductionSidebar({
           {isTranslating ? t('translating') : t('translateNow')}
         </Button>
         <p className={styles.toggleHint}>{t('autoTranslateHint')}</p>
+        {saveAsNote && <SaveAsNoteButton {...saveAsNote} />}
       </div>
 
       {alternatives.length > 0 && (

@@ -25,6 +25,7 @@ const MAX_CACHE_ENTRIES = 50;
 
 export default function CorrecteurPage() {
   const t = useTranslations('banner');
+  const tSave = useTranslations('saveAsNote');
   // Locale d'interface active : transmise au correcteur pour que les
   // explications d'erreurs soient rédigées dans la langue de l'UI.
   const uiLocale = useLocale();
@@ -359,6 +360,7 @@ export default function CorrecteurPage() {
         </div>
 
         <CorrecteurSidebar
+          saveAsNote={{ text: globalText, modeLabel: tSave('modeCorrecteur') }}
           isProcessing={isProcessing}
           diffParts={diffParts}
           handleUndo={handleUndo}

@@ -38,6 +38,7 @@ const FINAL_CHECK_RETRY_DELAY = 2000;
 
 export default function AssistantRedacteurPage() {
   const t = useTranslations('banner');
+  const tSave = useTranslations('saveAsNote');
   const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
@@ -535,6 +536,7 @@ export default function AssistantRedacteurPage() {
         </div>
 
         <AssistantRedacteurSidebar
+          saveAsNote={{ text: globalText, modeLabel: tSave('modeAssistant') }}
           isProcessing={currentlyProcessing}
           diffParts={diffParts}
           recentCorrections={recentCorrections}
