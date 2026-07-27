@@ -62,7 +62,7 @@ function buildSlashLabels(t: TFn) {
 /* Objet STABLE : passé en prop au DragHandle, une identité neuve à chaque
    rendu re-enregistrerait son plugin ProseMirror — ce qui recrée les vues de
    TOUS les plugins et ferme le menu « / » à chaque autosave. */
-const DRAG_HANDLE_POSITION = { placement: 'right-start' } as const;
+const DRAG_HANDLE_POSITION = { placement: 'left-start' } as const;
 
 export function NoteEditor({
   note,
