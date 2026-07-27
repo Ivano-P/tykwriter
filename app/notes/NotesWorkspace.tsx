@@ -93,6 +93,7 @@ export function NotesWorkspace({ initialFolders, initialNotes }: Props) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [flushSave]);
 
+
   const selectNote = useCallback(
     async (id: string) => {
       const previousId = openNoteIdRef.current;
@@ -108,6 +109,17 @@ export function NotesWorkspace({ initialFolders, initialNotes }: Props) {
     },
     [flushSave],
   );
+
+  // Ouverture d'une note via un lien inter-notes (chip @ dans l'éditeur).
+  useEffect(() => {
+    const handleOpenNote = (event: Event) => {
+      const noteId = (event as CustomEvent<string>).detail;
+      if (typeof noteId === 'string' && noteId) void selectNote(noteId);
+    };
+    document.addEventListener('tykwriter:open-note', handleOpenNote);
+    return () =>
+      document.removeEventListener('tykwriter:open-note', handleOpenNote);
+  }, [selectNote]);
 
   const handleCreateNote = useCallback(
     async (folderId: string | null) => {
@@ -222,6 +234,7 @@ export function NotesWorkspace({ initialFolders, initialNotes }: Props) {
             key={openNote.id}
             note={openNote}
             folders={folders}
+            notes={notes}
             saveState={saveState}
             onTitleChange={handleTitleChange}
             onContentChange={handleContentChange}

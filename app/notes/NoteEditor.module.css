@@ -8,6 +8,29 @@
     overflow: hidden;
 }
 
+/* Poignée de déplacement des blocs (drag & drop) */
+.dragHandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.1rem;
+    color: var(--tyk-dust-brown, #A08C73);
+    background-color: var(--surface-soft);
+    border-radius: 0.3rem;
+    cursor: grab;
+    opacity: 0.8;
+}
+
+.dragHandle:hover {
+    opacity: 1;
+    color: var(--tyk-sapphire, #0F52BA);
+    background-color: rgba(15, 82, 186, 0.1);
+}
+
+.dragHandle:active {
+    cursor: grabbing;
+}
+
 .aiToggle {
     display: inline-flex;
     align-items: center;
@@ -321,6 +344,49 @@
 .prosemirror :global(.note-details) summary {
     font-weight: 600;
     list-style: none;
+}
+
+/* Titres dépliants (details avec data-level) : summary stylé h1/h2/h3, sans
+   cadre — même rendu que les titres classiques, avec le chevron en plus. */
+.prosemirror :global(.note-details[data-level]) {
+    border: none;
+    padding: 0.1rem 0;
+    margin: 0.4rem 0;
+}
+
+.prosemirror :global(.note-details[data-level='1']) summary {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.prosemirror :global(.note-details[data-level='2']) summary {
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.prosemirror :global(.note-details[data-level='3']) summary {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.prosemirror :global(.note-details[data-level])>button {
+    margin-top: 0.35em;
+}
+
+/* Liens inter-notes (chips @) */
+.prosemirror :global(a.note-link) {
+    color: var(--tyk-sapphire, #0F52BA);
+    background-color: rgba(15, 82, 186, 0.08);
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.35rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.prosemirror :global(a.note-link):hover {
+    background-color: rgba(15, 82, 186, 0.16);
 }
 
 /* Images (node view redimensionnable) */

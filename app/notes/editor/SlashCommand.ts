@@ -1,4 +1,5 @@
 import { Extension, type Editor, type Range } from '@tiptap/core';
+import { PluginKey } from '@tiptap/pm/state';
 import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
 
 export interface SlashItem {
@@ -23,7 +24,7 @@ export const SlashCommand = Extension.create<{
     return {
       suggestion: {
         char: '/',
-        allowSpaces: false,
+        allowSpaces: true,
         startOfLine: false,
         command: ({ editor, range, props }) => {
           props.command({ editor, range });
@@ -36,6 +37,40 @@ export const SlashCommand = Extension.create<{
     return [
       Suggestion({
         editor: this.editor,
+        pluginKey: new PluginKey('slashSuggestion'),
+        ...this.options.suggestion,
+      }),
+    ];
+  },
+});
+
+/**
+ * Commande « @ » : menu de liens vers d'autres notes. Deuxième instance de
+ * Suggestion — clé de plugin distincte obligatoire.
+ */
+export const NoteLinkCommand = Extension.create<{
+  suggestion: Partial<SuggestionOptions<SlashItem, SlashItem>>;
+}>({
+  name: 'noteLinkCommand',
+
+  addOptions() {
+    return {
+      suggestion: {
+        char: '@',
+        allowSpaces: true,
+        startOfLine: false,
+        command: ({ editor, range, props }) => {
+          props.command({ editor, range });
+        },
+      },
+    };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        pluginKey: new PluginKey('noteLinkSuggestion'),
         ...this.options.suggestion,
       }),
     ];
@@ -55,11 +90,15 @@ export function buildSlashItems(labels: {
   orderedList: string;
   taskList: string;
   toggle: string;
+  toggleH1: string;
+  toggleH2: string;
+  toggleH3: string;
   quote: string;
   codeBlock: string;
   table: string;
   divider: string;
   image: string;
+  noteLink: string;
 }): SlashItem[] {
   const heading = (level: 1 | 2 | 3 | 4 | 5, label: string): SlashItem => ({
     key: `h${level}`,
@@ -67,6 +106,21 @@ export function buildSlashItems(labels: {
     group: labels.groups.headings,
     command: ({ editor, range }) =>
       editor.chain().focus().deleteRange(range).setNode('heading', { level }).run(),
+  });
+
+  /** Titre dépliant façon Notion : details avec attribut level (style h1-h3). */
+  const toggleHeading = (level: 1 | 2 | 3, label: string): SlashItem => ({
+    key: `toggleH${level}`,
+    label,
+    group: labels.groups.headings,
+    command: ({ editor, range }) =>
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setDetails()
+        .updateAttributes('details', { level })
+        .run(),
   });
 
   return [
@@ -82,6 +136,9 @@ export function buildSlashItems(labels: {
     heading(3, labels.h3),
     heading(4, labels.h4),
     heading(5, labels.h5),
+    toggleHeading(1, labels.toggleH1),
+    toggleHeading(2, labels.toggleH2),
+    toggleHeading(3, labels.toggleH3),
     {
       key: 'bulletList',
       label: labels.bulletList,
@@ -152,6 +209,14 @@ export function buildSlashItems(labels: {
         // Le NoteEditor écoute cet événement et ouvre le sélecteur de fichier.
         document.dispatchEvent(new CustomEvent('tykwriter:pick-image'));
       },
+    },
+    {
+      key: 'noteLink',
+      label: labels.noteLink,
+      group: labels.groups.inserts,
+      // Insère « @ » qui déclenche le menu de sélection de note.
+      command: ({ editor, range }) =>
+        editor.chain().focus().deleteRange(range).insertContent('@').run(),
     },
   ];
 }

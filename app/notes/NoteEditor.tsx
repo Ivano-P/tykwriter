@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { Sparkles } from 'lucide-react';
+import { DragHandle } from '@tiptap/extension-drag-handle-react';
+import { GripVertical, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { FolderMeta, NoteFull } from '@/services/NoteService';
+import type { FolderMeta, NoteFull, NoteMeta } from '@/services/NoteService';
 import { createImageUploadAction } from '@/actions/storage.action';
 import type { SaveState } from './NotesWorkspace';
 import { buildNoteExtensions } from './editor/extensions';
-import { SlashCommand } from './editor/SlashCommand';
-import { createSlashSuggestion } from './editor/slashSuggestion';
+import { NoteLinkCommand, SlashCommand } from './editor/SlashCommand';
+import {
+  createNoteLinkSuggestion,
+  createSlashSuggestion,
+} from './editor/slashSuggestion';
 import { EditorBubbleMenu } from './editor/EditorBubbleMenu';
 import { NotesAiPanel } from './NotesAiPanel';
 import styles from './NoteEditor.module.css';
@@ -17,6 +21,7 @@ import styles from './NoteEditor.module.css';
 interface Props {
   note: NoteFull;
   folders: FolderMeta[];
+  notes: NoteMeta[];
   saveState: SaveState;
   onTitleChange: (title: string) => void;
   onContentChange: (content: Record<string, unknown>) => void;
@@ -26,6 +31,7 @@ interface Props {
 export function NoteEditor({
   note,
   folders,
+  notes,
   saveState,
   onTitleChange,
   onContentChange,
@@ -41,6 +47,13 @@ export function NoteEditor({
   // Les handlers paste/drop sont capturés à la création de l'éditeur ;
   // on passe par une ref pour appeler la version courante.
   const uploadRef = useRef<(files: File[], pos?: number) => void>(() => {});
+
+  // Liste des notes lue par le menu « @ » (ref : la config d'extension est
+  // figée à la création de l'éditeur, la liste évolue).
+  const notesRef = useRef<NoteMeta[]>(notes);
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
 
   // Extensions stables pour la durée de vie de l'éditeur (une note = un éditeur).
   const extensions = useMemo(
@@ -63,12 +76,22 @@ export function NoteEditor({
           orderedList: t('slashOrderedList'),
           taskList: t('slashTaskList'),
           toggle: t('slashToggle'),
+          toggleH1: t('slashToggleH1'),
+          toggleH2: t('slashToggleH2'),
+          toggleH3: t('slashToggleH3'),
           quote: t('slashQuote'),
           codeBlock: t('slashCodeBlock'),
           table: t('slashTable'),
           divider: t('slashDivider'),
           image: t('slashImage'),
+          noteLink: t('slashNoteLink'),
         }),
+      }),
+      NoteLinkCommand.configure({
+        suggestion: createNoteLinkSuggestion(
+          () => notesRef.current.filter((n) => n.id !== note.id),
+          { group: t('noteLinkGroup'), untitled: t('untitled') },
+        ),
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,7 +228,33 @@ export function NoteEditor({
       </div>
 
       {editor && <EditorBubbleMenu editor={editor} />}
-      <EditorContent editor={editor} className={styles.content} />
+      {/* Poignée de déplacement des blocs (à droite, glisser-déposer). */}
+      {editor && (
+        <DragHandle
+          editor={editor}
+          computePositionConfig={{ placement: 'right-start' }}
+        >
+          <div className={styles.dragHandle}>
+            <GripVertical size={16} />
+          </div>
+        </DragHandle>
+      )}
+      {/* Clic sur un chip de lien inter-notes : ouvre la note cible
+          (listener React sur le wrapper — plus fiable que handleClick PM
+          pour les nodes atomiques). */}
+      <EditorContent
+        editor={editor}
+        className={styles.content}
+        onClick={(e) => {
+          const link = (e.target as HTMLElement).closest?.('[data-note-link]');
+          const noteId = link?.getAttribute('data-note-id');
+          if (noteId) {
+            document.dispatchEvent(
+              new CustomEvent('tykwriter:open-note', { detail: noteId }),
+            );
+          }
+        }}
+      />
       {editor && isAiPanelOpen && (
         <NotesAiPanel editor={editor} onClose={() => setIsAiPanelOpen(false)} />
       )}
