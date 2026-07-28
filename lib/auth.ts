@@ -13,12 +13,6 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg', schema }),
   emailAndPassword: {
     enabled: true,
-    // Mot de passe oublié : lien envoyé par email (SMTP du domaine).
-    sendResetPassword: async ({ user, url }) => {
-      const { EmailService } = await import('@/services/EmailService');
-      await EmailService.sendPasswordReset(user.email, url);
-    },
-    resetPasswordTokenExpiresIn: 3600, // 1 h
   },
   user: {
     deleteUser: {

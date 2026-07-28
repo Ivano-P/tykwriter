@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { signIn, signUp } from '@/lib/auth-client';
@@ -111,14 +110,6 @@ export function AuthForm() {
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
           </label>
-
-          {mode === 'signin' && (
-            <p className={styles.forgotRow}>
-              <Link href="/mot-de-passe-oublie" className={styles.switchButton}>
-                {t('forgotLink')}
-              </Link>
-            </p>
-          )}
 
           {mode === 'signup' && (
             <label className={styles.field}>
