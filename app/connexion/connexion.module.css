@@ -95,6 +95,12 @@
     color: var(--foreground, #111827);
 }
 
+.forgotRow {
+    margin: -0.5rem 0 0;
+    text-align: right;
+    font-size: 0.85rem;
+}
+
 .switchButton {
     border: none;
     background: transparent;
