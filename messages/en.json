@@ -152,7 +152,19 @@
     "errorEmailExists": "An account already exists with this email.",
     "errorPasswordTooShort": "The password must be at least 8 characters long.",
     "errorPasswordMismatch": "The two passwords do not match.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "forgotLink": "Forgot password?",
+    "forgotTitle": "Forgot password",
+    "forgotIntro": "Enter your account email: we will send you a reset link.",
+    "forgotSubmit": "Send the link",
+    "forgotSent": "If an account exists with this address, a reset email has just been sent. Remember to check your spam folder.",
+    "backToSignIn": "Back to sign in",
+    "resetTitle": "New password",
+    "resetSubmit": "Change password",
+    "resetDone": "Password changed! Redirecting to sign in…",
+    "resetInvalidLink": "This link is invalid or has expired.",
+    "resetRequestAgain": "Request a new link",
+    "newPassword": "New password"
   },
   "account": {
     "title": "My account",
