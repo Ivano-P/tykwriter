@@ -191,19 +191,36 @@ export class AiProService {
   }
 
   /**
-   * Q&A sur une note : répond à une question en se basant sur le contenu.
+   * Q&A sur une note : répond à une question en se basant d'abord sur le
+   * contenu, avec appoint de connaissances générales clairement signalé.
+   * `history` (échanges précédents) permet les questions de suivi.
    * Utilise le modèle du rôle 'assistant' (pas de rôle dédié pour l'instant).
    */
   static async askNote(
     noteText: string,
     question: string,
+    history: { question: string; answer: string }[] = [],
     uiLocale: UiLocale = 'fr'
   ): Promise<string> {
+    // Historique récent, plafonné pour maîtriser le coût du prompt.
+    const HISTORY_MAX_CHARS = 4000;
+    let historyBlock = '';
+    for (const exchange of [...history].reverse()) {
+      const entry = `Q : ${exchange.question}\nR : ${exchange.answer}\n\n`;
+      if (historyBlock.length + entry.length > HISTORY_MAX_CHARS) break;
+      historyBlock = entry + historyBlock;
+    }
+
+    const user =
+      `NOTE :\n${noteText}\n\n` +
+      (historyBlock ? `HISTORIQUE :\n${historyBlock}` : '') +
+      `NOUVELLE QUESTION :\n${question}`;
+
     try {
       const result = await this.completeJson(
         'assistant',
         buildAskNotePrompt(uiLocale),
-        `NOTE :\n${noteText}\n\nQUESTION :\n${question}`,
+        user,
         ASK_NOTE_JSON_SCHEMA,
         'reponse_note'
       );
