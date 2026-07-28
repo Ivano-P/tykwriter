@@ -28,6 +28,8 @@ ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# SQL migrations, applied at boot by instrumentation.ts (drizzle migrator)
+COPY --from=builder /app/db/migrations ./db/migrations
 
 EXPOSE 3000
 
