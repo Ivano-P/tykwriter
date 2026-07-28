@@ -45,7 +45,7 @@ export function NotesAiPanel({ editor, noteId, onClose }: Props) {
       .then(({ exchanges }) => {
         if (!cancelled) setExchanges(exchanges);
       })
-      // eslint-disable-next-line no-console
+       
       .catch((err) => console.error('Chargement du chat IA impossible :', err));
     return () => {
       cancelled = true;
