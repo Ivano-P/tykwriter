@@ -237,6 +237,8 @@
     "aiAsk": "Poser une question",
     "aiQuestionPlaceholder": "Votre question sur cette note…",
     "aiAskButton": "Demander",
+    "aiChatEmpty": "Posez votre première question sur cette note. L'historique est conservé 90 jours.",
+    "aiDeleteExchange": "Supprimer cet échange",
     "aiNoteSection": "Note entière",
     "aiRestructure": "Restructurer la note",
     "aiRestructureConfirm": "Restructurer toute la note ? Le contenu sera réorganisé (annulable avec Ctrl+Z).",

@@ -237,6 +237,8 @@
     "aiAsk": "Ask a question",
     "aiQuestionPlaceholder": "Your question about this note…",
     "aiAskButton": "Ask",
+    "aiChatEmpty": "Ask your first question about this note. History is kept for 90 days.",
+    "aiDeleteExchange": "Delete this exchange",
     "aiNoteSection": "Whole note",
     "aiRestructure": "Restructure the note",
     "aiRestructureConfirm": "Restructure the whole note? The content will be reorganized (undo with Ctrl+Z).",

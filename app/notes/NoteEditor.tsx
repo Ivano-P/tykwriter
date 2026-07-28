@@ -284,7 +284,11 @@ export function NoteEditor({
         }}
       />
       {editor && isAiPanelOpen && (
-        <NotesAiPanel editor={editor} onClose={() => setIsAiPanelOpen(false)} />
+        <NotesAiPanel
+          editor={editor}
+          noteId={note.id}
+          onClose={() => setIsAiPanelOpen(false)}
+        />
       )}
 
       <input
