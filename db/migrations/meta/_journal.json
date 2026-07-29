@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1785100442908,
+      "tag": "0000_certain_iron_monger",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785103562827,
+      "tag": "0001_steep_beyonder",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785216868350,
+      "tag": "0002_magenta_devos",
+      "breakpoints": true
+    }
+  ]
+}

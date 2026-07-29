@@ -26,6 +26,12 @@ import {
   type SourceLanguage,
   type TraductionResponse,
 } from './prompts/traduction.prompt';
+import {
+  buildAskNotePrompt,
+  buildRestructureNotePrompt,
+  ASK_NOTE_JSON_SCHEMA,
+  RESTRUCTURE_NOTE_JSON_SCHEMA,
+} from './prompts/notesAi.prompt';
 import type {
   CorrectionResponse,
   AssistantCorrectionResult,
@@ -182,6 +188,79 @@ export class AiProService {
     const stream =
       provider === 'gemini' ? GeminiProvider.stream(params) : MistralProvider.stream(params);
     yield* stream;
+  }
+
+  /**
+   * Q&A sur une note : répond à une question en se basant d'abord sur le
+   * contenu, avec appoint de connaissances générales clairement signalé.
+   * `history` (échanges précédents) permet les questions de suivi.
+   * Utilise le modèle du rôle 'assistant' (pas de rôle dédié pour l'instant).
+   */
+  static async askNote(
+    noteText: string,
+    question: string,
+    history: { question: string; answer: string }[] = [],
+    uiLocale: UiLocale = 'fr'
+  ): Promise<string> {
+    // Historique récent, plafonné pour maîtriser le coût du prompt.
+    const HISTORY_MAX_CHARS = 4000;
+    let historyBlock = '';
+    for (const exchange of [...history].reverse()) {
+      const entry = `Q : ${exchange.question}\nR : ${exchange.answer}\n\n`;
+      if (historyBlock.length + entry.length > HISTORY_MAX_CHARS) break;
+      historyBlock = entry + historyBlock;
+    }
+
+    const user =
+      `NOTE :\n${noteText}\n\n` +
+      (historyBlock ? `HISTORIQUE :\n${historyBlock}` : '') +
+      `NOUVELLE QUESTION :\n${question}`;
+
+    try {
+      const result = await this.completeJson(
+        'assistant',
+        buildAskNotePrompt(uiLocale),
+        user,
+        ASK_NOTE_JSON_SCHEMA,
+        'reponse_note'
+      );
+      const parsed: { reponse?: unknown } = JSON.parse(result);
+      if (typeof parsed.reponse !== 'string') {
+        throw new Error('Missing "reponse" field in AI response');
+      }
+      return parsed.reponse.trim();
+    } catch (error) {
+      console.error('AI Ask Note Error:', error);
+      throw new Error('Failed to answer about the note.');
+    }
+  }
+
+  /**
+   * Restructuration d'une note : reçoit le HTML de la note, retourne un HTML
+   * mieux organisé (balises restreintes, fond conservé).
+   * Utilise le modèle du rôle 'assistant' (pas de rôle dédié pour l'instant).
+   */
+  static async restructureNote(
+    html: string,
+    uiLocale: UiLocale = 'fr'
+  ): Promise<string> {
+    try {
+      const result = await this.completeJson(
+        'assistant',
+        buildRestructureNotePrompt(uiLocale),
+        html,
+        RESTRUCTURE_NOTE_JSON_SCHEMA,
+        'note_restructuree'
+      );
+      const parsed: { html?: unknown } = JSON.parse(result);
+      if (typeof parsed.html !== 'string' || !parsed.html.trim()) {
+        throw new Error('Missing "html" field in AI response');
+      }
+      return parsed.html.trim();
+    } catch (error) {
+      console.error('AI Restructure Note Error:', error);
+      throw new Error('Failed to restructure the note.');
+    }
   }
 
   /**

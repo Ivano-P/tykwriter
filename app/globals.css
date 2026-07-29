@@ -97,10 +97,18 @@
   --soft-card-bg: #FDFBF7;
   --page-bg: #F0F2F5;
   --floating-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+
+  /* Surfaces sémantiques (mode clair) — surchargées par .dark plus bas.
+     Toujours utiliser ces variables (jamais de blanc/bordure en dur) pour
+     que le dark mode reste automatique. */
+  --surface: #ffffff;
+  --surface-soft: rgba(160, 140, 115, 0.06);
+  --border-soft: rgba(160, 140, 115, 0.18);
+  --border-strong: rgba(160, 140, 115, 0.35);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(14.479% 0.00002 271.152);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -131,6 +139,18 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Tykwriter — mode sombre : blanc → noir, bleu conservé (éclairci pour
+     rester lisible sur fond sombre). */
+  --page-bg: #0c0e12;
+  --soft-card-bg: #14171c;
+  --surface: #14171c;
+  --surface-soft: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --tyk-sapphire: #4d8be8;
+  --tyk-dust-brown: #b3a28c;
+  --floating-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
 }
 
 @layer base {

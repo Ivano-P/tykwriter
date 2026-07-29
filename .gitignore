@@ -47,3 +47,4 @@ next-env.d.ts
 
 # Reglages de modeles IA modifies via /admin (machine-specific)
 /data/
+*.stackdump

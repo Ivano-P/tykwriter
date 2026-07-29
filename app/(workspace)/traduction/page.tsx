@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Copy, Check } from 'lucide-react';
 import { ContentArea } from '@/components/ui/ContentArea';
 import { TraductionSidebar } from '@/components/ui/TraductionSidebar';
+import { RateLimitBanner } from '@/components/ui/RateLimitBanner';
 import {
   TARGET_LANGUAGES,
   SOURCE_LANGUAGES,
@@ -33,6 +34,7 @@ type TranslationError = 'failed' | null;
 export default function TraductionPage() {
   const t = useTranslations('banner');
   const tp = useTranslations('traductionPage');
+  const tSave = useTranslations('saveAsNote');
   const uiLocale = useLocale();
   const { globalText, setGlobalText } = useText();
 
@@ -49,6 +51,8 @@ export default function TraductionPage() {
   const [streamText, setStreamText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState<TranslationError>(null);
+  // Quota IA anonyme épuisé : bannière + arrêt des traductions automatiques.
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [justCopied, setJustCopied] = useState(false);
   const [justCopiedSource, setJustCopiedSource] = useState(false);
 
@@ -156,6 +160,10 @@ export default function TraductionPage() {
           body: JSON.stringify({ text, targetLanguage: target, sourceLanguage: source }),
           signal: controller.signal,
         });
+        if (resp.status === 429) {
+          setIsRateLimited(true);
+          return;
+        }
         if (!resp.ok || !resp.body) throw new Error('Translation request failed');
 
         // Protocole : 1re ligne = en-tête JSON {langue_detectee, est_supportee},
@@ -453,6 +461,8 @@ export default function TraductionPage() {
         <p className={layoutStyles.headerSubtitle}>{t('traductionSubtitle')}</p>
       </div>
 
+      {isRateLimited && <RateLimitBanner />}
+
       <div className={layoutStyles.workspaceContent}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <ContentArea
@@ -480,6 +490,14 @@ export default function TraductionPage() {
         </div>
 
         <TraductionSidebar
+          saveAsNote={{
+            text: translationText,
+            modeLabel: `${tSave('modeTraducteur')} ${labelOf(
+              sourceLanguage !== 'auto'
+                ? sourceLanguage
+                : (result?.langue_detectee ?? 'auto'),
+            )} -> ${labelOf(targetLanguage)}`,
+          }}
           isTranslating={isTranslating}
           onManualTranslate={handleManualTranslate}
           isTranslateDisabled={isManualTranslateDisabled}
