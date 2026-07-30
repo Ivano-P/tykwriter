@@ -23,7 +23,7 @@ export default async function AdminPage() {
       <h1 className={styles.title}>Administration</h1>
       <p className={styles.subtitle}>
         Choix du fournisseur et du modèle IA pour chaque fonctionnalité. Les
-        changements s&apos;appliquent immédiatement, sans redéploiement.
+        changements s&apos;appliquent immédiatement, sans redéploiement nécessairte .
       </p>
       {memoryOnly && (
         <p className={styles.warning}>
