@@ -29,6 +29,10 @@ export function AuthForm() {
       case 'PASSWORD_TOO_SHORT':
         return 'errorPasswordTooShort';
       default:
+        // Codes non mappés (ex. INVALID_ORIGIN quand l'app est ouverte sur une
+        // origine absente de BETTER_AUTH_URL) : message générique à l'écran,
+        // mais code visible en console pour pouvoir diagnostiquer.
+        console.error('[auth] échec non mappé, code :', code ?? '(aucun)');
         return 'errorGeneric';
     }
   };
