@@ -2,8 +2,10 @@
 .link {
   margin-top: auto;
   padding-top: 0.75rem;
-  display: inline-flex;
+  /* Pleine largeur + contenu centré, comme les autres éléments de la barre. */
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   font-size: 0.8rem;
   font-weight: 600;
