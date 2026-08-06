@@ -11,8 +11,29 @@ import * as schema from '@/db/schema';
  */
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg', schema }),
+  // En développement, l'app peut être ouverte sur un port arbitraire
+  // (`next dev` en autoPort) ou via 127.0.0.1 / [::1] au lieu de localhost
+  // alors que BETTER_AUTH_URL pointe sur localhost:3000 → « Invalid origin »,
+  // qui remonte à l'écran en erreur générique. On fait donc confiance à la
+  // machine locale sous toutes ses formes. En production l'option n'est pas
+  // posée du tout : seule BETTER_AUTH_URL est acceptée.
+  ...(process.env.NODE_ENV !== 'production'
+    ? {
+        trustedOrigins: [
+          'http://localhost:*',
+          'http://127.0.0.1:*',
+          'http://[::1]:*',
+        ],
+      }
+    : {}),
   emailAndPassword: {
     enabled: true,
+    // Mot de passe oublié : lien envoyé par email (SMTP du domaine).
+    sendResetPassword: async ({ user, url }) => {
+      const { EmailService } = await import('@/services/EmailService');
+      await EmailService.sendPasswordReset(user.email, url);
+    },
+    resetPasswordTokenExpiresIn: 3600, // 1 h
   },
   user: {
     deleteUser: {

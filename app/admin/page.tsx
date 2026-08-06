@@ -1,5 +1,7 @@
 import { ModelSettingsStore } from '@/services/ModelSettingsStore';
+import { ReportService } from '@/services/ReportService';
 import { AdminModelForm } from '@/components/ui/AdminModelForm';
+import { AdminReportsPanel } from '@/components/ui/AdminReportsPanel';
 import styles from './admin.module.css';
 
 /**
@@ -17,6 +19,17 @@ export const metadata = {
 export default async function AdminPage() {
   const settings = await ModelSettingsStore.getSettings();
   const memoryOnly = ModelSettingsStore.isMemoryOnly;
+  // Signalements : la DB peut être indisponible (dev sans conteneur lancé) —
+  // la page des réglages doit rester utilisable dans ce cas.
+  const [reports, counts] = await Promise.all([
+    ReportService.listAll().catch(() => []),
+    ReportService.countsByStatus().catch(() => ({
+      open: 0,
+      in_progress: 0,
+      resolved: 0,
+      closed: 0,
+    })),
+  ]);
 
   return (
     <div className={styles.container}>
@@ -32,6 +45,13 @@ export default async function AdminPage() {
         </p>
       )}
       <AdminModelForm initialSettings={settings} />
+
+      <h2 className={styles.sectionTitle}>Signalements</h2>
+      <p className={styles.subtitle}>
+        Bugs, suggestions et questions envoyés par les utilisateurs depuis
+        /signalements. La réponse enregistrée est visible par l&apos;auteur.
+      </p>
+      <AdminReportsPanel initialReports={reports} counts={counts} />
     </div>
   );
 }

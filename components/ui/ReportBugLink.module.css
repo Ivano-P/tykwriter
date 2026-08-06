@@ -1,0 +1,20 @@
+/* Pinned at the bottom of the actions sidebar */
+.link {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  /* Pleine largeur + contenu centré, comme les autres éléments de la barre. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tyk-dust-brown, #A08C73);
+  text-decoration: none;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.link:hover {
+  color: var(--tyk-sapphire, #0F52BA);
+}

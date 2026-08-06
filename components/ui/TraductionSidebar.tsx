@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { SaveAsNoteButton } from './SaveAsNoteButton';
+import { ReportBugLink } from './ReportBugLink';
 import styles from './CorrectionSidebar.module.css'; // Réutilise le CSS principal de la sidebar
 
 interface TraductionSidebarProps {
@@ -64,6 +65,8 @@ export function TraductionSidebar({
       {isTranslating && (
         <div className={styles.processingIndicator}>{t('translating')}</div>
       )}
+
+      <ReportBugLink />
     </aside>
   );
 }

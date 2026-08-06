@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Mail, Link as LinkIcon } from 'lucide-react';
 import { SaveAsNoteButton } from './SaveAsNoteButton';
+import { ReportBugLink } from './ReportBugLink';
 import type { AssistantTone, AssistantAbreviations } from '@/services/prompts/assistantRedacteur.prompt';
 import type { RecentCorrection } from '@/app/(workspace)/assistant-redacteur/page';
 import styles from './CorrectionSidebar.module.css';
@@ -221,6 +222,8 @@ export function AssistantRedacteurSidebar({
           </ul>
         </div>
       )}
+
+      <ReportBugLink />
 
     </aside>
   );

@@ -29,6 +29,15 @@
     margin-bottom: 1.5rem;
 }
 
+.sectionTitle {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--tyk-sapphire, #0F52BA);
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-soft);
+}
+
 /************** Larger screens adjustments *****************************/
 @media (min-width: 768px) {
     .container {

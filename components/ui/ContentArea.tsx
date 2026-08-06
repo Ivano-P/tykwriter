@@ -8,6 +8,8 @@ import { useTranslations } from 'next-intl';
 import styles from './ContentArea.module.css';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
 import { CorrectionIssue } from '@/services/aiTypes';
+import { useSession } from '@/lib/auth-client';
+import { copyWorkspaceText } from '@/lib/workspaceText';
 
 type Mode = "correcteur" | "assistant-redacteur" | "traduction";
 
@@ -73,6 +75,7 @@ export function ContentArea({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -194,6 +197,20 @@ export function ContentArea({
                 >
                   {t('modeTraduction')}
                 </Link>
+                {/* Notes : réservé aux connectés. Le texte en cours est
+                    conservé (sessionStorage) et copié dans le presse-papiers. */}
+                {session && (
+                  <Link
+                    href="/notes"
+                    className={styles.modeDropdownItem}
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      copyWorkspaceText();
+                    }}
+                  >
+                    {t('modeNotes')}
+                  </Link>
+                )}
               </div>
             )}
           </div>

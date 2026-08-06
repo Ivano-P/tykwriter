@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, CircleUserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from '@/lib/auth-client';
+import { copyWorkspaceText, TEXT_COPIED_EVENT } from '@/lib/workspaceText';
 import styles from './Navbar.module.css';
 
 export function Navbar() {
@@ -17,6 +18,8 @@ export function Navbar() {
   const [isModesDropdownOpen, setIsModesDropdownOpen] = useState(false);
   const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  /** Confirmation éphémère « texte copié » au passage vers les notes. */
+  const [showCopiedHint, setShowCopiedHint] = useState(false);
 
   // Fermeture au clic EXTÉRIEUR (même mécanisme que le sélecteur de mode de
   // ContentArea) : un clic dans le menu ne le démonte jamais avant que la
@@ -47,6 +50,38 @@ export function Navbar() {
   }, [isModesDropdownOpen, isMoreDropdownOpen, isUserMenuOpen]);
 
   const pathname = usePathname();
+
+  // Confirmation de copie : émise par copyWorkspaceText, quel que soit le
+  // point de départ (menu de la navbar ou sélecteur de la zone de saisie).
+  useEffect(() => {
+    const onCopied = () => {
+      setShowCopiedHint(true);
+      setTimeout(() => setShowCopiedHint(false), 3500);
+    };
+    document.addEventListener(TEXT_COPIED_EVENT, onCopied);
+    return () => document.removeEventListener(TEXT_COPIED_EVENT, onCopied);
+  }, []);
+
+  /** Clé i18n du mode correspondant à la route courante (null hors modes). */
+  const MODE_KEY_BY_PATH: Record<string, string> = {
+    '/correcteur': 'correcteur',
+    '/assistant-redacteur': 'assistant',
+    '/traduction': 'traduction',
+    '/notes': 'notes',
+  };
+  const currentModeKey = MODE_KEY_BY_PATH[pathname] ?? null;
+
+  /**
+   * Passage vers les notes : le texte de travail est conservé (sessionStorage,
+   * voir TextContext) ET copié dans le presse-papiers — double sécurité pour
+   * pouvoir le recoller dans une note. La copie doit rester dans le geste
+   * utilisateur, d'où l'appel ici plutôt qu'au montage de /notes.
+   */
+  const handleGoToNotes = () => {
+    setIsModesDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    copyWorkspaceText();
+  };
 
   const handleSignOut = async () => {
     setIsUserMenuOpen(false);
@@ -118,6 +153,9 @@ export function Navbar() {
 
           {/* Right: "En savoir plus" and Mode selector */}
           <div className="flex items-center gap-6">
+            {showCopiedHint && (
+              <span className={styles.copiedHint}>{t('textCopied')}</span>
+            )}
             <div className="relative" ref={moreDropdownRef}>
               <button
                 className={styles.dropdownToggle}
@@ -140,8 +178,18 @@ export function Navbar() {
                 className={styles.dropdownToggle}
                 onClick={() => setIsModesDropdownOpen(!isModesDropdownOpen)}
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-semibold text-base">{t('mode')}</span>
+                <div className="flex items-center gap-1.5">
+                  {/* Mode courant affiché sur le bouton. Sur tablette, seul le
+                      nom du mode est visible (le préfixe « Mode : » est masqué
+                      par CSS) pour économiser la largeur. */}
+                  {currentModeKey ? (
+                    <>
+                      <span className={styles.modePrefix}>{t('mode')} :</span>
+                      <span className={styles.modeCurrent}>{t(currentModeKey)}</span>
+                    </>
+                  ) : (
+                    <span className="font-semibold text-base">{t('mode')}</span>
+                  )}
                 </div>
                 <ChevronDown size={16} className="ml-1" />
               </button>
@@ -151,7 +199,7 @@ export function Navbar() {
                   <Link href="/assistant-redacteur" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('assistant')}</Link>
                   <Link href="/traduction" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('traduction')}</Link>
                   {session && (
-                    <Link href="/notes" className={styles.dropdownItem} onClick={() => setIsModesDropdownOpen(false)}>{t('notes')}</Link>
+                    <Link href="/notes" className={styles.dropdownItem} onClick={handleGoToNotes}>{t('notes')}</Link>
                   )}
                 </div>
               )}
@@ -175,6 +223,9 @@ export function Navbar() {
                     </div>
                     <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
                       {t('account')}
+                    </Link>
+                    <Link href="/signalements" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
+                      {t('reports')}
                     </Link>
                     <button className={styles.dropdownItem} onClick={handleSignOut}>
                       {t('logout')}
@@ -201,7 +252,7 @@ export function Navbar() {
           <Link href="/traduction" className={`px-6 py-2 ${pathname === '/traduction' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('traduction')}</Link>
           <Link href="/assistant-redacteur" className={`px-6 py-2 ${pathname === '/assistant-redacteur' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('assistant')}</Link>
           {session && (
-            <Link href="/notes" className={`px-6 py-2 ${pathname === '/notes' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={() => setIsMobileMenuOpen(false)}>{t('notes')}</Link>
+            <Link href="/notes" className={`px-6 py-2 ${pathname === '/notes' ? 'bg-gray-50 dark:bg-neutral-800 text-[#0F52BA] font-semibold border-l-4 border-[#0F52BA]' : 'hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-neutral-200'}`} onClick={handleGoToNotes}>{t('notes')}</Link>
           )}
 
           <div className="border-t border-gray-100 my-2"></div>
@@ -220,6 +271,9 @@ export function Navbar() {
               </div>
               <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
                 {t('account')}
+              </Link>
+              <Link href="/signalements" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
+                {t('reports')}
               </Link>
               <button className={styles.dropdownItem} onClick={handleSignOut}>
                 {t('logout')}
