@@ -8,8 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-/** Clé de stockage du texte de travail partagé entre les modes d'écriture. */
-export const WORKSPACE_TEXT_KEY = 'tykwriter:workspace-text';
+import { WORKSPACE_TEXT_KEY } from './workspaceText';
 
 /**
  * Store externe minimal adossé à sessionStorage.

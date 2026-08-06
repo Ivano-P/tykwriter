@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, ChevronDown, CircleUserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { signOut, useSession } from '@/lib/auth-client';
-import { WORKSPACE_TEXT_KEY } from '@/lib/TextContext';
+import { copyWorkspaceText, TEXT_COPIED_EVENT } from '@/lib/workspaceText';
 import styles from './Navbar.module.css';
 
 export function Navbar() {
@@ -51,6 +51,17 @@ export function Navbar() {
 
   const pathname = usePathname();
 
+  // Confirmation de copie : émise par copyWorkspaceText, quel que soit le
+  // point de départ (menu de la navbar ou sélecteur de la zone de saisie).
+  useEffect(() => {
+    const onCopied = () => {
+      setShowCopiedHint(true);
+      setTimeout(() => setShowCopiedHint(false), 3500);
+    };
+    document.addEventListener(TEXT_COPIED_EVENT, onCopied);
+    return () => document.removeEventListener(TEXT_COPIED_EVENT, onCopied);
+  }, []);
+
   /** Clé i18n du mode correspondant à la route courante (null hors modes). */
   const MODE_KEY_BY_PATH: Record<string, string> = {
     '/correcteur': 'correcteur',
@@ -69,45 +80,7 @@ export function Navbar() {
   const handleGoToNotes = () => {
     setIsModesDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    let text = '';
-    try {
-      text = sessionStorage.getItem(WORKSPACE_TEXT_KEY) ?? '';
-    } catch {
-      return;
-    }
-    if (!text.trim()) return;
-
-    const confirmCopied = () => {
-      setShowCopiedHint(true);
-      setTimeout(() => setShowCopiedHint(false), 3500);
-    };
-
-    /** Repli synchrone quand l'API asynchrone est refusée (contexte non
-     *  sécurisé, Safari, permission bloquée). */
-    const copyFallback = (): boolean => {
-      try {
-        const area = document.createElement('textarea');
-        area.value = text;
-        area.setAttribute('readonly', '');
-        area.style.position = 'fixed';
-        area.style.top = '-1000px';
-        document.body.appendChild(area);
-        area.select();
-        const ok = document.execCommand('copy');
-        document.body.removeChild(area);
-        return ok;
-      } catch {
-        return false;
-      }
-    };
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(confirmCopied, () => {
-        if (copyFallback()) confirmCopied();
-      });
-      return;
-    }
-    if (copyFallback()) confirmCopied();
+    copyWorkspaceText();
   };
 
   const handleSignOut = async () => {
