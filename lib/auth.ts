@@ -11,6 +11,13 @@ import * as schema from '@/db/schema';
  */
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg', schema }),
+  // En développement, `next dev` peut écouter sur un port arbitraire alors que
+  // BETTER_AUTH_URL pointe sur 3000 → « Invalid origin ». On fait donc
+  // confiance à localhost quel que soit le port. En production l'option n'est
+  // pas posée du tout : seule BETTER_AUTH_URL est acceptée.
+  ...(process.env.NODE_ENV !== 'production'
+    ? { trustedOrigins: ['http://localhost:*'] }
+    : {}),
   emailAndPassword: {
     enabled: true,
     // Mot de passe oublié : lien envoyé par email (SMTP du domaine).

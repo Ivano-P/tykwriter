@@ -1,0 +1,310 @@
+/* Mobile-first base styles */
+.page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.subtitle {
+    color: var(--tyk-dust-brown, #A08C73);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-top: 0.25rem;
+}
+
+.newButton {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.newButton:hover {
+    background-color: #0c429a;
+}
+
+/* ------------------------------- Formulaire ------------------------------ */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+}
+
+.typeRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.typeChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--tyk-dust-brown, #A08C73);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.typeChipActive {
+    border-color: var(--tyk-sapphire, #0F52BA);
+    color: var(--tyk-sapphire, #0F52BA);
+    background-color: rgba(15, 82, 186, 0.08);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.input,
+.textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--foreground, #111827);
+    background-color: var(--surface);
+}
+
+.textarea {
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    border-color: var(--tyk-sapphire, #0F52BA);
+    box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.15);
+}
+
+.submit {
+    align-self: flex-start;
+    padding: 0.55rem 1.1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: var(--tyk-sapphire, #0F52BA);
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit:hover {
+    background-color: #0c429a;
+}
+
+.submit:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.error {
+    color: #b91c1c;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* --------------------------------- Liste --------------------------------- */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.empty {
+    color: var(--tyk-dust-brown, #A08C73);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.card {
+    background-color: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 0.75rem;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.typeBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.type_bug {
+    background-color: rgba(185, 28, 28, 0.12);
+    color: #b91c1c;
+}
+
+.type_suggestion {
+    background-color: rgba(202, 138, 4, 0.15);
+    color: #a16207;
+}
+
+.type_question {
+    background-color: rgba(15, 82, 186, 0.12);
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.statusBadge {
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.status_open {
+    background-color: rgba(21, 128, 61, 0.14);
+    color: #15803d;
+}
+
+.status_in_progress {
+    background-color: rgba(202, 138, 4, 0.15);
+    color: #a16207;
+}
+
+.status_resolved {
+    background-color: rgba(15, 82, 186, 0.12);
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.status_closed {
+    background-color: var(--surface-soft);
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.date {
+    font-size: 0.75rem;
+    color: var(--tyk-dust-brown, #A08C73);
+}
+
+.deleteButton {
+    margin-left: auto;
+    display: inline-flex;
+    padding: 0.3rem;
+    border: none;
+    background: transparent;
+    color: var(--tyk-dust-brown, #A08C73);
+    border-radius: 0.25rem;
+    cursor: pointer;
+    opacity: 0.55;
+}
+
+.deleteButton:hover {
+    opacity: 1;
+    color: #b91c1c;
+}
+
+.cardTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--foreground, #111827);
+}
+
+.cardDescription {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--foreground, #111827);
+    white-space: pre-wrap;
+}
+
+.reply {
+    margin-top: 0.35rem;
+    padding: 0.6rem 0.75rem;
+    background-color: rgba(15, 82, 186, 0.06);
+    border-left: 3px solid var(--tyk-sapphire, #0F52BA);
+    border-radius: 0 0.4rem 0.4rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.replyLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tyk-sapphire, #0F52BA);
+}
+
+.replyText {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--foreground, #111827);
+    white-space: pre-wrap;
+}
+
+/************** Larger screens adjustments *****************************/
+@media (min-width: 768px) {
+    .page {
+        padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .header {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .newButton {
+        align-self: center;
+    }
+}

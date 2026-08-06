@@ -1,4 +1,12 @@
 import nodemailer, { type Transporter } from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
+
+/**
+ * `family` est une vraie option nodemailer (transmise à net.connect) mais
+ * absente de @types/nodemailer (types v8 pour nodemailer v9) : on l'ajoute
+ * localement au type plutôt que de contourner le contrôle par un cast.
+ */
+type SmtpOptions = SMTPTransport.Options & { family?: number };
 
 /**
  * Envoi d'emails transactionnels via le SMTP du domaine (Hostinger).
@@ -18,7 +26,7 @@ export class EmailService {
       if (!host || !user || !pass) {
         throw new Error('SMTP_NOT_CONFIGURED');
       }
-      this.transporter = nodemailer.createTransport({
+      const options: SmtpOptions = {
         host,
         port,
         // 465 = TLS implicite ; 587 = STARTTLS.
@@ -27,7 +35,8 @@ export class EmailService {
         // IPv4 forcé : la résolution IPv6 de smtp.hostinger.com échoue en
         // ENETUNREACH sur les machines sans route IPv6.
         family: 4,
-      });
+      };
+      this.transporter = nodemailer.createTransport(options);
     }
     return this.transporter;
   }

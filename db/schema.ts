@@ -85,6 +85,35 @@ export const folder = pgTable(
 );
 
 /**
+ * Signalements (bugs / suggestions) façon « issues » GitHub.
+ * Créés par les utilisateurs connectés, traités depuis /admin.
+ * Supprimés avec le compte (cascade) comme le reste des données utilisateur.
+ */
+export const report = pgTable(
+  'report',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // 'bug' | 'suggestion' | 'question'
+    type: text('type').notNull().default('bug'),
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    // 'open' | 'in_progress' | 'resolved' | 'closed'
+    status: text('status').notNull().default('open'),
+    /** Réponse publique de l'admin, visible par l'auteur du signalement. */
+    adminReply: text('admin_reply'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('report_user_idx').on(t.userId, t.createdAt),
+    index('report_status_idx').on(t.status, t.createdAt),
+  ],
+);
+
+/**
  * Historique du chat IA d'une note : un enregistrement = un échange
  * question/réponse. Purgé après 90 jours sans activité sur le chat de la note.
  */

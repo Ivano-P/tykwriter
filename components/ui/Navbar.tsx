@@ -176,6 +176,9 @@ export function Navbar() {
                     <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
                       {t('account')}
                     </Link>
+                    <Link href="/signalements" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
+                      {t('reports')}
+                    </Link>
                     <button className={styles.dropdownItem} onClick={handleSignOut}>
                       {t('logout')}
                     </button>
@@ -220,6 +223,9 @@ export function Navbar() {
               </div>
               <Link href="/compte" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
                 {t('account')}
+              </Link>
+              <Link href="/signalements" className={styles.dropdownItem} onClick={() => setIsMobileMenuOpen(false)}>
+                {t('reports')}
               </Link>
               <button className={styles.dropdownItem} onClick={handleSignOut}>
                 {t('logout')}

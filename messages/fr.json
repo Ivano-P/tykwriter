@@ -16,6 +16,7 @@
     "login": "Se connecter",
     "logout": "Se déconnecter",
     "account": "Mon compte",
+    "reports": "Signalements",
     "userMenu": "Menu utilisateur",
     "themeToDark": "Passer en mode sombre",
     "themeToLight": "Passer en mode clair"
@@ -129,6 +130,30 @@
     "modeCorrecteur": "correcteur",
     "modeAssistant": "assistant rédacteur",
     "modeTraducteur": "traducteur"
+  },
+  "reports": {
+    "title": "Signalements",
+    "subtitle": "Signalez un bug, proposez une amélioration ou posez une question. Vous suivez ici l'avancement de chaque signalement.",
+    "newReport": "Nouveau signalement",
+    "cancel": "Annuler",
+    "type_bug": "Bug",
+    "type_suggestion": "Suggestion",
+    "type_question": "Question",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Résumez le problème en une phrase",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Que s'est-il passé ? Qu'attendiez-vous ? Étapes pour reproduire, mode concerné (correcteur, notes…), navigateur…",
+    "submit": "Envoyer le signalement",
+    "sending": "Envoi…",
+    "sendError": "L'envoi a échoué. Réessayez.",
+    "empty": "Aucun signalement pour l'instant.",
+    "delete": "Supprimer ce signalement",
+    "confirmDelete": "Supprimer définitivement ce signalement ?",
+    "adminReply": "Réponse de l'équipe",
+    "status_open": "Ouvert",
+    "status_in_progress": "En cours",
+    "status_resolved": "Résolu",
+    "status_closed": "Fermé"
   },
   "rateLimit": {
     "message": "Vous avez atteint la limite quotidienne gratuite. Connectez-vous pour continuer sans limite — c'est gratuit.",

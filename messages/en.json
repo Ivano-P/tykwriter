@@ -16,6 +16,7 @@
     "login": "Sign in",
     "logout": "Sign out",
     "account": "My account",
+    "reports": "Reports",
     "userMenu": "User menu",
     "themeToDark": "Switch to dark mode",
     "themeToLight": "Switch to light mode"
@@ -129,6 +130,30 @@
     "modeCorrecteur": "proofreader",
     "modeAssistant": "writing assistant",
     "modeTraducteur": "translator"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Report a bug, suggest an improvement or ask a question. Track the progress of each report here.",
+    "newReport": "New report",
+    "cancel": "Cancel",
+    "type_bug": "Bug",
+    "type_suggestion": "Suggestion",
+    "type_question": "Question",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Summarize the problem in one sentence",
+    "descriptionPlaceholder": "What happened? What did you expect? Steps to reproduce, mode involved (proofreader, notes…), browser…",
+    "descriptionLabel": "Description",
+    "submit": "Send the report",
+    "sending": "Sending…",
+    "sendError": "Sending failed. Please try again.",
+    "empty": "No reports yet.",
+    "delete": "Delete this report",
+    "confirmDelete": "Permanently delete this report?",
+    "adminReply": "Team reply",
+    "status_open": "Open",
+    "status_in_progress": "In progress",
+    "status_resolved": "Resolved",
+    "status_closed": "Closed"
   },
   "rateLimit": {
     "message": "You have reached the free daily limit. Sign in to keep going without limits — it's free.",
