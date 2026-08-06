@@ -134,6 +134,8 @@
   "reports": {
     "title": "Reports",
     "subtitle": "Report a bug, suggest an improvement or ask a question. Track the progress of each report here.",
+    "linkLabel": "Report a bug",
+    "linkTitle": "Report a bug or suggest an improvement",
     "newReport": "New report",
     "cancel": "Cancel",
     "type_bug": "Bug",

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import { SaveAsNoteButton } from './SaveAsNoteButton';
+import { ReportBugLink } from './ReportBugLink';
 import styles from './CorrectionSidebar.module.css'; // On réutilise ce CSS pour l'instant
 import { CorrectionIssue } from '@/services/aiTypes';
 
@@ -120,7 +121,7 @@ export function CorrecteurSidebar({
         ))}
       </div>
 
-      
+      <ReportBugLink />
 
     </aside>
   );

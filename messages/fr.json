@@ -134,6 +134,8 @@
   "reports": {
     "title": "Signalements",
     "subtitle": "Signalez un bug, proposez une amélioration ou posez une question. Vous suivez ici l'avancement de chaque signalement.",
+    "linkLabel": "Signaler un bug",
+    "linkTitle": "Signaler un bug ou proposer une amélioration",
     "newReport": "Nouveau signalement",
     "cancel": "Annuler",
     "type_bug": "Bug",
