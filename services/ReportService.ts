@@ -5,6 +5,7 @@ import {
   isReportStatus,
   sanitizeReportType,
   type AdminReportItem,
+  type ReportAttachment,
   type ReportCounts,
   type ReportItem,
   type ReportStatus,
@@ -29,7 +30,12 @@ export class ReportService {
 
   static async create(
     userId: string,
-    data: { type: ReportType; title: string; description: string },
+    data: {
+      type: ReportType;
+      title: string;
+      description: string;
+      attachments: ReportAttachment[];
+    },
   ): Promise<ReportItem> {
     const rows = await db
       .insert(report)
@@ -38,9 +44,20 @@ export class ReportService {
         type: data.type,
         title: data.title,
         description: data.description,
+        attachments: data.attachments,
       })
       .returning();
     return toReportItem(rows[0]);
+  }
+
+  /** Clés R2 des pièces jointes d'un signalement (purge à la suppression). */
+  static async attachmentKeys(id: string): Promise<string[]> {
+    const rows = await db
+      .select({ attachments: report.attachments })
+      .from(report)
+      .where(eq(report.id, id))
+      .limit(1);
+    return toAttachments(rows[0]?.attachments).map((a) => a.key);
   }
 
   /** Suppression par l'auteur (son propre signalement uniquement). */
@@ -106,6 +123,17 @@ export class ReportService {
 
 type ReportRow = typeof report.$inferSelect;
 
+/** Normalise la colonne jsonb en tableau de pièces jointes exploitable. */
+function toAttachments(value: unknown): ReportAttachment[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const { url, key, name } = entry as Record<string, unknown>;
+    if (typeof url !== 'string' || typeof key !== 'string') return [];
+    return [{ url, key, name: typeof name === 'string' ? name : 'capture' }];
+  });
+}
+
 function toReportItem(row: ReportRow): ReportItem {
   return {
     id: row.id,
@@ -114,6 +142,7 @@ function toReportItem(row: ReportRow): ReportItem {
     description: row.description,
     status: isReportStatus(row.status) ? row.status : 'open',
     adminReply: row.adminReply,
+    attachments: toAttachments(row.attachments),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

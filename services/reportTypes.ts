@@ -28,6 +28,19 @@ export function isReportStatus(value: unknown): value is ReportStatus {
   return REPORT_STATUSES.includes(value as ReportStatus);
 }
 
+/** Capture d'écran jointe à un signalement (stockée sur Cloudflare R2). */
+export interface ReportAttachment {
+  /** URL publique servie par le domaine du bucket. */
+  url: string;
+  /** Clé R2, conservée pour pouvoir purger le fichier à la suppression. */
+  key: string;
+  /** Nom d'origine, utilisé comme nom de téléchargement. */
+  name: string;
+}
+
+/** Nombre maximum de captures par signalement. */
+export const MAX_REPORT_ATTACHMENTS = 5;
+
 /** Signalement tel que vu par son auteur. */
 export interface ReportItem {
   id: string;
@@ -36,6 +49,7 @@ export interface ReportItem {
   description: string;
   status: ReportStatus;
   adminReply: string | null;
+  attachments: ReportAttachment[];
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }

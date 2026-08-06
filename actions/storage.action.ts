@@ -20,6 +20,51 @@ export interface UploadTicket {
   publicUrl: string;
 }
 
+export interface ReportUploadTicket extends UploadTicket {
+  /** Clé R2, renvoyée pour être stockée avec le signalement (purge ensuite). */
+  key: string;
+}
+
+/**
+ * Prépare l'upload d'une capture d'écran jointe à un signalement.
+ * Clé : reports/{userId}/{uuid}.{ext} — pas d'identifiant de signalement car
+ * les captures sont envoyées AVANT la création de celui-ci.
+ */
+export async function createReportImageUploadAction(
+  contentType: string,
+  size: number,
+): Promise<ReportUploadTicket> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error('UNAUTHORIZED');
+
+  const ext = ALLOWED_TYPES.get(contentType);
+  if (!ext) throw new Error('INVALID_TYPE');
+  if (typeof size !== 'number' || size <= 0 || size > MAX_IMAGE_BYTES) {
+    throw new Error('FILE_TOO_LARGE');
+  }
+
+  const key = `reports/${session.user.id}/${randomUUID()}.${ext}`;
+  const uploadUrl = await StorageService.createUploadUrl(key, contentType);
+
+  return { uploadUrl, publicUrl: StorageService.publicUrl(key), key };
+}
+
+/**
+ * Supprime une capture retirée du formulaire avant envoi : sans cela le fichier
+ * resterait indéfiniment sur R2 (aucun signalement ne le référence).
+ * Le préfixe de la clé garantit que l'utilisateur ne peut effacer que ses
+ * propres fichiers.
+ */
+export async function deleteReportImageAction(key: string): Promise<void> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error('UNAUTHORIZED');
+
+  if (typeof key !== 'string' || !key.startsWith(`reports/${session.user.id}/`)) {
+    throw new Error('INVALID_KEY');
+  }
+  await StorageService.deleteKeys([key]);
+}
+
 /**
  * Prépare un upload d'image direct navigateur → R2 (URL présignée PUT).
  * Clé : notes/{userId}/{noteId}/{uuid}.{ext} (purge par note/compte possible).

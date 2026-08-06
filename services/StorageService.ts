@@ -56,6 +56,18 @@ export class StorageService {
     return getSignedUrl(this.getClient(), command, { expiresIn: 300 });
   }
 
+  /** Supprime des objets précis (pièces jointes d'un signalement). */
+  static async deleteKeys(keys: string[]): Promise<void> {
+    const valid = keys.filter((k) => typeof k === 'string' && k.length > 0);
+    if (valid.length === 0) return;
+    await this.getClient().send(
+      new DeleteObjectsCommand({
+        Bucket: this.bucket(),
+        Delete: { Objects: valid.map((Key) => ({ Key })) },
+      }),
+    );
+  }
+
   /** Supprime tous les objets sous un préfixe (purge note ou utilisateur). */
   static async deleteByPrefix(prefix: string): Promise<void> {
     const client = this.getClient();

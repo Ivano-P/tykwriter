@@ -104,6 +104,8 @@ export const report = pgTable(
     status: text('status').notNull().default('open'),
     /** Réponse publique de l'admin, visible par l'auteur du signalement. */
     adminReply: text('admin_reply'),
+    /** Captures d'écran jointes : [{ url, key, name }] stockées sur R2. */
+    attachments: jsonb('attachments'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
