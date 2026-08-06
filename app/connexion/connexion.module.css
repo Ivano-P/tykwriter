@@ -95,6 +95,11 @@
     color: var(--foreground, #111827);
 }
 
+.hintRow {
+    margin: -0.35rem 0 0;
+    font-size: 0.85rem;
+}
+
 .forgotRow {
     margin: -0.5rem 0 0;
     text-align: right;
