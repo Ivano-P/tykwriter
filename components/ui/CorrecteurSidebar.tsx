@@ -102,13 +102,13 @@ export function CorrecteurSidebar({
           <div 
             key={index} 
             onClick={() => applyCorrection(issue)}
-            className="relative p-3 border border-gray-200 rounded-md transition-all text-sm group cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm"
+            className="relative p-3 border border-gray-200 dark:border-neutral-700 rounded-md transition-all text-sm group cursor-pointer hover:bg-blue-50 dark:hover:bg-neutral-800 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm"
           >
             <div className="pb-1">
               <span className="text-[var(--destructive)] font-medium line-through">{issue.texte_original}</span>
               {' → '}
               <span className="text-[var(--tyk-sapphire)] font-bold">{issue.correction}</span>
-              <div className="text-gray-600 mt-1.5">{issue.explication}</div>
+              <div className="text-gray-600 dark:text-neutral-300 mt-1.5">{issue.explication}</div>
             </div>
             <button 
               onClick={(e) => { e.stopPropagation(); ignoreCorrection(issue); }}
