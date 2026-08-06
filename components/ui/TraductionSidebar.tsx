@@ -53,7 +53,7 @@ export function TraductionSidebar({
             <button
               key={alternative}
               onClick={() => onPickAlternative(alternative)}
-              className="p-3 border border-gray-200 rounded-md transition-all text-sm text-left cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm text-gray-700"
+              className="p-3 border border-gray-200 dark:border-neutral-700 rounded-md transition-all text-sm text-left cursor-pointer hover:bg-blue-50 dark:hover:bg-neutral-800 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm text-gray-700 dark:text-neutral-200"
               title={t('alternativePickTitle')}
             >
               {alternative}
