@@ -158,9 +158,42 @@
   text-overflow: ellipsis;
 }
 
+/* Confirmation éphémère « texte copié » (passage vers les notes). */
+.copiedHint {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #15803d;
+  background-color: rgba(21, 128, 61, 0.12);
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Bouton « Mode » : préfixe masqué par défaut (tablette = nom du mode seul),
+   restauré sur grand écran. Le nom du mode courant est mis en avant. */
+.modePrefix {
+  display: none;
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.modeCurrent {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--tyk-sapphire, #0F52BA);
+  white-space: nowrap;
+}
+
 /************** Larger screens adjustments *****************************/
 @media (min-width: 768px) {
   .navContainer {
     padding: 0 50px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modePrefix {
+    display: inline;
   }
 }
