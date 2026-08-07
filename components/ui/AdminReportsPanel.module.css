@@ -135,6 +135,53 @@
     white-space: pre-wrap;
 }
 
+/* Captures d'écran jointes */
+.thumbGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.thumb {
+    position: relative;
+    width: 6rem;
+    height: 6rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: var(--surface-soft);
+}
+
+.thumbImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.thumbDownload {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border: none;
+    border-radius: 9999px;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.15s, background-color 0.15s;
+}
+
+.thumbDownload:hover {
+    opacity: 1;
+    background-color: var(--tyk-sapphire, #0F52BA);
+}
+
 .actions {
     display: flex;
     flex-wrap: wrap;

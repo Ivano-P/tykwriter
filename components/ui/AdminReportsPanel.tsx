@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Bug, HelpCircle, Lightbulb, Trash2 } from 'lucide-react';
+import { Bug, Download, HelpCircle, Lightbulb, Trash2 } from 'lucide-react';
 import {
   REPORT_STATUSES,
   type AdminReportItem,
+  type ReportAttachment,
   type ReportCounts,
   type ReportStatus,
   type ReportType,
@@ -98,6 +99,23 @@ export function AdminReportsPanel({ initialReports, counts }: Props) {
     }
   };
 
+  /** Téléchargement forcé : le bucket étant sur un autre domaine, l'attribut
+   *  `download` est ignoré — on récupère un blob puis on déclenche le clic. */
+  const download = async (attachment: ReportAttachment) => {
+    try {
+      const res = await fetch(attachment.url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.name;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(attachment.url, '_blank', 'noopener');
+    }
+  };
+
   const remove = async (id: string) => {
     if (!window.confirm('Supprimer définitivement ce signalement ?')) return;
     setReports((prev) => prev.filter((r) => r.id !== id));
@@ -162,6 +180,37 @@ export function AdminReportsPanel({ initialReports, counts }: Props) {
 
                 <h3 className={styles.cardTitle}>{item.title}</h3>
                 <p className={styles.cardDescription}>{item.description}</p>
+
+                {item.attachments.length > 0 && (
+                  <div className={styles.thumbGrid}>
+                    {item.attachments.map((attachment) => (
+                      <div key={attachment.key} className={styles.thumb}>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Ouvrir ${attachment.name}`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className={styles.thumbImage}
+                          />
+                        </a>
+                        <button
+                          type="button"
+                          className={styles.thumbDownload}
+                          onClick={() => download(attachment)}
+                          aria-label={`Télécharger ${attachment.name}`}
+                          title={`Télécharger ${attachment.name}`}
+                        >
+                          <Download size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className={styles.actions}>
                   <label className={styles.statusLabel}>

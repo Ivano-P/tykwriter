@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Bug, Lightbulb, HelpCircle, Plus, Trash2, X } from 'lucide-react';
 import {
+  Bug,
+  Download,
+  HelpCircle,
+  ImagePlus,
+  Lightbulb,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
+import {
+  MAX_REPORT_ATTACHMENTS,
   REPORT_TYPES,
+  type ReportAttachment,
   type ReportItem,
   type ReportStatus,
   type ReportType,
@@ -13,6 +24,10 @@ import {
   createReportAction,
   deleteMyReportAction,
 } from '@/actions/reports.action';
+import {
+  createReportImageUploadAction,
+  deleteReportImageAction,
+} from '@/actions/storage.action';
 import styles from './signalements.module.css';
 
 interface Props {
@@ -36,6 +51,68 @@ export function ReportsClient({ initialReports }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'error'>('idle');
+  /** Captures déjà envoyées sur R2, en attente d'être liées au signalement. */
+  const [attachments, setAttachments] = useState<ReportAttachment[]>([]);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error'>(
+    'idle',
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadFiles = async (files: File[]) => {
+    const room = MAX_REPORT_ATTACHMENTS - attachments.length;
+    if (room <= 0) return;
+    setUploadState('uploading');
+    let failed = false;
+    for (const file of files.slice(0, room)) {
+      try {
+        const ticket = await createReportImageUploadAction(
+          file.type,
+          file.size,
+        );
+        const res = await fetch(ticket.uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type },
+        });
+        if (!res.ok) throw new Error('UPLOAD_FAILED');
+        setAttachments((prev) => [
+          ...prev,
+          { url: ticket.publicUrl, key: ticket.key, name: file.name },
+        ]);
+      } catch {
+        failed = true;
+      }
+    }
+    setUploadState(failed ? 'error' : 'idle');
+  };
+
+  const removeAttachment = async (key: string) => {
+    setAttachments((prev) => prev.filter((a) => a.key !== key));
+    try {
+      // Suppression immédiate sur R2 : sans cela le fichier resterait orphelin,
+      // aucun signalement ne le référençant jamais.
+      await deleteReportImageAction(key);
+    } catch {
+      // Best effort : un orphelin coûte quelques Ko, on ne bloque pas l'UI.
+    }
+  };
+
+  /** Téléchargement forcé : le bucket est sur un autre domaine, l'attribut
+   *  `download` y est ignoré — on passe par un blob. */
+  const downloadAttachment = async (attachment: ReportAttachment) => {
+    try {
+      const res = await fetch(attachment.url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.name;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(attachment.url, '_blank', 'noopener');
+    }
+  };
 
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
@@ -47,11 +124,18 @@ export function ReportsClient({ initialReports }: Props) {
     if (state === 'sending' || !title.trim() || !description.trim()) return;
     setState('sending');
     try {
-      const created = await createReportAction({ type, title, description });
+      const created = await createReportAction({
+        type,
+        title,
+        description,
+        attachmentsJson:
+          attachments.length > 0 ? JSON.stringify(attachments) : undefined,
+      });
       setReports((prev) => [created, ...prev]);
       setTitle('');
       setDescription('');
       setType('bug');
+      setAttachments([]);
       setIsFormOpen(false);
       setState('idle');
     } catch {
@@ -132,6 +216,70 @@ export function ReportsClient({ initialReports }: Props) {
             />
           </label>
 
+          {/* Captures d'écran (Cloudflare R2, comme les images des notes) */}
+          <div className={styles.field}>
+            <span className={styles.label}>
+              {t('attachmentsLabel', { max: String(MAX_REPORT_ATTACHMENTS) })}
+            </span>
+
+            {attachments.length > 0 && (
+              <div className={styles.thumbGrid}>
+                {attachments.map((attachment) => (
+                  <div key={attachment.key} className={styles.thumb}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className={styles.thumbImage}
+                    />
+                    <button
+                      type="button"
+                      className={styles.thumbRemove}
+                      onClick={() => removeAttachment(attachment.key)}
+                      aria-label={t('attachmentRemove')}
+                      title={t('attachmentRemove')}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={styles.attachButton}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={
+                uploadState === 'uploading' ||
+                attachments.length >= MAX_REPORT_ATTACHMENTS
+              }
+            >
+              <ImagePlus size={15} />
+              <span>
+                {uploadState === 'uploading'
+                  ? t('attachmentUploading')
+                  : t('attachmentAdd')}
+              </span>
+            </button>
+            {uploadState === 'error' && (
+              <p className={styles.error}>{t('attachmentError')}</p>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp"
+              multiple
+              hidden
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                e.target.value = '';
+                if (files.length > 0) void uploadFiles(files);
+              }}
+            />
+          </div>
+
           {state === 'error' && <p className={styles.error}>{t('sendError')}</p>}
 
           <button
@@ -177,6 +325,37 @@ export function ReportsClient({ initialReports }: Props) {
 
                 <h2 className={styles.cardTitle}>{item.title}</h2>
                 <p className={styles.cardDescription}>{item.description}</p>
+
+                {item.attachments.length > 0 && (
+                  <div className={styles.thumbGrid}>
+                    {item.attachments.map((attachment) => (
+                      <div key={attachment.key} className={styles.thumb}>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={attachment.name}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className={styles.thumbImage}
+                          />
+                        </a>
+                        <button
+                          type="button"
+                          className={styles.thumbDownload}
+                          onClick={() => downloadAttachment(attachment)}
+                          aria-label={t('attachmentDownload')}
+                          title={t('attachmentDownload')}
+                        >
+                          <Download size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {item.adminReply && (
                   <div className={styles.reply}>
